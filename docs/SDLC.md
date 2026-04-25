@@ -1,0 +1,220 @@
+# Pipeline SDLC — Orquestrum
+
+Complete map of the documentation-driven development flow (SDD). Each phase produces artifacts that feed the next phase. An orchestrator agent can use this file to infer execution order and dependencies between skills.
+
+---
+
+## Pipeline Overview
+
+```mermaid
+flowchart TD
+    subgraph phase_neg1 [Phase -1 · Onboarding — existing projects only]
+        CM[codebase-mapper] --> RS[reverse-spec]
+        RS --> ADR0[adr-manager\narcheological]
+        ADR0 --> GL0[glossary-manager]
+    end
+
+    GL0 --> G
+
+    subgraph phase0 [Phase 0 · Foundation — new projects start here]
+        G[glossary-manager]
+    end
+
+    G --> S
+
+    subgraph phase1 [Phase 1 · Discovery]
+        S[spec-manager] --> A[adr-manager]
+    end
+
+    S --> AR
+    A --> AR
+
+    subgraph phase2 [Phase 2 · Design]
+        AR[architecture-manager]
+    end
+
+    AR --> E
+
+    subgraph phase3 [Phase 3 · Planning]
+        E[epic-manager] --> T[task-manager]
+    end
+
+    T --> R
+    T --> Q
+
+    subgraph phase4 [Phase 4 · Quality]
+        R[review-manager] --> Q[qa-manager]
+        Q -->|critical failure| L[learning-manager]
+        T -->|unexpected difficulty| L
+    end
+
+    Q -->|Passed| C
+    AR --> RB
+
+    subgraph phase5 [Phase 5 · Release]
+        C[changelog-manager] --> RB[runbook-manager]
+    end
+```
+
+---
+
+## Phases and Responsibilities
+
+### Phase -1 — Onboarding (`docs/00-discovery/` + `docs/01-design/architecture/`)
+
+> Triggered **only for existing projects** without SDD documentation. New projects start directly at Phase 0.
+
+| Skill | Artifact | Trigger |
+|-------|----------|---------|
+| [codebase-mapper](../skills/codebase-mapper/SKILL.md) | `ARCHITECTURE-v0-as-is.md` | First step — always before any other onboarding skill |
+| [reverse-spec](../skills/reverse-spec/SKILL.md) | `spec-v0-extracted.md` (Draft) | After codebase-mapper — extracts behaviors as requirements |
+| [adr-manager](../skills/adr-manager/SKILL.md) | `ADR-00X.md` (Accepted) | For each implicit architectural decision found in the code |
+| [glossary-manager](../skills/glossary-manager/SKILL.md) | `GLOSSARY.md` | To canonize domain terms found in the codebase |
+
+**Rule:** No Phase 0 or later skill may be used without codebase-mapper having produced the as-is architecture. The extracted spec must start as `Draft` and requires human validation before becoming `Active`.
+
+---
+
+### Phase 0 — Foundation (`docs/00-discovery/glossary/`)
+
+| Skill | Artifact | Trigger |
+|-------|----------|---------|
+| [glossary-manager](../skills/glossary-manager/SKILL.md) | `GLOSSARY.md` | Project start or when new domain terms need to be canonized |
+
+**Rule:** The glossary must exist before the first SPEC. Every agent must consult the glossary before creating any document to ensure consistent terminology.
+
+---
+
+### Phase 1 — Discovery (`docs/00-discovery/`)
+
+| Skill | Artifact | Trigger |
+|-------|----------|---------|
+| [spec-manager](../skills/spec-manager/SKILL.md) | `spec-vX.md` | Start of any new feature |
+| [adr-manager](../skills/adr-manager/SKILL.md) | `ADR-XXX.md` | Relevant technical decision or technology change |
+| [pattern-manager](../skills/pattern-manager/SKILL.md) | `PATTERNS.md` | After first SPEC — catalog patterns and register adoptions |
+
+**Rule:** No Epic may exist without an active SPEC. No Architecture may exist without at least one ADR to justify it. Every first adoption of a design pattern must have an associated ADR and an entry in `PATTERNS.md`.
+
+---
+
+### Phase 2 — Design (`docs/01-design/`)
+
+| Skill | Artifact | Trigger |
+|-------|----------|---------|
+| [architecture-manager](../skills/architecture-manager/SKILL.md) | `ARCHITECTURE-vX.md` | Active SPEC + accepted ADRs |
+
+**Rule:** Architecture is the materialization of decisions (ADRs) applied to requirements (SPEC). Every component change requires simultaneous diagram update.
+
+---
+
+### Phase 3 — Planning (`docs/02-planning/`)
+
+| Skill | Artifact | Trigger |
+|-------|----------|---------|
+| [epic-manager](../skills/epic-manager/SKILL.md) | `E{ID}.md` | SPEC + Architecture defined |
+| [task-manager](../skills/task-manager/SKILL.md) | `T{ID}.md` + `logs/T{ID}-log.md` | Epic created |
+
+**Rule:** Epics make vertical slices of the SPEC. Tasks are executable units that produce traceable code artifacts.
+
+---
+
+### Phase 4 — Quality (`docs/03-quality/`)
+
+| Skill | Artifact | Trigger | Depends on |
+|-------|----------|---------|------------|
+| [review-manager](../skills/review-manager/SKILL.md) | `REVIEW-vX.md` | Task(s) with status `Completed` | task-manager |
+| [qa-manager](../skills/qa-manager/SKILL.md) | `QA-vX.md` | Task(s) `Completed` + Review `Approved` | task-manager, review-manager |
+| [learning-manager](../skills/learning-manager/SKILL.md) | `L-XXX.md` | QA `Failed` or unexpected technical difficulty | task-manager, qa-manager |
+
+**Rule:** QA validates against the SPEC. Review validates against code and security. Learning closes the loop by turning failures into knowledge.
+
+---
+
+### Phase 5 — Release (`docs/04-release/`)
+
+| Skill | Artifact | Trigger | Depends on |
+|-------|----------|---------|------------|
+| [changelog-manager](../skills/changelog-manager/SKILL.md) | `CHANGELOG.md` + `RELEASE-vX.Y.Z.md` | QA(s) with status `Passed` | qa-manager |
+| [runbook-manager](../skills/runbook-manager/SKILL.md) | `RUNBOOK.md` | New release created or infrastructure change | architecture-manager, changelog-manager |
+
+**Rule:** No release without QA Passed. No deploy without updated Runbook. The changelog connects software versions to delivered epics and tasks.
+
+---
+
+## Complete Artifact Structure
+
+```
+docs/
+├── 00-discovery/
+│   ├── glossary/      → GLOSSARY.md
+│   ├── spec/          → spec-v1.md, spec-v2.md ...
+│   └── adr/           → ADR-001.md, ADR-002.md ...
+├── 01-design/
+│   └── architecture/  → ARCHITECTURE-v1.md ...
+├── 02-planning/
+│   ├── epics/         → E001.md, E002.md ...
+│   └── tasks/
+│       ├── T001.md, T002.md ...
+│       └── logs/      → T001-log.md ...
+├── 03-quality/
+│   ├── review/        → REVIEW-v1.md ...
+│   ├── qa/            → QA-v1.md ...
+│   └── learning/      → L-001.md ...
+└── 04-release/
+    ├── CHANGELOG.md
+    ├── RELEASE-v1.0.0.md ...
+    └── RUNBOOK.md
+```
+
+---
+
+## Bidirectional Traceability
+
+Every artifact must be able to answer:
+- **Upward:** Which SPEC/ADR originated this?
+- **Downward:** Which Tasks/Reviews/QAs/Releases derived from this?
+
+Always use the `References` section of templates to keep this chain intact.
+
+---
+
+## Orchestrator Team
+
+| Agent | Phases | Skills governed | File |
+|-------|--------|----------------|------|
+| [Helm — The Architect](../agents/helm.md) | all | — (pure coordinator) | `agents/helm.md` |
+| [Trace — Onboarding Lead](../agents/trace.md) | -1 | codebase-mapper, reverse-spec, adr, glossary | `agents/trace.md` |
+| [Lore — Product Strategist](../agents/lore.md) | 0–1 | glossary, spec, adr | `agents/lore.md` |
+| [Forge — Dev Lead](../agents/forge.md) | 2–3 | architecture, epic, task | `agents/forge.md` |
+| [Ward — Quality Lead](../agents/ward.md) | 4 | review, qa, learning | `agents/ward.md` |
+| [Cast — Ship & Support Lead](../agents/cast.md) | 5 + maintenance | changelog, runbook | `agents/cast.md` |
+
+---
+
+## Skills Index
+
+| Phase | Skill | Role |
+|-------|-------|------|
+| -1 | codebase-mapper | As-is map of existing projects |
+| -1 | reverse-spec | Requirements extraction from existing code |
+| 0 | glossary-manager | Canonical domain vocabulary |
+| 1 | spec-manager | Requirements and success criteria |
+| 1 | adr-manager | Architectural decisions |
+| 1 | pattern-manager | Design pattern catalog and traceability |
+| 2 | architecture-manager | System view and diagrams |
+| 3 | epic-manager | Vertical decomposition of SPEC |
+| 3 | task-manager | Execution with traceability |
+| 4 | review-manager | Code quality and security |
+| 4 | qa-manager | Functional validation against SPEC |
+| 4 | learning-manager | Failure knowledge capture |
+| 5 | changelog-manager | Versioned and documented release |
+| 5 | runbook-manager | Operational procedures |
+
+---
+
+## Pipeline Governance Documents
+
+| Document | Purpose |
+|----------|---------|
+| [TIERS.md](TIERS.md) | Work classification by activity type and size — defines required artifacts |
+| [MODELS.md](MODELS.md) | LLM model assignment per agent and skill — token cost optimization |

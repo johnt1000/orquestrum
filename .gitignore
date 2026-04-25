@@ -1,0 +1,16 @@
+# Generated — never edit manually
+integrations/
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# Environment
+.env
+.env.*
+
+# claude
+.claude/
