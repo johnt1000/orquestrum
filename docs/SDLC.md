@@ -168,6 +168,57 @@ docs/
 
 ---
 
+## Artifact Flow & Context Fencing
+
+### How Artifacts Flow Between Phases
+
+Each phase boundary is a handoff point. The receiving orchestrator treats all upstream artifacts as **read-only constraints**.
+
+```
+Discovery (Lore) → Design (Forge):
+  Input:  SPEC [Active] + ADRs [Accepted] + GLOSSARY
+  Fence:  Forge cannot modify SPEC, ADRs, or GLOSSARY
+  Output: ARCHITECTURE-vX with diagram + component map
+
+Design → Planning (Forge owns 2–3):
+  Input:  ARCHITECTURE + SPEC [read-only] + ADRs [read-only] + PATTERNS
+  Fence:  Cannot modify Architecture or SPEC during planning
+  Output: Epics with spec_ref + Tasks with artifact paths + Logs
+
+Planning → Quality (Forge → Ward):
+  Input:  Completed Tasks with non-empty Artifacts sections + Logs
+  Fence:  Ward cannot modify Tasks — creates correction Tasks if needed
+  Output: REVIEW-vX [Approved] + QA-vX [Passed] + optional L-XXX
+
+Quality → Release (Ward → Cast):
+  Input:  QA [Passed] + no Critical findings open + approved artifact versions
+  Fence:  Cast cannot modify approved code or quality docs
+  Output: RELEASE-vX.Y.Z + CHANGELOG.md + RUNBOOK.md
+```
+
+### Context Isolation by Phase
+
+| Phase | Orchestrator | Isolation Level | May Read | Must NOT Write |
+|-------|-------------|----------------|----------|----------------|
+| 0–1 | Lore | High | Industry standards, past SPECs, ADRs | Code, tasks, epics, architecture, releases |
+| 2–3 | Forge | Medium | All discovery artifacts (read-only), existing Architecture | SPECs, ADRs, Glossary |
+| 4 | Ward | Medium | All previous phases (strictly read-only) | SPECs, Architecture, Task descriptions, any code |
+| 5 | Cast | Low | All artifacts (read-only for code and quality docs) | Code, decisions, test results |
+
+### Handoff Checklist Protocol
+
+Every artifact produced by a skill includes a `## Handoff Checklist` section. Helm validates this checklist at each gate:
+
+- **Gate blocked** if any critical `[ ]` item remains open
+- **Gate advances** only when all mandatory checks are `[x]`
+- **Promotion rule:** tier never demotes mid-flight — only promotes if a gate reveals unexpected scope
+
+### Few-Shot Reference Injection
+
+Reference files in `skills/*/references/` that contain `<!-- inject:start -->` / `<!-- inject:end -->` markers are automatically included in Cursor, Aider, and Windsurf builds by `scripts/convert.sh`. This ensures few-shot examples reach agents that cannot read files at runtime.
+
+---
+
 ## Bidirectional Traceability
 
 Every artifact must be able to answer:
