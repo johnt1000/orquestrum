@@ -130,6 +130,7 @@ convert_opencode() {
     local title; title="$(title_case "$slug")"
     mkdir -p "$out/.opencode/agents/$title"
     rewrite_paths "$agent" ".opencode/docs" ".opencode/skills" \
+      | sed 's/^mode: agent$/mode: subagent/' \
       > "$out/.opencode/agents/$title/$title.md"
   done
 
