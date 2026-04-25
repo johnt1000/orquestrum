@@ -26,6 +26,20 @@ Before any action, read: `./references/codebase-mapper-references.md`
 | **Reads** | Project source code (root), configuration files, dependency manifests, infra scripts |
 | **Writes** | `docs/01-design/architecture/ARCHITECTURE-v0-as-is.md` |
 | **Depends on** | none (first step of onboarding) |
+| **Must NOT touch** | `docs/00-discovery/`, `docs/02-planning/`, `docs/04-release/`, any source code files |
+| **Handoff to** | `reverse-spec` — expects as-is architecture document |
+
+## Output Schema
+
+The artifact produced by this skill MUST contain the following mandatory sections:
+- System Overview
+- Technology Stack
+- Component Map
+- Data Flow
+- Integration Points
+- Identified Risks
+
+Invalid format: absence of any mandatory section blocks the next gate.
 
 ## Execution Instructions
 
@@ -61,6 +75,11 @@ Before any action, read: `./references/codebase-mapper-references.md`
 - **DO NOT** modify any code files during the mapping.
 - **DO NOT** mark as "debt" what may be an intentional decision — use `⚠️ Observation` without judgment.
 - **DO NOT** attempt to map everything at once in large codebases — prioritize by layer: infra → data → domain → interface.
+
+**Context fence:**
+- Operate exclusively on files declared under `Reads`
+- DO NOT read files from later pipeline phases not listed in the I/O Contract
+- DO NOT infer context from files not explicitly listed above
 
 ## Context Reflection
 

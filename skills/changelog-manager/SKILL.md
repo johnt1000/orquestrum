@@ -26,6 +26,16 @@ Before any action, read: `./references/changelog-references.md`
 | **Reads** | `docs/03-quality/qa/QA-vX.md` (QAs with Passed status), `docs/02-planning/tasks/T{ID}.md` (delivered artifacts), `docs/04-release/CHANGELOG.md` (previous version) |
 | **Writes** | `docs/04-release/CHANGELOG.md` (updates), `docs/04-release/RELEASE-vX.Y.Z.md` (creates) |
 | **Depends on** | qa-manager (all QAs in scope must be Passed) |
+| **Must NOT touch** | `docs/00-discovery/`, `docs/01-design/`, `docs/02-planning/`, `docs/03-quality/`, any code |
+| **Handoff to** | end of pipeline (Cast) — expects CHANGELOG.md updated and RELEASE-vX.Y.Z created |
+
+## Output Schema
+
+The artifact produced by this skill MUST contain the following mandatory sections:
+- Changelog entry (Added/Changed/Fixed/Removed)
+- Release document with version, date, and artifact list
+
+Invalid format: absence of any mandatory section blocks the next gate.
 
 ## Execution Instructions
 
@@ -45,6 +55,11 @@ Before any action, read: `./references/changelog-references.md`
 - **DO NOT** leave Migration Notes empty when there is a database schema or API contract change.
 - **DO NOT** invent the version number — always derive it from the type of change via Semantic Versioning.
 - **DO NOT** move items from `[Unreleased]` to a version without dating the entry.
+
+**Context fence:**
+- Operate exclusively on files declared under `Reads`
+- DO NOT read files from later pipeline phases not listed in the I/O Contract
+- DO NOT infer context from files not explicitly listed above
 
 ## Context Reflection
 

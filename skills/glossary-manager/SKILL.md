@@ -26,6 +26,18 @@ Before any action, read: `./references/glossary-references.md`
 | **Reads** | `docs/00-discovery/spec/` (terms used in existing SPECs), `docs/00-discovery/glossary/GLOSSARY.md` (to avoid duplicates) |
 | **Writes** | `docs/00-discovery/glossary/GLOSSARY.md` |
 | **Depends on** | none (must be created before or together with the first SPEC) |
+| **Must NOT touch** | `docs/00-discovery/spec/`, `docs/01-design/`, `docs/02-planning/`, any code |
+| **Handoff to** | `spec-manager` (Lore) — expects GLOSSARY.md with Active status |
+
+## Output Schema
+
+The artifact produced by this skill MUST contain the following mandatory sections:
+- Context
+- Domain Terms table
+- Acronyms
+- References
+
+Invalid format: absence of any mandatory section blocks the next gate.
 
 ## Execution Instructions
 
@@ -44,6 +56,11 @@ Before any action, read: `./references/glossary-references.md`
 - **DO NOT** create the glossary without consulting the user about the critical domain terms.
 - **DO NOT** omit LGPD terms when the project involves personal or sensitive data.
 - **DO NOT** mark a term as `Deprecated` without indicating the replacement term.
+
+**Context fence:**
+- Operate exclusively on files declared under `Reads`
+- DO NOT read files from later pipeline phases not listed in the I/O Contract
+- DO NOT infer context from files not explicitly listed above
 
 ## Context Reflection
 

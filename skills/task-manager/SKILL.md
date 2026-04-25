@@ -26,6 +26,20 @@ Before any action, read: `./references/task-references.md`
 | **Reads** | `docs/02-planning/epics/E{ID}.md`, `docs/00-discovery/spec/spec-vX.md` |
 | **Writes** | `docs/02-planning/tasks/T{ID}.md`, `docs/02-planning/tasks/logs/T{ID}-log.md` |
 | **Depends on** | epic-manager |
+| **Must NOT touch** | `docs/00-discovery/` (read-only), `docs/01-design/` (read-only), `docs/04-release/`, any non-task docs |
+| **Handoff to** | `review-manager` (Ward) — expects Task with Completed status and Artifacts section listing all created files |
+
+## Output Schema
+
+The artifact produced by this skill MUST contain the following mandatory sections:
+- Objective
+- Acceptance Criteria
+- Artifacts
+- TDD Log reference
+- epic_ref
+- spec_ref
+
+Invalid format: absence of any mandatory section blocks the next gate.
 
 ## Execution Instructions
 
@@ -49,6 +63,11 @@ Before any action, read: `./references/task-references.md`
 - **DO NOT** write production code before the test in Tier 2 — the Red → Green → Refactor order is mandatory.
 - **DO NOT** start a Task with status `Blocked` without explicitly describing which task blocks it in the `Dependencies` field.
 - **DO NOT** invent the next ID — always check the last file in `docs/02-planning/tasks/`.
+
+**Context fence:**
+- Operate exclusively on files declared under `Reads`
+- DO NOT read files from later pipeline phases not listed in the I/O Contract
+- DO NOT infer context from files not explicitly listed above
 
 ## Context Reflection
 

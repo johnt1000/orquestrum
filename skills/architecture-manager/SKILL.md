@@ -26,6 +26,21 @@ Before any action, read: `./references/arch-references.md`
 | **Reads** | `docs/00-discovery/spec/spec-vX.md`, `docs/00-discovery/adr/` (all accepted ADRs) |
 | **Writes** | `docs/01-design/architecture/ARCHITECTURE-vX.md` |
 | **Depends on** | spec-manager, adr-manager |
+| **Must NOT touch** | `docs/00-discovery/` (read-only), `docs/02-planning/`, any code |
+| **Handoff to** | `epic-manager` (Forge) — expects ARCHITECTURE-vX with diagram and component map |
+
+## Output Schema
+
+The artifact produced by this skill MUST contain the following mandatory sections:
+- Context
+- Architecture Diagram
+- Component Map
+- Technology Decisions
+- Integration Points
+- Scalability Considerations
+- References
+
+Invalid format: absence of any mandatory section blocks the next gate.
 
 ## Execution Instructions
 
@@ -44,6 +59,11 @@ Before any action, read: `./references/arch-references.md`
 - **DO NOT** create a new version (v2, v3) for minor changes — increment the version only when components or flows are added or removed.
 - **DO NOT** leave the `Decisions` section empty if there are accepted ADRs — every architectural decision must be traceable.
 - **DO NOT** mix asynchronous flows (queues, webhooks) and synchronous flows (REST) in the same diagram without visual distinction.
+
+**Context fence:**
+- Operate exclusively on files declared under `Reads`
+- DO NOT read files from later pipeline phases not listed in the I/O Contract
+- DO NOT infer context from files not explicitly listed above
 
 ## Context Reflection
 

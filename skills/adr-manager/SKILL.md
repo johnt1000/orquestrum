@@ -26,6 +26,20 @@ Before any action, read: `./references/adr-references.md`
 | **Reads** | `docs/00-discovery/spec/spec-vX.md`, `docs/00-discovery/adr/` (existing ADRs to check for duplicates) |
 | **Writes** | `docs/00-discovery/adr/ADR-XXX.md` |
 | **Depends on** | spec-manager (the problem context must exist before the decision) |
+| **Must NOT touch** | `docs/00-discovery/spec/` (read-only), `docs/01-design/`, `docs/02-planning/`, any code |
+| **Handoff to** | `forge` (Forge) — expects ADR with Accepted status |
+
+## Output Schema
+
+The artifact produced by this skill MUST contain the following mandatory sections:
+- Context
+- Decision
+- Status
+- Consequences
+- Alternatives Considered
+- References
+
+Invalid format: absence of any mandatory section blocks the next gate.
 
 ## Execution Instructions
 
@@ -52,6 +66,11 @@ Before any action, read: `./references/adr-references.md`
 - **DO NOT** describe the solution in the `Context` field — Context describes the problem, not the answer.
 - **DO NOT** omit the `superseded_by` field in deprecated ADRs — always point to the replacement ADR.
 - **DO NOT** create duplicate ADRs — check the folder before writing.
+
+**Context fence:**
+- Operate exclusively on files declared under `Reads`
+- DO NOT read files from later pipeline phases not listed in the I/O Contract
+- DO NOT infer context from files not explicitly listed above
 
 ## Context Reflection
 

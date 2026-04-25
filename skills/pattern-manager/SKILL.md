@@ -26,6 +26,17 @@ Before any action, read: `./references/pattern-references.md`
 | **Reads** | `docs/00-discovery/spec/spec-vX.md`, `docs/00-discovery/adr/` (existing ADRs), `docs/01-design/architecture/` (if it exists) |
 | **Writes** | `docs/00-discovery/patterns/PATTERNS.md` |
 | **Depends on** | spec-manager (the SPEC must exist to identify required patterns) |
+| **Must NOT touch** | `docs/00-discovery/` (read-only), `docs/02-planning/`, any code |
+| **Handoff to** | `architecture-manager` (Forge) — expects PATTERNS.md with at least 1 adopted pattern |
+
+## Output Schema
+
+The artifact produced by this skill MUST contain the following mandatory sections:
+- Pattern Catalog
+- Pattern Adoption Log
+- Decision Rationale
+
+Invalid format: absence of any mandatory section blocks the next gate.
 
 ## Operation Modes
 
@@ -96,6 +107,11 @@ Before any action, read: `./references/pattern-references.md`
 - **DO NOT** mix two patterns in the same adoption record — one record per pattern per context
 - **DO NOT** force a pattern where a simple CRUD suffices — complexity without reason is technical debt
 - **DO NOT** omit negative trade-offs — every pattern has a cost (complexity, learning curve, overhead)
+
+**Context fence:**
+- Operate exclusively on files declared under `Reads`
+- DO NOT read files from later pipeline phases not listed in the I/O Contract
+- DO NOT infer context from files not explicitly listed above
 
 ## Context Reflection
 

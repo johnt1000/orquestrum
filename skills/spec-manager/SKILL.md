@@ -26,6 +26,22 @@ Before any action, read: `./references/spec-references.md`
 | **Reads** | `docs/00-discovery/adr/` (existing ADRs), `docs/01-design/architecture/` (existing architectures) |
 | **Writes** | `docs/00-discovery/spec/spec-vX.md` |
 | **Depends on** | none (pipeline entry point) |
+| **Must NOT touch** | `docs/00-discovery/adr/` (read-only), `docs/01-design/`, `docs/02-planning/`, any code |
+| **Handoff to** | `adr-manager` (Lore) — expects SPEC with Active status and ≥3 assumptions |
+
+## Output Schema
+
+The artifact produced by this skill MUST contain the following mandatory sections:
+- Context
+- Assumptions table
+- Functional Requirements
+- Non-Functional Requirements
+- Constraints
+- Flows
+- Success Criteria
+- References
+
+Invalid format: absence of any mandatory section blocks the next gate.
 
 ## Execution Instructions
 
@@ -48,6 +64,11 @@ Before any action, read: `./references/spec-references.md`
 - **DO NOT** write success criteria outside Given/When/Then format — vague criteria are not testable.
 - **DO NOT** omit the `Out-of-Scope` section — it is as important as the positive scope.
 - **DO NOT** invent ADR or Architecture IDs in References — only link what already exists on disk.
+
+**Context fence:**
+- Operate exclusively on files declared under `Reads`
+- DO NOT read files from later pipeline phases not listed in the I/O Contract
+- DO NOT infer context from files not explicitly listed above
 
 ## Context Reflection
 

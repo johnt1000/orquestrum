@@ -26,6 +26,20 @@ Before any action, read: `./references/review-references.md`
 | **Reads** | `docs/02-planning/tasks/T{ID}.md` (completed tasks), `docs/00-discovery/adr/` (technical decisions), `docs/00-discovery/spec/spec-vX.md` |
 | **Writes** | `docs/03-quality/review/REVIEW-vX.md` |
 | **Depends on** | task-manager (tasks must have status Completed) |
+| **Must NOT touch** | `docs/00-discovery/` (read-only), `docs/01-design/` (read-only), `docs/02-planning/` (read-only), any code |
+| **Handoff to** | `qa-manager` (Ward) — expects REVIEW-vX with Approved or Changes Requested status |
+
+## Output Schema
+
+The artifact produced by this skill MUST contain the following mandatory sections:
+- Summary
+- Findings
+- Security Checklist
+- SPEC Conformance
+- Approved Artifacts
+- Handoff Status
+
+Invalid format: absence of any mandatory section blocks the next gate.
 
 ## Execution Instructions
 
@@ -44,6 +58,11 @@ Before any action, read: `./references/review-references.md`
 - **DO NOT** leave the `Security Considerations` section empty — at minimum record "No risks were identified in this review" with justification.
 - **DO NOT** review code without checking conformance with the SPEC — the implementation may be technically correct but functionally wrong.
 - **DO NOT** use `Approved` when any `Critical` finding is open.
+
+**Context fence:**
+- Operate exclusively on files declared under `Reads`
+- DO NOT read files from later pipeline phases not listed in the I/O Contract
+- DO NOT infer context from files not explicitly listed above
 
 ## Context Reflection
 

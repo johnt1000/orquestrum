@@ -26,6 +26,21 @@ Before any action, read: `./references/reverse-spec-references.md`
 | **Reads** | Source code (controllers, services, models, validations, tests), `docs/01-design/architecture/ARCHITECTURE-v0-as-is.md` |
 | **Writes** | `docs/00-discovery/spec/spec-v0-extracted.md` |
 | **Depends on** | codebase-mapper (as-is architecture must exist first) |
+| **Must NOT touch** | `docs/00-discovery/spec/` (read-only for existing), `docs/02-planning/`, `docs/04-release/`, any code |
+| **Handoff to** | `spec-manager` — expects reverse-spec Draft with confidence ratings and ❓ Confirm items |
+
+## Output Schema
+
+The artifact produced by this skill MUST contain the following mandatory sections:
+- System Summary
+- Extracted Functional Requirements
+- Extracted Non-Functional Requirements
+- Implicit Data Model
+- Suspicious Behaviors
+- Areas Without Spec Coverage
+- Validation Pending
+
+Invalid format: absence of any mandatory section blocks the next gate.
 
 ## Execution Instructions
 
@@ -64,6 +79,11 @@ Before any action, read: `./references/reverse-spec-references.md`
 - **DO NOT** omit behaviors that appear to be wrong — document and flag with `⚠️ Suspicious behavior`.
 - **DO NOT** invent requirements without evidence in the code — if not found, leave the section blank with `[Not identified in code]`.
 - **DO NOT** extract requirements from outdated comments without comparing with the actual code — comments lie, code does not.
+
+**Context fence:**
+- Operate exclusively on files declared under `Reads`
+- DO NOT read files from later pipeline phases not listed in the I/O Contract
+- DO NOT infer context from files not explicitly listed above
 
 ## Context Reflection
 

@@ -26,6 +26,19 @@ Before any action, read: `./references/learning-references.md`
 | **Reads** | `docs/02-planning/tasks/T{ID}.md` and its log, `docs/03-quality/qa/QA-vX.md` (failures), `docs/00-discovery/adr/` (related decisions) |
 | **Writes** | `docs/03-quality/learning/L-XXX.md` |
 | **Depends on** | task-manager, qa-manager (triggered by failure or discovery) |
+| **Must NOT touch** | `docs/00-discovery/` (read-only), `docs/01-design/` (read-only), `docs/02-planning/` (read-only), any code |
+| **Handoff to** | `cast` or `helm` — expects L-XXX with Root Cause and Corrective Action assigned |
+
+## Output Schema
+
+The artifact produced by this skill MUST contain the following mandatory sections:
+- Incident Summary
+- Root Cause (5 Whys)
+- Corrective Action
+- Risk of Recurrence
+- Knowledge Captured
+
+Invalid format: absence of any mandatory section blocks the next gate.
 
 ## Execution Instructions
 
@@ -46,6 +59,11 @@ Before any action, read: `./references/learning-references.md`
 - **DO NOT** assign `confidence: High` without concrete evidence (error log, reproduction test, confirmed diagnosis).
 - **DO NOT** archive a Learning before the fix has been validated by QA.
 - **DO NOT** leave `Patterns` empty if the same type of error has occurred before — check other files in `docs/03-quality/learning/`.
+
+**Context fence:**
+- Operate exclusively on files declared under `Reads`
+- DO NOT read files from later pipeline phases not listed in the I/O Contract
+- DO NOT infer context from files not explicitly listed above
 
 ## Context Reflection
 
