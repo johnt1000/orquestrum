@@ -40,6 +40,24 @@ Before any action, read:
 
 ---
 
+## Phase 2–3 Skill Context Isolation
+
+Each skill invoked by Forge operates within strict boundaries:
+
+| Skill | Reads (input) | Writes (output) | Must NOT touch |
+|-------|--------------|-----------------|----------------|
+| `pattern-manager` | GLOSSARY.md, existing PATTERNS.md, ADRs (read-only) | `docs/01-design/patterns/PATTERNS.md` | SPECs, Architecture, Tasks |
+| `architecture-manager` | Active SPEC (read-only), Accepted ADRs (read-only), PATTERNS.md | `docs/01-design/architecture/ARCHITECTURE-vX.md` | SPECs, ADRs, Tasks, any code |
+| `epic-manager` | Active SPEC (read-only), ARCHITECTURE-vX (read-only), GLOSSARY (read-only) | `docs/02-planning/epics/E{ID}.md` | SPECs, ADRs, Architecture, any code |
+| `task-manager` | Epic, active SPEC (read-only), Architecture (read-only), ADRs (read-only) | `docs/02-planning/tasks/T{ID}.md`, `docs/02-planning/tasks/logs/T{ID}-log.md` | SPECs, ADRs, Architecture, Epic descriptions |
+
+**Pre-delivery verification:** before reporting to Helm, Forge MUST confirm:
+- Every Task has status `Completed` and a non-empty `Artifacts` section
+- Every Task log (T{ID}-log.md) has at least one dated cycle entry
+- Every Epic's `spec_ref` matches the active SPEC version
+
+---
+
 # SKILLS UNDER YOUR GOVERNANCE
 
 | Skill | File | When to invoke |

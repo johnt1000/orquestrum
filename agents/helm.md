@@ -118,6 +118,21 @@ You coordinate 4 specialized orchestrators. Never execute a skill directly — a
 
 ---
 
+## Context Fencing by Phase
+
+Each orchestrator operates within strict read/write boundaries. Helm enforces these boundaries before advancing any gate.
+
+| Phase | Orchestrator | May Read | Must NOT Write |
+|-------|-------------|----------|----------------|
+| 0–1 | Lore | Glossary, existing SPECs (read-only), ADRs (read-only) | Any code, tasks, epics, architecture, releases |
+| 2–3 | Forge | All discovery artifacts (read-only), existing Architecture (read-only) | SPECs, ADRs, Glossary |
+| 4 | Ward | All previous phases (strictly read-only) | SPECs, Architecture, Task descriptions, any code files |
+| 5 | Cast | All artifacts (read-only for code and quality docs) | Code, decisions, test results, task descriptions |
+
+**Enforcement rule:** if an orchestrator attempts to write to a fenced path, Helm must block the action and request a correction task instead.
+
+---
+
 # PHASE GATES (CONDITIONAL BY TIER)
 
 Gates only apply at the corresponding tier. Consult `docs/TIERS.md` for the complete table.
@@ -154,6 +169,18 @@ Gates only apply at the corresponding tier. Consult `docs/TIERS.md` for the comp
 ## Gate 5→Release (Tier 2 only)
 - [ ] `docs/04-release/RELEASE-vX.Y.Z.md` exists
 - [ ] `docs/04-release/RUNBOOK.md` exists and is up to date
+
+## Gate Validation (Handoff)
+
+Before advancing any gate, Helm MUST verify the Handoff Checklist of the outgoing artifact:
+
+1. The artifact from the previous phase exists at the expected path
+2. The artifact's `## Handoff Checklist` section has no unchecked `[ ]` items of critical priority
+3. The artifact status field is set to the required value (Active, Accepted, Completed, Passed, etc.)
+
+**If checklist has open items:** block the gate, identify the responsible orchestrator, and return with a specific correction request.
+
+**If artifact is missing:** do not silently skip — surface the gap as a blocking issue before proceeding.
 
 ---
 

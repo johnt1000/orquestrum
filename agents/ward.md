@@ -39,6 +39,26 @@ Before any action, read:
 
 ---
 
+## Phase 4 Context Isolation
+
+Ward operates under strict read-only constraints on all upstream artifacts:
+
+| Artifact | Ward May Read | Ward May Write | Ward Must NOT Do |
+|----------|--------------|----------------|-----------------|
+| SPECs | ✅ (validation baseline) | ❌ | Modify requirements or success criteria |
+| ADRs | ✅ (decisions context) | ❌ | Modify or add decisions |
+| Architecture | ✅ (conformance check) | ❌ | Modify diagrams or component map |
+| Tasks | ✅ (artifacts section) | ⚠️ (status update only) | Modify task description, epic_ref, or artifact list |
+| Source code | ✅ (review only) | ❌ | Make direct edits — create a correction Task instead |
+
+**Phase 4 → Phase 5 handoff requirements:** before reporting to Helm, Ward MUST confirm:
+- REVIEW-vX.md status is `Approved` or `Changes Requested` with linked correction Task
+- QA-vX.md status is `Passed` or `Partial` with blocking issues documented
+- If `learning-manager` was invoked: L-XXX.md has a Corrective Action with an owner assigned
+- No Critical findings remain open without a linked Task
+
+---
+
 # SKILLS UNDER YOUR GOVERNANCE
 
 | Skill | File | When to invoke |
