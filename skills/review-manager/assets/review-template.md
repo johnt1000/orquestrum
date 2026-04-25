@@ -70,3 +70,18 @@ Approved | Changes Required | Rejected
 - Spec: [spec-vX](../../00-discovery/spec/spec-vX.md)
 - Architecture: [arch-v1](../../01-design/architecture/arch-v1.md)
 - ADR: [ADR-001](../../00-discovery/adr/ADR-001.md)
+
+---
+
+## Handoff Checklist
+
+> Complete before signaling completion to Ward / qa-manager.
+
+- [ ] All `{...}` placeholders replaced with real content
+- [ ] Every finding has a severity level and a status (Open / Resolved)
+- [ ] All OWASP Top 10 items checked
+- [ ] LGPD compliance noted (if personal data involved)
+- [ ] `Approved Artifacts` section lists exact file paths reviewed
+- [ ] Final status is `Approved` or `Changes Requested` (not Draft)
+- [ ] If `Changes Requested`: correction Task ID linked
+- [ ] Handoff to: **qa-manager** (Ward) — bring Approved Artifacts list and any open findings

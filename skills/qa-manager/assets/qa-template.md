@@ -71,3 +71,17 @@ Date: YYYY-MM-DD HH:mm
 - Spec: [spec-vX](../../00-discovery/spec/spec-vX.md)
 - Architecture: [arch-vX](../../01-design/architecture/arch-vX.md)
 - Learning: [L-XXX](../learning/L-XXX.md)
+
+---
+
+## Handoff Checklist
+
+> Complete before signaling completion to Ward / cast.
+
+- [ ] All `{...}` placeholders replaced with real content
+- [ ] Every SC-XX from the active SPEC has a test result (Pass / Fail / Blocked)
+- [ ] Security validation section completed
+- [ ] Test execution summary filled (total passed, failed, blocked)
+- [ ] Final status is `Passed` or `Partial` (not Draft)
+- [ ] If `Partial` or `Failed`: blocking issues documented with linked Tasks
+- [ ] Handoff to: **changelog-manager** (Cast) — bring QA status and approved artifact versions

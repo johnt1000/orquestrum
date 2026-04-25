@@ -86,3 +86,16 @@ graph TD
 - ADR:
 - Learning:
 - Log: [T{ID}-log](./logs/T{ID}-log.md)
+
+---
+
+## Handoff Checklist
+
+> Complete before setting task status to Completed.
+
+- [ ] All `{...}` placeholders replaced with real content
+- [ ] `Artifacts` section lists every file created or modified (no placeholders)
+- [ ] All artifact paths verified to exist on disk
+- [ ] `epic_ref` and `spec_ref` fields populated with valid IDs
+- [ ] Acceptance criteria all marked as met
+- [ ] Handoff to: **review-manager** (Ward) — bring the Artifacts list and spec_ref

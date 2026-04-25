@@ -49,3 +49,15 @@ Created: YYYY-MM-DD HH:mm
 - Task: [T{ID}](../T{ID}.md)
 - Spec: [spec-vX](../../../00-discovery/spec/spec-vX.md)
 - Learning: [L-XXX](../../../03-quality/learning/L-XXX.md)
+
+---
+
+## Handoff Checklist
+
+> Complete before marking the associated Task as Completed.
+
+- [ ] At least one cycle entry recorded
+- [ ] Each cycle entry has Red / Green / Refactor documented
+- [ ] Final status is `Completed` with a dated entry
+- [ ] All test results noted (pass/fail count)
+- [ ] Handoff to: **task-template** — update the Task `Artifacts` section from this log

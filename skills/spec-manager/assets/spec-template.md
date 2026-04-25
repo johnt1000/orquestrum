@@ -97,3 +97,17 @@ flowchart TD
 - Architecture: [architecture-vX](../../01-design/architecture/ARCHITECTURE-vX.md)
 - ADR:
 - Epics:
+
+---
+
+## Handoff Checklist
+
+> Complete before signaling completion to Lore / adr-manager.
+
+- [ ] All `{...}` placeholders replaced with real content
+- [ ] At least 3 assumptions documented in the Assumptions table
+- [ ] All functional requirements have MoSCoW priority assigned
+- [ ] All success criteria reference at least one RF-XX or RNF-XX
+- [ ] Flows section contains at least one Mermaid diagram
+- [ ] Status set to `Active` (not Draft)
+- [ ] Handoff to: **adr-manager** — bring the list of open technical decisions that need ADRs
