@@ -104,7 +104,7 @@ chmod +x scripts/*.sh
 ```
 
 **Claude Code** — agents to `.claude/agents/`, docs/skills to `.sdd/` (paths resolved relative to project root)  
-**OpenCode** — 20 agents (6 orchestrators + 14 skill subagents) + docs/skills to `--target`; paths rewritten to absolute target at install time  
+**OpenCode** — 6 flat agent files (`agents/<Name>.md`) + docs/skills to `--target`; paths rewritten to absolute target at install time  
 **Cursor** — 20 rule files in `.cursor/rules/` with `.sdd/docs` paths and embedded reference content  
 **Aider** — single `CONVENTIONS.md` with all agents, skills, and `.sdd/docs` paths  
 **Windsurf** — single `.windsurfrules` with all agents, skills, and `.sdd/docs` paths
@@ -113,24 +113,22 @@ chmod +x scripts/*.sh
 
 ## OpenCode agent hierarchy
 
-OpenCode is the only tool that gets the full multi-agent delegation model. Skills become hidden subagents invocable via the Task tool, and each orchestrator has explicit `permission.task` restrictions:
+OpenCode receives 6 flat agent files (`agents/Helm.md`, `agents/Lore.md`, …). The filename without `.md` is the agent type used by OpenCode's Task tool.
+
+**Helm** is the only agent with a restricted `permission.task` — it can only route to the 5 orchestrators:
 
 ```
-Helm (primary)
-├─ Lore   (subagent) → GlossaryManager, SpecManager, AdrManager
-├─ Forge  (subagent) → PatternManager, ArchitectureManager, EpicManager, TaskManager
-│                      + engineering-* (agency-agents)
-├─ Ward   (subagent) → ReviewManager, QaManager, LearningManager
-│                      + engineering-code-reviewer, engineering-security-engineer
-├─ Cast   (subagent) → ChangelogManager, RunbookManager
-│                      + engineering-technical-writer
-└─ Trace  (subagent) → CodebaseMapper, ReverseSpec, AdrManager, GlossaryManager
-                       + engineering-codebase-onboarding-engineer
+Helm (primary, permission.task: Lore | Forge | Ward | Cast | Trace)
+├─ Lore  (subagent) — executes skills inline; can call any agent including agency-agents
+├─ Forge (subagent) — executes skills inline; can call any agent including agency-agents
+├─ Ward  (subagent) — executes skills inline; can call any agent including agency-agents
+├─ Cast  (subagent) — executes skills inline; can call any agent including agency-agents
+└─ Trace (subagent) — executes skills inline; can call any agent including agency-agents
 ```
 
-All skill agents are `hidden: true` — they don't appear in the `@` autocomplete and are only invocable by their designated orchestrators. The `skills/` directory is also copied as read-only reference documentation.
+Skills remain as documentation in `skills/` — orchestrators read `__OPENCODE_ROOT__/skills/<name>/SKILL.md` and execute instructions inline. Skills are **not** registered as separate agents, keeping the setup simple.
 
-Agency-agents (from [msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents)) integrate via their kebab-case OpenCode names (e.g. `engineering-code-reviewer`).
+Agency-agents (from [msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents)) integrate via their kebab-case OpenCode names (e.g. `engineering-code-reviewer`). Since non-Helm orchestrators have no `permission.task` restriction, they can call agency-agents freely.
 
 ---
 

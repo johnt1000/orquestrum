@@ -21,7 +21,7 @@ This repository is the **canonical source** of the framework. The files here do 
 
 # Generate for a specific tool
 ./scripts/convert.sh --tool claude-code   # .claude/agents/ + .sdd/
-./scripts/convert.sh --tool opencode      # agents/ (20: 6 orchestrators + 14 skill subagents) + docs/ + skills/
+./scripts/convert.sh --tool opencode      # agents/ (6 flat .md files) + docs/ + skills/
 ./scripts/convert.sh --tool cursor        # .cursor/rules/*.mdc
 ./scripts/convert.sh --tool aider         # CONVENTIONS.md
 ./scripts/convert.sh --tool windsurf      # .windsurfrules
@@ -139,52 +139,28 @@ docs/04-release/CHANGELOG.md + RELEASE-vX.Y.Z.md + RUNBOOK.md
 
 ### OpenCode integration specifics
 
-OpenCode receives the most complete conversion because it supports `permission.task` — explicit control over which subagents each agent can invoke via the Task tool.
+OpenCode uses flat agent files (`agents/<Name>.md`). The filename without `.md` is the agent type used by the Task tool.
 
 **Output structure** (`integrations/opencode/`):
 ```
 agents/
-  Helm/         ← primary orchestrator
-  Lore/         ← subagent
-  Forge/        ← subagent
-  Ward/         ← subagent
-  Cast/         ← subagent
-  Trace/        ← subagent
-  GlossaryManager/    ← skill subagent (hidden: true)
-  SpecManager/        ← skill subagent (hidden: true)
-  AdrManager/         ← skill subagent (hidden: true)
-  PatternManager/     ← skill subagent (hidden: true)
-  ArchitectureManager/ ← skill subagent (hidden: true)
-  EpicManager/        ← skill subagent (hidden: true)
-  TaskManager/        ← skill subagent (hidden: true)
-  ReviewManager/      ← skill subagent (hidden: true)
-  QaManager/          ← skill subagent (hidden: true)
-  LearningManager/    ← skill subagent (hidden: true)
-  ChangelogManager/   ← skill subagent (hidden: true)
-  RunbookManager/     ← skill subagent (hidden: true)
-  CodebaseMapper/     ← skill subagent (hidden: true)
-  ReverseSpec/        ← skill subagent (hidden: true)
-docs/           ← SDLC.md, TIERS.md, MODELS.md
-skills/         ← reference documentation (read-only context, not loaded as agents)
+  Helm.md    ← primary (mode: primary); filename = Task tool agent type
+  Lore.md    ← subagent (mode: subagent)
+  Forge.md   ← subagent
+  Ward.md    ← subagent
+  Cast.md    ← subagent
+  Trace.md   ← subagent
+docs/        ← SDLC.md, TIERS.md, MODELS.md
+skills/      ← reference documentation (read as files by orchestrators)
 ```
 
-**Delegation hierarchy:**
-```
-Helm → Lore | Forge | Ward | Cast | Trace
-Lore → GlossaryManager | SpecManager | AdrManager
-Forge → PatternManager | ArchitectureManager | EpicManager | TaskManager | engineering-*
-Ward → ReviewManager | QaManager | LearningManager | engineering-code-reviewer | engineering-security-engineer
-Cast → ChangelogManager | RunbookManager | engineering-technical-writer
-Trace → CodebaseMapper | ReverseSpec | AdrManager | GlossaryManager | engineering-codebase-onboarding-engineer
-```
+**Delegation model:**
+- Helm has `permission.task: {'*': deny, Lore: allow, Forge: allow, Ward: allow, Cast: allow, Trace: allow}` — it can only route to its 5 orchestrators.
+- Other orchestrators have **no `permission.task`** — they can freely call agency-agents and built-ins (general, explore) while executing skills inline.
 
-Agency-agents (from [msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents)) use kebab-case names in OpenCode (e.g. `engineering-code-reviewer`). The `permission.task` entries for these are hardcoded in `convert_opencode()` via the `opencode_task_permission()` function (`scripts/convert.sh`).
+**Skills remain as documentation** (not registered as OpenCode agents). Orchestrators read `__OPENCODE_ROOT__/skills/<name>/SKILL.md` at runtime and follow the workflow instructions inline.
 
-**Skill agents** (`hidden: true`):
-- Not visible in the `@` autocomplete
-- Only invocable by their designated orchestrator via the Task tool
-- Their system prompt is the body of the canonical `SKILL.md`
-- `permission.task: {'*': deny}` — skills do not sub-delegate
+**Agency-agents** (from [msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents)) use kebab-case names in OpenCode (e.g. `engineering-code-reviewer`). Non-Helm orchestrators can call them freely.
 
 ---
 
