@@ -130,11 +130,11 @@ convert_claude_code() {
 
 # Helper: emit OpenCode frontmatter for an orchestrator agent.
 # Replaces the canonical tools: block with permission: (edit/bash/task).
-# For primary agent: name stays as-is (e.g. "Helm The Architect")
-# For subagents: name becomes first word only (e.g. "Lore Product Strategist" → "Lore")
+# For primary agent: name is "Helm - The Architect" (with dash)
+# For subagents: name is already kebab-case-lowercase (e.g. "lore-product-strategist")
 # Task permissions differ by mode:
-#   - primary (Helm): restricted to 5 orchestrators only (lore, forge, ward, cast, trace)
-#   - subagent (Lore/Forge/Ward/Cast/Trace): unrestricted ("*": allow)
+#   - primary (Helm): restricted to 5 orchestrators only
+#   - subagent: unrestricted ("*": allow)
 # Args: file
 opencode_agent_frontmatter() {
   local file="$1"
@@ -144,17 +144,14 @@ opencode_agent_frontmatter() {
   local emoji; emoji="$(frontmatter_field "$file" "emoji")"
   local mode; mode="$(frontmatter_field "$file" "mode")"
   
-  local display_name="$canonical_name"
   local actual_mode="$mode"
   if [[ "$mode" == "agent" ]]; then
     actual_mode="subagent"
-    # Extract first word only for subagents (e.g. "Lore Product Strategist" → "Lore")
-    display_name="$(echo "$canonical_name" | cut -d' ' -f1)"
   fi
 
   {
     echo "---"
-    echo "name: $display_name"
+    echo "name: $canonical_name"
     echo "description: $desc"
     echo "mode: $actual_mode"
     echo "temperature: $temp"
@@ -166,11 +163,11 @@ opencode_agent_frontmatter() {
     if [[ "$mode" == "primary" ]]; then
       # Helm: restricted to 5 orchestrators (deny all, then allow specific)
       echo "    \"*\": deny"
-      echo "    lore: allow"
-      echo "    forge: allow"
-      echo "    ward: allow"
-      echo "    cast: allow"
-      echo "    trace: allow"
+      echo "    lore-product-strategist: allow"
+      echo "    forge-dev-lead: allow"
+      echo "    ward-quality-lead: allow"
+      echo "    cast-ship-and-support-lead: allow"
+      echo "    trace-onboarding-lead: allow"
     else
       # Subagents: unrestricted access to any agent (agency-agents, etc)
       echo "    \"*\": allow"
@@ -188,17 +185,19 @@ convert_opencode() {
   mkdir -p "$out/agents" "$out/docs" "$out/skills"
 
   # Generate agent files with intelligent filename strategy:
-  # - primary agent (Helm): use kebab-case of full name → helm-the-architect.md
-  # - subagents (Lore, Forge, etc): use first word lowercased → lore.md, forge.md, etc.
+  # - primary agent (Helm): name="Helm - The Architect" → filename=helm-the-architect.md
+  # - subagents: name already in kebab-case-lowercase → use as filename
   for agent in "$ROOT/agents"/*.md; do
     local canonical_name; canonical_name="$(frontmatter_field "$agent" "name")"
     local mode; mode="$(frontmatter_field "$agent" "mode")"
     local out_file
     
     if [[ "$mode" == "primary" ]]; then
-      out_file="$(name_to_kebab "$canonical_name")"   # e.g. helm-the-architect
+      # "Helm - The Architect" → "helm-the-architect"
+      out_file="$(echo "$canonical_name" | tr '[:upper:]' '[:lower:]' | sed 's/ - /-/g' | sed 's/ /-/g')"
     else
-      out_file="$(echo "$canonical_name" | cut -d' ' -f1 | tr '[:upper:]' '[:lower:]')"  # e.g. lore, forge
+      # Already in kebab-case-lowercase, use as-is
+      out_file="$canonical_name"
     fi
     
     opencode_agent_frontmatter "$agent" > "$out/agents/$out_file.md"

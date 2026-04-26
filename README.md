@@ -113,17 +113,17 @@ chmod +x scripts/*.sh
 
 ## OpenCode agent hierarchy
 
-OpenCode receives 6 flat agent files (`agents/helm-the-architect.md`, `agents/lore.md`, …). The filename without `.md` is the agent type used by OpenCode's Task tool.
+OpenCode receives 6 flat agent files (`agents/helm-the-architect.md`, `agents/lore-product-strategist.md`, …). The filename without `.md` is the agent type used by OpenCode's Task tool.
 
 **Helm** is the only agent with a restricted `permission.task` — it can only route to the 5 orchestrators:
 
 ```
-Helm (primary, permission.task: Lore | Forge | Ward | Cast | Trace)
-├─ Lore  (subagent) — executes skills inline; can call any agent including agency-agents
-├─ Forge (subagent) — executes skills inline; can call any agent including agency-agents
-├─ Ward  (subagent) — executes skills inline; can call any agent including agency-agents
-├─ Cast  (subagent) — executes skills inline; can call any agent including agency-agents
-└─ Trace (subagent) — executes skills inline; can call any agent including agency-agents
+Helm (primary, permission.task: lore-product-strategist | forge-dev-lead | ward-quality-lead | cast-ship-and-support-lead | trace-onboarding-lead)
+├─ lore-product-strategist  (subagent) — executes skills inline; can call any agent including agency-agents
+├─ forge-dev-lead (subagent) — executes skills inline; can call any agent including agency-agents
+├─ ward-quality-lead  (subagent) — executes skills inline; can call any agent including agency-agents
+├─ cast-ship-and-support-lead (subagent) — executes skills inline; can call any agent including agency-agents
+└─ trace-onboarding-lead (subagent) — executes skills inline; can call any agent including agency-agents
 ```
 
 Skills remain as documentation in `skills/` — orchestrators read `__OPENCODE_ROOT__/skills/<name>/SKILL.md` and execute instructions inline. Skills are **not** registered as separate agents, keeping the setup simple.

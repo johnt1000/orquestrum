@@ -63,13 +63,13 @@ The `convert.sh` script rewrites these paths for each tool:
 
 | Phase | Agent | Delegated skills |
 |-------|-------|-----------------|
-| -1 Onboarding | `trace` | codebase-mapper → reverse-spec → adr-manager → glossary-manager |
-| 0 Foundation | `lore` | glossary-manager |
-| 1 Discovery | `lore` | spec-manager → adr-manager |
-| 2 Design | `forge` | pattern-manager → architecture-manager |
-| 3 Planning | `forge` | epic-manager → task-manager |
-| 4 Quality | `ward` | review-manager → qa-manager → learning-manager |
-| 5 Release | `cast` | changelog-manager → runbook-manager |
+| -1 Onboarding | `trace-onboarding-lead` | codebase-mapper → reverse-spec → adr-manager → glossary-manager |
+| 0 Foundation | `lore-product-strategist` | glossary-manager |
+| 1 Discovery | `lore-product-strategist` | spec-manager → adr-manager |
+| 2 Design | `forge-dev-lead` | pattern-manager → architecture-manager |
+| 3 Planning | `forge-dev-lead` | epic-manager → task-manager |
+| 4 Quality | `ward-quality-lead` | review-manager → qa-manager → learning-manager |
+| 5 Release | `cast-ship-and-support-lead` | changelog-manager → runbook-manager |
 
 `helm` is the meta-orchestrator: classifies the work tier (0/1/2) and decides which agent to invoke and which gates to validate.
 
@@ -112,7 +112,7 @@ permission:
 ```
 
 Task tool permissions are **embedded in generated agent files** by `convert.sh`:
-- **Helm**: restricted to `lore`, `forge`, `ward`, `cast`, `trace` (denies all others)
+- **Helm**: restricted to `lore-product-strategist`, `forge-dev-lead`, `ward-quality-lead`, `cast-ship-and-support-lead`, `trace-onboarding-lead` (denies all others)
 - **Subagents**: unrestricted (`"*": allow`) to call agency-agents or other agents
 
 ### Skill structure (`skills/<name>/`)
@@ -155,28 +155,28 @@ This design balances three goals:
 
 | Canonical `name:` | Generated `name:` | Filename | Task tool `subagent_type` |
 |---|---|---|---|
-| `Helm The Architect` | `Helm The Architect` | `helm-the-architect.md` | `helm-the-architect` |
-| `Lore` | `Lore` | `lore.md` | `lore` |
-| `Forge` | `Forge` | `forge.md` | `forge` |
-| `Ward` | `Ward` | `ward.md` | `ward` |
-| `Cast` | `Cast` | `cast.md` | `cast` |
-| `Trace` | `Trace` | `trace.md` | `trace` |
+| `Helm - The Architect` | `Helm - The Architect` | `helm-the-architect.md` | `helm-the-architect` |
+| `lore-product-strategist` | `lore-product-strategist` | `lore-product-strategist.md` | `lore-product-strategist` |
+| `forge-dev-lead` | `forge-dev-lead` | `forge-dev-lead.md` | `forge-dev-lead` |
+| `ward-quality-lead` | `ward-quality-lead` | `ward-quality-lead.md` | `ward-quality-lead` |
+| `cast-ship-and-support-lead` | `cast-ship-and-support-lead` | `cast-ship-and-support-lead.md` | `cast-ship-and-support-lead` |
+| `trace-onboarding-lead` | `trace-onboarding-lead` | `trace-onboarding-lead.md` | `trace-onboarding-lead` |
 
 **How the conversion works** (in `convert.sh`):
 
-- For **primary** agents: `name_to_kebab(canonical_name)` → filename (e.g. "Helm The Architect" → `helm-the-architect.md`)
-- For **subagents**: first word lowercased → filename (e.g. "Lore Product Strategist" → `lore.md`)
-- Generated `name:` matches the filename base (without `.md`)
+- For **primary** agents: convert name to kebab-case-lowercase → filename (e.g. "Helm - The Architect" → `helm-the-architect.md`)
+- For **subagents**: name is already kebab-case-lowercase → use as filename (e.g. `lore-product-strategist` → `lore-product-strategist.md`)
+- Generated `name:` is preserved from canonical source (unchanged by convert.sh)
 
 **Output structure** (`integrations/opencode/`):
 ```
 agents/
-  helm-the-architect.md   ← primary; name: "Helm The Architect"; subagent_type: helm-the-architect
-  lore.md                 ← subagent; name: "Lore"; subagent_type: lore
-  forge.md                ← subagent; name: "Forge"; subagent_type: forge
-  ward.md                 ← subagent; name: "Ward"; subagent_type: ward
-  cast.md                 ← subagent; name: "Cast"; subagent_type: cast
-  trace.md                ← subagent; name: "Trace"; subagent_type: trace
+  helm-the-architect.md              ← primary; name: "Helm - The Architect"; subagent_type: helm-the-architect
+  lore-product-strategist.md         ← subagent; name: "lore-product-strategist"; subagent_type: lore-product-strategist
+  forge-dev-lead.md                  ← subagent; name: "forge-dev-lead"; subagent_type: forge-dev-lead
+  ward-quality-lead.md               ← subagent; name: "ward-quality-lead"; subagent_type: ward-quality-lead
+  cast-ship-and-support-lead.md      ← subagent; name: "cast-ship-and-support-lead"; subagent_type: cast-ship-and-support-lead
+  trace-onboarding-lead.md           ← subagent; name: "trace-onboarding-lead"; subagent_type: trace-onboarding-lead
 docs/        ← SDLC.md, TIERS.md, MODELS.md
 skills/      ← reference documentation (read as files by orchestrators)
 ```

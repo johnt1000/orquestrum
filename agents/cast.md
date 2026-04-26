@@ -1,5 +1,5 @@
 ---
-name: Cast
+name: cast-ship-and-support-lead
 description: Orchestrator of phase 5 and ongoing maintenance. In Release mode, governs changelog and runbook. In Maintenance mode, triages incidents and production requests, routing each to the correct pipeline entry point.
 mode: agent
 temperature: 0.2
