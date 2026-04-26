@@ -138,23 +138,35 @@ docs/04-release/CHANGELOG.md + RELEASE-vX.Y.Z.md + RUNBOOK.md
 
 ### OpenCode integration specifics
 
-OpenCode uses flat agent files (`agents/<Name>.md`). The filename without `.md` is the agent type used by the Task tool.
+OpenCode uses flat agent files (`agents/<kebab-name>.md`). The filename without `.md` is the agent type used by the Task tool. Filenames are derived from the `name:` frontmatter field converted to kebab-case by `name_to_kebab()` in `convert.sh`.
+
+**Naming convention:**
+
+| `name:` field | OpenCode filename (agent type) |
+|---|---|
+| `Helm — The Architect` | `helm-the-architect.md` |
+| `Lore — Product Strategist` | `lore-product-strategist.md` |
+| `Forge — Dev Lead` | `forge-dev-lead.md` |
+| `Ward — Quality Lead` | `ward-quality-lead.md` |
+| `Cast — Ship & Support Lead` | `cast-ship-and-support-lead.md` |
+| `Trace — Onboarding Lead` | `trace-onboarding-lead.md` |
 
 **Output structure** (`integrations/opencode/`):
 ```
 agents/
-  Helm.md    ← primary (mode: primary); filename = Task tool agent type
-  Lore.md    ← subagent (mode: subagent)
-  Forge.md   ← subagent
-  Ward.md    ← subagent
-  Cast.md    ← subagent
-  Trace.md   ← subagent
+  helm-the-architect.md          ← primary (mode: primary); filename = Task tool agent type
+  lore-product-strategist.md     ← subagent (mode: subagent)
+  forge-dev-lead.md              ← subagent
+  ward-quality-lead.md           ← subagent
+  cast-ship-and-support-lead.md  ← subagent
+  trace-onboarding-lead.md       ← subagent
 docs/        ← SDLC.md, TIERS.md, MODELS.md
 skills/      ← reference documentation (read as files by orchestrators)
 ```
 
 **Delegation model:**
-- Helm has `permission.task: {'*': deny, Lore: allow, Forge: allow, Ward: allow, Cast: allow, Trace: allow}` — it can only route to its 5 orchestrators.
+- Helm has `permission.task: {'*': deny, lore-product-strategist: allow, forge-dev-lead: allow, ward-quality-lead: allow, cast-ship-and-support-lead: allow, trace-onboarding-lead: allow}` — it can only route to its 5 orchestrators.
+- The allow list is **computed dynamically** by `convert.sh` from the `name:` fields of all non-helm agents — renaming an agent automatically propagates to the permission block.
 - Other orchestrators have **no `permission.task`** — they can freely call agency-agents and built-ins (general, explore) while executing skills inline.
 
 **Skills remain as documentation** (not registered as OpenCode agents). Orchestrators read `__OPENCODE_ROOT__/skills/<name>/SKILL.md` at runtime and follow the workflow instructions inline.
@@ -169,4 +181,5 @@ skills/      ← reference documentation (read as files by orchestrators)
 2. Use only canonical paths in the body (`docs/`, `skills/`, `./references/`, `./assets/`)
 3. Run `./scripts/lint-agents.sh` — must pass with zero errors
 4. Run `./scripts/convert.sh --all` to update `integrations/`
-5. **If adding a new skill:** it automatically becomes a hidden OpenCode subagent. If an orchestrator should be able to invoke it, add its TitleCase name to the corresponding `case` block inside `opencode_task_permission()` in `scripts/convert.sh`.
+5. **If adding a new agent:** the kebab-case name is computed automatically from the `name:` field by `name_to_kebab()` in `convert.sh`. If it is a sub-orchestrator that Helm should delegate to, no manual change is needed — the allow list is built dynamically from all non-helm agents.
+5. **If adding a new skill:** it remains as documentation (not an OpenCode agent). No changes to `convert.sh` are needed.

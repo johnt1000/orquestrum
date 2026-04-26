@@ -46,9 +46,18 @@ frontmatter_field() {
        fm==1 && /^'"$key"':/{sub(/^'"$key"': */,""); print; exit}' "$file"
 }
 
-# Convert kebab-case slug to TitleCase (the-architect -> TheArchitect)
-title_case() {
-  echo "$1" | awk -F'-' '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) substr($i,2); print}' OFS=''
+# Convert an agent name field to kebab-case filename
+# "Lore — Product Strategist" → "lore-product-strategist"
+# "Cast — Ship & Support Lead" → "cast-ship-and-support-lead"
+name_to_kebab() {
+  echo "$1" \
+    | tr '[:upper:]' '[:lower:]' \
+    | sed 's/ — /-/g' \
+    | sed 's/ & /-and-/g' \
+    | sed 's/ /-/g' \
+    | sed 's/[^a-z0-9-]//g' \
+    | sed 's/-\{2,\}/-/g' \
+    | sed 's/^-//;s/-$//'
 }
 
 # Rewrite governance paths — reads from [file] or stdin if omitted
@@ -120,12 +129,17 @@ convert_claude_code() {
 # ─── OpenCode ────────────────────────────────────────────────────────────────
 
 # Helper: return permission.task YAML block for Helm only.
+# Receives: slug + all sub-orchestrator kebab names (dynamically computed from name fields).
 # Other orchestrators have no task restriction — they freely call agency-agents and built-ins.
 opencode_task_permission() {
-  local slug="$1"
+  local slug="$1"; shift
+  local allowed=("$@")
   case "$slug" in
     helm)
-      printf "    '*': deny\n    Lore: allow\n    Forge: allow\n    Ward: allow\n    Cast: allow\n    Trace: allow\n"
+      printf "    '*': deny\n"
+      for k in "${allowed[@]}"; do
+        printf "    %s: allow\n" "$k"
+      done
       ;;
   esac
 }
@@ -133,15 +147,18 @@ opencode_task_permission() {
 # Helper: emit OpenCode frontmatter for an orchestrator agent.
 # Replaces the canonical tools: block with permission: (edit/bash) and, for Helm only,
 # permission.task restricting which orchestrators it can route to.
+# Args: file slug [subagent_kebab...]
 opencode_agent_frontmatter() {
   local file="$1"
   local slug="$2"
+  shift 2
+  local subagent_kebabs=("$@")
   local name; name="$(frontmatter_field "$file" "name")"
   local desc; desc="$(frontmatter_field "$file" "description")"
   local temp; temp="$(frontmatter_field "$file" "temperature")"
   local emoji; emoji="$(frontmatter_field "$file" "emoji")"
   local mode; mode="$(frontmatter_field "$file" "mode")"
-  local task_perms; task_perms="$(opencode_task_permission "$slug")"
+  local task_perms; task_perms="$(opencode_task_permission "$slug" "${subagent_kebabs[@]}")"
 
   [[ "$mode" == "agent" ]] && mode="subagent"
 
@@ -171,11 +188,27 @@ convert_opencode() {
   rm -rf "$out"
   mkdir -p "$out/agents" "$out/docs" "$out/skills"
 
-  # Orchestrators — flat files: agents/<Title>.md (filename = agent type in OpenCode Task tool)
+  # Collect kebab names of all sub-orchestrators (non-helm), sorted for determinism.
+  # Compatible with bash 3.2 (macOS system bash): no declare -A, no mapfile.
+  local subagent_kebabs=()
+  while IFS= read -r k; do
+    subagent_kebabs+=("$k")
+  done < <(
+    for agent in "$ROOT/agents"/*.md; do
+      local s; s="$(basename "$agent" .md)"
+      [[ "$s" == "helm" ]] && continue
+      local fn; fn="$(frontmatter_field "$agent" "name")"
+      name_to_kebab "$fn"
+    done | sort
+  )
+
+  # Generate agent files using kebab-case names derived from each agent's name field.
+  # filename (without .md) = agent type in OpenCode Task tool
   for agent in "$ROOT/agents"/*.md; do
     local slug; slug="$(basename "$agent" .md)"
-    local title; title="$(title_case "$slug")"
-    opencode_agent_frontmatter "$agent" "$slug" > "$out/agents/$title.md"
+    local full_name; full_name="$(frontmatter_field "$agent" "name")"
+    local kebab; kebab="$(name_to_kebab "$full_name")"
+    opencode_agent_frontmatter "$agent" "$slug" "${subagent_kebabs[@]}" > "$out/agents/$kebab.md"
   done
 
   # Copy governance docs
