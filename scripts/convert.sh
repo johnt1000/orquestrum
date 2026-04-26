@@ -119,22 +119,117 @@ convert_claude_code() {
 
 # ─── OpenCode ────────────────────────────────────────────────────────────────
 
+# Helper: return permission.task entries for an orchestrator by slug
+opencode_task_permission() {
+  local slug="$1"
+  case "$slug" in
+    helm)
+      printf "    '*': deny\n    Lore: allow\n    Forge: allow\n    Ward: allow\n    Cast: allow\n    Trace: allow\n"
+      ;;
+    lore)
+      printf "    '*': deny\n    GlossaryManager: allow\n    SpecManager: allow\n    AdrManager: allow\n"
+      ;;
+    forge)
+      printf "    '*': deny\n    PatternManager: allow\n    ArchitectureManager: allow\n    EpicManager: allow\n    TaskManager: allow\n    'engineering-*': allow\n"
+      ;;
+    ward)
+      printf "    '*': deny\n    ReviewManager: allow\n    QaManager: allow\n    LearningManager: allow\n    engineering-code-reviewer: allow\n    engineering-security-engineer: allow\n"
+      ;;
+    cast)
+      printf "    '*': deny\n    ChangelogManager: allow\n    RunbookManager: allow\n    engineering-technical-writer: allow\n"
+      ;;
+    trace)
+      printf "    '*': deny\n    CodebaseMapper: allow\n    ReverseSpec: allow\n    AdrManager: allow\n    GlossaryManager: allow\n    engineering-codebase-onboarding-engineer: allow\n"
+      ;;
+  esac
+}
+
+# Helper: emit OpenCode frontmatter for an orchestrator agent
+opencode_agent_frontmatter() {
+  local file="$1"
+  local slug="$2"
+  local name; name="$(frontmatter_field "$file" "name")"
+  local desc; desc="$(frontmatter_field "$file" "description")"
+  local model; model="$(frontmatter_field "$file" "model")"
+  local temp; temp="$(frontmatter_field "$file" "temperature")"
+  local emoji; emoji="$(frontmatter_field "$file" "emoji")"
+  local mode; mode="$(frontmatter_field "$file" "mode")"
+
+  [[ "$mode" == "agent" ]] && mode="subagent"
+
+  {
+    echo "---"
+    echo "name: $name"
+    echo "description: $desc"
+    echo "mode: $mode"
+    echo "model: $model"
+    echo "temperature: $temp"
+    echo "emoji: $emoji"
+    echo "permission:"
+    echo "  edit: allow"
+    echo "  bash: deny"
+    echo "  task:"
+    opencode_task_permission "$slug"
+    echo "---"
+    echo ""
+    strip_frontmatter "$file" | rewrite_paths "__OPENCODE_ROOT__/docs" "__OPENCODE_ROOT__/skills"
+  }
+}
+
+# Helper: emit OpenCode frontmatter for a skill agent (subagent, hidden)
+opencode_skill_frontmatter() {
+  local file="$1"
+  local name; name="$(frontmatter_field "$file" "name")"
+  local desc; desc="$(frontmatter_field "$file" "description")"
+  local model; model="$(frontmatter_field "$file" "model")"
+
+  {
+    echo "---"
+    echo "name: $name"
+    echo "description: $desc"
+    echo "mode: subagent"
+    echo "hidden: true"
+    [[ -n "$model" ]] && echo "model: $model"
+    echo "permission:"
+    echo "  edit: allow"
+    echo "  bash: deny"
+    echo "  task:"
+    echo "    '*': deny"
+    echo "---"
+    echo ""
+    strip_frontmatter "$file" | rewrite_paths "__OPENCODE_ROOT__/docs" "__OPENCODE_ROOT__/skills"
+  }
+}
+
 convert_opencode() {
   local out="$INTEGRATIONS/opencode"
   log "Generating opencode..."
   rm -rf "$out"
   mkdir -p "$out/agents" "$out/docs" "$out/skills"
 
+  # Orchestrators with permission.task for sub-agent delegation
   for agent in "$ROOT/agents"/*.md; do
     local slug; slug="$(basename "$agent" .md)"
     local title; title="$(title_case "$slug")"
     mkdir -p "$out/agents/$title"
-    rewrite_paths "__OPENCODE_ROOT__/docs" "__OPENCODE_ROOT__/skills" "$agent" \
-      | sed 's/^mode: agent$/mode: subagent/' \
-      > "$out/agents/$title/$title.md"
+    opencode_agent_frontmatter "$agent" "$slug" > "$out/agents/$title/$title.md"
   done
 
+  # Skills as subagents (hidden, invocable via Task tool)
+  for skill_dir in "$ROOT/skills"/*/; do
+    local skill_file="$skill_dir/SKILL.md"
+    [[ ! -f "$skill_file" ]] && continue
+
+    local skill_slug; skill_slug="$(basename "$skill_dir")"
+    local skill_title; skill_title="$(title_case "$skill_slug")"
+    mkdir -p "$out/agents/$skill_title"
+    opencode_skill_frontmatter "$skill_file" > "$out/agents/$skill_title/$skill_title.md"
+  done
+
+  # Copy governance docs
   cp "$ROOT/docs/"*.md "$out/docs/"
+
+  # Copy skills as reference documentation (for reading by orchestrators)
   cp -r "$ROOT/skills/"* "$out/skills/"
 
   ok "opencode → $out"
