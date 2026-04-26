@@ -137,37 +137,51 @@ docs/04-release/CHANGELOG.md + RELEASE-vX.Y.Z.md + RUNBOOK.md
 
 ### OpenCode integration specifics
 
-OpenCode uses flat agent files (`agents/<kebab-name>.md`). The filename without `.md` is the agent type used by the Task tool. Filenames are derived from the `name:` frontmatter field converted to kebab-case by `name_to_kebab()` in `convert.sh`.
+OpenCode uses flat agent files. The **filename without `.md`** is the official `subagent_type` used by the Task tool. Agent naming follows a **dual pattern**:
+
+- **Primary agent (Helm)**: `name:` = full name without em-dash; filename = kebab-case of full name
+- **Subagents (Lore, Forge, Ward, Cast, Trace)**: `name:` = first word only (Title Case); filename = first word lowercased
+
+This design balances three goals:
+1. **Clarity**: Helm displays as "Helm The Architect" (human-readable, no kebab)
+2. **Directness**: Subagents display as short names ("Lore", "Forge", etc.) matching Helm's dispatch table and the agent type
+3. **Consistency**: Filename always matches the effective agent type for the Task tool
 
 **Naming convention:**
 
-| `name:` field | OpenCode filename (agent type) |
-|---|---|
-| `Helm — The Architect` | `helm-the-architect.md` |
-| `Lore — Product Strategist` | `lore-product-strategist.md` |
-| `Forge — Dev Lead` | `forge-dev-lead.md` |
-| `Ward — Quality Lead` | `ward-quality-lead.md` |
-| `Cast — Ship & Support Lead` | `cast-ship-and-support-lead.md` |
-| `Trace — Onboarding Lead` | `trace-onboarding-lead.md` |
+| Canonical `name:` | Generated `name:` | Filename | Task tool `subagent_type` |
+|---|---|---|---|
+| `Helm The Architect` | `Helm The Architect` | `helm-the-architect.md` | `helm-the-architect` |
+| `Lore` | `Lore` | `lore.md` | `lore` |
+| `Forge` | `Forge` | `forge.md` | `forge` |
+| `Ward` | `Ward` | `ward.md` | `ward` |
+| `Cast` | `Cast` | `cast.md` | `cast` |
+| `Trace` | `Trace` | `trace.md` | `trace` |
+
+**How the conversion works** (in `convert.sh`):
+
+- For **primary** agents: `name_to_kebab(canonical_name)` → filename (e.g. "Helm The Architect" → `helm-the-architect.md`)
+- For **subagents**: first word lowercased → filename (e.g. "Lore Product Strategist" → `lore.md`)
+- Generated `name:` matches the filename base (without `.md`)
 
 **Output structure** (`integrations/opencode/`):
 ```
 agents/
-  helm-the-architect.md          ← primary (mode: primary); filename = Task tool agent type
-  lore-product-strategist.md     ← subagent (mode: subagent)
-  forge-dev-lead.md              ← subagent
-  ward-quality-lead.md           ← subagent
-  cast-ship-and-support-lead.md  ← subagent
-  trace-onboarding-lead.md       ← subagent
+  helm-the-architect.md   ← primary; name: "Helm The Architect"; subagent_type: helm-the-architect
+  lore.md                 ← subagent; name: "Lore"; subagent_type: lore
+  forge.md                ← subagent; name: "Forge"; subagent_type: forge
+  ward.md                 ← subagent; name: "Ward"; subagent_type: ward
+  cast.md                 ← subagent; name: "Cast"; subagent_type: cast
+  trace.md                ← subagent; name: "Trace"; subagent_type: trace
 docs/        ← SDLC.md, TIERS.md, MODELS.md
 skills/      ← reference documentation (read as files by orchestrators)
 ```
 
 **Delegation model:**
-- Helm can delegate to Lore, Forge, Ward, Cast, and Trace via the Task tool
-- Sub-orchestrators (Lore, Forge, Ward, Cast, Trace) can call any agency-agent or built-in (general, explore) while executing skills inline
+- Helm contains an **ORCHESTRATOR DISPATCH** table documenting exact `subagent_type` values
+- Helm delegates to subagents via the Task tool using the documented `subagent_type`
+- Sub-orchestrators can call any agency-agent or built-in (general, explore) while executing skills inline
 - Task tool permissions are **not embedded in generated agent files** — they are managed separately via `opencode.json` in your project or globally in `~/.config/opencode/opencode.json`
-- Agent `name:` field now uses kebab-case to ensure the system prompt identifier matches the filename/agent-type used by the Task tool
 
 **Skills remain as documentation** (not registered as OpenCode agents). Orchestrators read `__OPENCODE_ROOT__/skills/<name>/SKILL.md` at runtime and follow the workflow instructions inline.
 

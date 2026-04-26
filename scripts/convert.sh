@@ -130,21 +130,27 @@ convert_claude_code() {
 
 # Helper: emit OpenCode frontmatter for an orchestrator agent.
 # Replaces the canonical tools: block with permission: (edit/bash).
+# For primary agent: name stays as-is (e.g. "Helm The Architect")
+# For subagents: name becomes first word only (e.g. "Lore Product Strategist" → "Lore")
 # Args: file
 opencode_agent_frontmatter() {
   local file="$1"
-  local name; name="$(frontmatter_field "$file" "name")"
-  local kebab_name; kebab_name="$(name_to_kebab "$name")"
+  local canonical_name; canonical_name="$(frontmatter_field "$file" "name")"
   local desc; desc="$(frontmatter_field "$file" "description")"
   local temp; temp="$(frontmatter_field "$file" "temperature")"
   local emoji; emoji="$(frontmatter_field "$file" "emoji")"
   local mode; mode="$(frontmatter_field "$file" "mode")"
-
-  [[ "$mode" == "agent" ]] && mode="subagent"
+  
+  local display_name="$canonical_name"
+  if [[ "$mode" == "agent" ]]; then
+    mode="subagent"
+    # Extract first word only for subagents (e.g. "Lore Product Strategist" → "Lore")
+    display_name="$(echo "$canonical_name" | cut -d' ' -f1)"
+  fi
 
   {
     echo "---"
-    echo "name: $kebab_name"
+    echo "name: $display_name"
     echo "description: $desc"
     echo "mode: $mode"
     echo "temperature: $temp"
@@ -164,12 +170,21 @@ convert_opencode() {
   rm -rf "$out"
   mkdir -p "$out/agents" "$out/docs" "$out/skills"
 
-  # Generate agent files using kebab-case names derived from each agent's name field.
-  # filename (without .md) = agent type in OpenCode Task tool
+  # Generate agent files with intelligent filename strategy:
+  # - primary agent (Helm): use kebab-case of full name → helm-the-architect.md
+  # - subagents (Lore, Forge, etc): use first word lowercased → lore.md, forge.md, etc.
   for agent in "$ROOT/agents"/*.md; do
-    local full_name; full_name="$(frontmatter_field "$agent" "name")"
-    local kebab; kebab="$(name_to_kebab "$full_name")"
-    opencode_agent_frontmatter "$agent" > "$out/agents/$kebab.md"
+    local canonical_name; canonical_name="$(frontmatter_field "$agent" "name")"
+    local mode; mode="$(frontmatter_field "$agent" "mode")"
+    local out_file
+    
+    if [[ "$mode" == "primary" ]]; then
+      out_file="$(name_to_kebab "$canonical_name")"   # e.g. helm-the-architect
+    else
+      out_file="$(echo "$canonical_name" | cut -d' ' -f1 | tr '[:upper:]' '[:lower:]')"  # e.g. lore, forge
+    fi
+    
+    opencode_agent_frontmatter "$agent" > "$out/agents/$out_file.md"
   done
 
   # Copy governance docs

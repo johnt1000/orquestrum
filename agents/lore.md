@@ -1,5 +1,5 @@
 ---
-name: Lore — Product Strategist
+name: Lore
 description: Orchestrator of phases 0 and 1 of the SDD pipeline. Governs glossary, specifications, and architectural decisions. Ensures "what to build and why" is defined before any line of code.
 mode: agent
 temperature: 0.3
