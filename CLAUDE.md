@@ -107,10 +107,9 @@ The `tools:` block is canonical only. For OpenCode, `convert.sh` replaces it wit
 permission:
   edit: allow    # tools.write + tools.edit
   bash: deny     # tools.bash: false
-  task:
-    '*': deny
-    <subagent>: allow   # per-orchestrator allow list (see OpenCode section below)
 ```
+
+Task tool access is managed separately via `opencode.json` to keep concerns separated from auto-generated agent files.
 
 ### Skill structure (`skills/<name>/`)
 
@@ -165,13 +164,14 @@ skills/      ← reference documentation (read as files by orchestrators)
 ```
 
 **Delegation model:**
-- Helm has `permission.task: {'*': deny, lore-product-strategist: allow, forge-dev-lead: allow, ward-quality-lead: allow, cast-ship-and-support-lead: allow, trace-onboarding-lead: allow}` — it can only route to its 5 orchestrators.
-- The allow list is **computed dynamically** by `convert.sh` from the `name:` fields of all non-helm agents — renaming an agent automatically propagates to the permission block.
-- Other orchestrators have **no `permission.task`** — they can freely call agency-agents and built-ins (general, explore) while executing skills inline.
+- Helm can delegate to Lore, Forge, Ward, Cast, and Trace via the Task tool
+- Sub-orchestrators (Lore, Forge, Ward, Cast, Trace) can call any agency-agent or built-in (general, explore) while executing skills inline
+- Task tool permissions are **not embedded in generated agent files** — they are managed separately via `opencode.json` in your project or globally in `~/.config/opencode/opencode.json`
+- Agent `name:` field now uses kebab-case to ensure the system prompt identifier matches the filename/agent-type used by the Task tool
 
 **Skills remain as documentation** (not registered as OpenCode agents). Orchestrators read `__OPENCODE_ROOT__/skills/<name>/SKILL.md` at runtime and follow the workflow instructions inline.
 
-**Agency-agents** (from [msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents)) use kebab-case names in OpenCode (e.g. `engineering-code-reviewer`). Non-Helm orchestrators can call them freely.
+**Agency-agents** (from [msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents)) use kebab-case names in OpenCode (e.g. `engineering-code-reviewer`). Sub-orchestrators can call them freely.
 
 ---
 
@@ -181,5 +181,5 @@ skills/      ← reference documentation (read as files by orchestrators)
 2. Use only canonical paths in the body (`docs/`, `skills/`, `./references/`, `./assets/`)
 3. Run `./scripts/lint-agents.sh` — must pass with zero errors
 4. Run `./scripts/convert.sh --all` to update `integrations/`
-5. **If adding a new agent:** the kebab-case name is computed automatically from the `name:` field by `name_to_kebab()` in `convert.sh`. If it is a sub-orchestrator that Helm should delegate to, no manual change is needed — the allow list is built dynamically from all non-helm agents.
-5. **If adding a new skill:** it remains as documentation (not an OpenCode agent). No changes to `convert.sh` are needed.
+5. **If adding a new agent:** the kebab-case name is computed automatically from the `name:` field by `name_to_kebab()` in `convert.sh`. No manual changes needed.
+6. **If adding a new skill:** it remains as documentation (not an OpenCode agent). No changes to `convert.sh` are needed.
