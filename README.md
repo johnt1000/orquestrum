@@ -113,7 +113,7 @@ chmod +x scripts/*.sh
 
 ## OpenCode agent hierarchy
 
-OpenCode receives 6 flat agent files (`agents/Helm.md`, `agents/Lore.md`, …). The filename without `.md` is the agent type used by OpenCode's Task tool.
+OpenCode receives 6 flat agent files (`agents/helm-the-architect.md`, `agents/lore.md`, …). The filename without `.md` is the agent type used by OpenCode's Task tool.
 
 **Helm** is the only agent with a restricted `permission.task` — it can only route to the 5 orchestrators:
 

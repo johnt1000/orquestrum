@@ -105,11 +105,15 @@ The `tools:` block is canonical only. For OpenCode, `convert.sh` replaces it wit
 
 ```yaml
 permission:
-  edit: allow    # tools.write + tools.edit
-  bash: deny     # tools.bash: false
+  edit: allow
+  bash: deny
+  task:
+    "*": allow   # for subagents; Helm uses restricted rules instead
 ```
 
-Task tool access is managed separately via `opencode.json` to keep concerns separated from auto-generated agent files.
+Task tool permissions are **embedded in generated agent files** by `convert.sh`:
+- **Helm**: restricted to `lore`, `forge`, `ward`, `cast`, `trace` (denies all others)
+- **Subagents**: unrestricted (`"*": allow`) to call agency-agents or other agents
 
 ### Skill structure (`skills/<name>/`)
 
@@ -181,7 +185,7 @@ skills/      ← reference documentation (read as files by orchestrators)
 - Helm contains an **ORCHESTRATOR DISPATCH** table documenting exact `subagent_type` values
 - Helm delegates to subagents via the Task tool using the documented `subagent_type`
 - Sub-orchestrators can call any agency-agent or built-in (general, explore) while executing skills inline
-- Task tool permissions are **not embedded in generated agent files** — they are managed separately via `opencode.json` in your project or globally in `~/.config/opencode/opencode.json`
+- Task tool permissions are **embedded in generated agent files** by `convert.sh` (not managed via external `opencode.json`)
 
 **Skills remain as documentation** (not registered as OpenCode agents). Orchestrators read `__OPENCODE_ROOT__/skills/<name>/SKILL.md` at runtime and follow the workflow instructions inline.
 

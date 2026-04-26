@@ -129,9 +129,12 @@ convert_claude_code() {
 # ─── OpenCode ────────────────────────────────────────────────────────────────
 
 # Helper: emit OpenCode frontmatter for an orchestrator agent.
-# Replaces the canonical tools: block with permission: (edit/bash).
+# Replaces the canonical tools: block with permission: (edit/bash/task).
 # For primary agent: name stays as-is (e.g. "Helm The Architect")
 # For subagents: name becomes first word only (e.g. "Lore Product Strategist" → "Lore")
+# Task permissions differ by mode:
+#   - primary (Helm): restricted to 5 orchestrators only (lore, forge, ward, cast, trace)
+#   - subagent (Lore/Forge/Ward/Cast/Trace): unrestricted ("*": allow)
 # Args: file
 opencode_agent_frontmatter() {
   local file="$1"
@@ -142,8 +145,9 @@ opencode_agent_frontmatter() {
   local mode; mode="$(frontmatter_field "$file" "mode")"
   
   local display_name="$canonical_name"
+  local actual_mode="$mode"
   if [[ "$mode" == "agent" ]]; then
-    mode="subagent"
+    actual_mode="subagent"
     # Extract first word only for subagents (e.g. "Lore Product Strategist" → "Lore")
     display_name="$(echo "$canonical_name" | cut -d' ' -f1)"
   fi
@@ -152,12 +156,25 @@ opencode_agent_frontmatter() {
     echo "---"
     echo "name: $display_name"
     echo "description: $desc"
-    echo "mode: $mode"
+    echo "mode: $actual_mode"
     echo "temperature: $temp"
     echo "emoji: $emoji"
     echo "permission:"
     echo "  edit: allow"
     echo "  bash: deny"
+    echo "  task:"
+    if [[ "$mode" == "primary" ]]; then
+      # Helm: restricted to 5 orchestrators (deny all, then allow specific)
+      echo "    \"*\": deny"
+      echo "    lore: allow"
+      echo "    forge: allow"
+      echo "    ward: allow"
+      echo "    cast: allow"
+      echo "    trace: allow"
+    else
+      # Subagents: unrestricted access to any agent (agency-agents, etc)
+      echo "    \"*\": allow"
+    fi
     echo "---"
     echo ""
     strip_frontmatter "$file" | rewrite_paths "__OPENCODE_ROOT__/docs" "__OPENCODE_ROOT__/skills"
