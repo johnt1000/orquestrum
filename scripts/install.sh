@@ -40,7 +40,7 @@ detect_tools() {
   local found=()
 
   { [[ -d "$HOME/.claude" ]] || command -v claude &>/dev/null; } && found+=("claude-code") || true
-  { [[ -d "$target/.opencode" ]] || command -v opencode &>/dev/null 2>&1; } && found+=("opencode") || true
+  { [[ -d "$HOME/.config/opencode" ]] || [[ -d "$target/.opencode" ]] || command -v opencode &>/dev/null 2>&1; } && found+=("opencode") || true
   { [[ -d "$target/.cursor" ]] || command -v cursor &>/dev/null 2>&1; } && found+=("cursor") || true
   command -v aider &>/dev/null 2>&1 && found+=("aider") || true
   { [[ -f "$target/.windsurfrules" ]] || command -v windsurf &>/dev/null 2>&1; } && found+=("windsurf") || true
@@ -59,9 +59,19 @@ install_tool() {
     return 1
   fi
 
-  log "Installing $tool → $target"
-  cp -r "$src"/. "$target/"
-  ok "$tool installed into $target"
+  local abs_target; abs_target="$(eval echo "$target")"
+  log "Installing $tool → $abs_target"
+  mkdir -p "$abs_target"
+  cp -r "$src"/. "$abs_target/"
+
+  case "$tool" in
+    opencode)
+      find "$abs_target/agents" -name "*.md" -exec \
+        sed -i '' "s|__OPENCODE_ROOT__|${abs_target}|g" {} \;
+      ;;
+  esac
+
+  ok "$tool installed into $abs_target"
 }
 
 TOOL=""

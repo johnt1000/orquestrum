@@ -51,11 +51,11 @@ title_case() {
   echo "$1" | awk -F'-' '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) substr($i,2); print}' OFS=''
 }
 
-# Rewrite governance paths inside an agent file
+# Rewrite governance paths — reads from [file] or stdin if omitted
 rewrite_paths() {
-  local file="$1"
-  local docs_prefix="$2"   # e.g. ".sdd/docs" or ".opencode/docs"
-  local skills_prefix="$3" # e.g. ".sdd/skills" or ".opencode/skills"
+  local docs_prefix="$1"   # e.g. ".sdd/docs" or "__OPENCODE_ROOT__/docs"
+  local skills_prefix="$2" # e.g. ".sdd/skills" or "__OPENCODE_ROOT__/skills"
+  local file="${3:-}"       # optional file path; reads stdin when absent
 
   sed \
     -e "s|docs/SDLC\.md|${docs_prefix}/SDLC.md|g" \
@@ -63,7 +63,7 @@ rewrite_paths() {
     -e "s|docs/MODELS\.md|${docs_prefix}/MODELS.md|g" \
     -e "s|skills/\([a-zA-Z_-]*\)/SKILL\.md|${skills_prefix}/\1/SKILL.md|g" \
     -e "s|skills/\([a-zA-Z_-]*\)/references/|${skills_prefix}/\1/references/|g" \
-    "$file"
+    ${file:+"$file"}
 }
 
 # Extract blocks marked with <!-- inject:start --> / <!-- inject:end -->
@@ -106,7 +106,7 @@ convert_claude_code() {
 
   for agent in "$ROOT/agents"/*.md; do
     local name; name="$(basename "$agent")"
-    rewrite_paths "$agent" ".sdd/docs" ".sdd/skills" > "$out/.claude/agents/$name"
+    rewrite_paths ".sdd/docs" ".sdd/skills" "$agent" > "$out/.claude/agents/$name"
   done
 
   cp "$ROOT/docs/"*.md "$out/.sdd/docs/"
@@ -123,22 +123,23 @@ convert_opencode() {
   local out="$INTEGRATIONS/opencode"
   log "Generating opencode..."
   rm -rf "$out"
-  mkdir -p "$out/.opencode/docs" "$out/.opencode/skills"
+  mkdir -p "$out/agents" "$out/docs" "$out/skills"
 
   for agent in "$ROOT/agents"/*.md; do
     local slug; slug="$(basename "$agent" .md)"
     local title; title="$(title_case "$slug")"
-    mkdir -p "$out/.opencode/agents/$title"
-    rewrite_paths "$agent" ".opencode/docs" ".opencode/skills" \
+    mkdir -p "$out/agents/$title"
+    rewrite_paths "__OPENCODE_ROOT__/docs" "__OPENCODE_ROOT__/skills" "$agent" \
       | sed 's/^mode: agent$/mode: subagent/' \
-      > "$out/.opencode/agents/$title/$title.md"
+      > "$out/agents/$title/$title.md"
   done
 
-  cp "$ROOT/docs/"*.md "$out/.opencode/docs/"
-  cp -r "$ROOT/skills/"* "$out/.opencode/skills/"
+  cp "$ROOT/docs/"*.md "$out/docs/"
+  cp -r "$ROOT/skills/"* "$out/skills/"
 
   ok "opencode → $out"
-  echo "    .opencode/        ← copy to your project root"
+  echo "    Install global:   ./scripts/install.sh --tool opencode --target ~/.config/opencode"
+  echo "    Install local:    ./scripts/install.sh --tool opencode --target /your/project/.opencode"
 }
 
 # ─── Cursor ──────────────────────────────────────────────────────────────────
@@ -154,7 +155,7 @@ convert_cursor() {
     local slug; slug="$(basename "$agent" .md)"
     local name; name="$(frontmatter_field "$agent" "name")"
     local desc; desc="$(frontmatter_field "$agent" "description")"
-    local body; body="$(strip_frontmatter "$agent")"
+    local body; body="$(strip_frontmatter "$agent" | rewrite_paths ".sdd/docs" ".sdd/skills")"
 
     {
       echo "---"
@@ -178,7 +179,7 @@ convert_cursor() {
 
     local name; name="$(frontmatter_field "$skill_file" "name")"
     local desc; desc="$(frontmatter_field "$skill_file" "description")"
-    local body; body="$(strip_frontmatter "$skill_file")"
+    local body; body="$(strip_frontmatter "$skill_file" | rewrite_paths ".sdd/docs" ".sdd/skills")"
     local ref_content; ref_content="$(skill_reference_content "$skill_dir")"
 
     {
@@ -224,7 +225,7 @@ convert_aider() {
       echo ""
       echo "## Agent: ${name}"
       echo ""
-      strip_frontmatter "$agent"
+      strip_frontmatter "$agent" | rewrite_paths ".sdd/docs" ".sdd/skills"
       echo ""
     } >> "$conv"
   done
@@ -248,7 +249,7 @@ convert_aider() {
       echo ""
       echo "## Skill: ${name}"
       echo ""
-      strip_frontmatter "$skill_file"
+      strip_frontmatter "$skill_file" | rewrite_paths ".sdd/docs" ".sdd/skills"
       skill_reference_content "$skill_dir"
       echo ""
     } >> "$conv"
@@ -282,7 +283,7 @@ convert_windsurf() {
       echo ""
       echo "## ${name}"
       echo ""
-      strip_frontmatter "$agent"
+      strip_frontmatter "$agent" | rewrite_paths ".sdd/docs" ".sdd/skills"
       echo ""
     } >> "$rules"
   done
@@ -306,7 +307,7 @@ convert_windsurf() {
       echo ""
       echo "## Skill: ${name}"
       echo ""
-      strip_frontmatter "$skill_file"
+      strip_frontmatter "$skill_file" | rewrite_paths ".sdd/docs" ".sdd/skills"
       skill_reference_content "$skill_dir"
       echo ""
     } >> "$rules"

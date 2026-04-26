@@ -85,18 +85,29 @@ chmod +x scripts/*.sh
 ### Install into a project
 
 ```bash
-# Install for a specific tool
+# Claude Code — project-local
 ./scripts/install.sh --tool claude-code --target /path/to/your/project
 
-# Auto-detect installed tools
+# OpenCode — global (recommended)
+./scripts/install.sh --tool opencode --target ~/.config/opencode
+
+# OpenCode — project-local or custom path
+./scripts/install.sh --tool opencode --target /path/to/your/project/.opencode
+
+# Cursor / Aider / Windsurf — project-local
+./scripts/install.sh --tool cursor --target /path/to/your/project
+./scripts/install.sh --tool aider --target /path/to/your/project
+./scripts/install.sh --tool windsurf --target /path/to/your/project
+
+# Auto-detect installed tools (project-local)
 ./scripts/install.sh --auto --target /path/to/your/project
 ```
 
-**Claude Code** — copies agents to `.claude/agents/` and docs/skills to `.sdd/`  
-**OpenCode** — copies to `.opencode/`  
-**Cursor** — copies 20 rule files to `.cursor/rules/` (agents + skills with embedded references)  
-**Aider** — single `CONVENTIONS.md` with all agents and skills  
-**Windsurf** — single `.windsurfrules` with all agents and skills
+**Claude Code** — agents to `.claude/agents/`, docs/skills to `.sdd/` (paths resolved relative to project root)  
+**OpenCode** — agents/docs/skills copied to `--target`; internal paths rewritten to the absolute target at install time  
+**Cursor** — 20 rule files in `.cursor/rules/` with `.sdd/docs` paths and embedded reference content  
+**Aider** — single `CONVENTIONS.md` with all agents, skills, and `.sdd/docs` paths  
+**Windsurf** — single `.windsurfrules` with all agents, skills, and `.sdd/docs` paths
 
 ---
 
@@ -105,6 +116,20 @@ chmod +x scripts/*.sh
 Skills for Cursor, Aider, and Windsurf include their reference knowledge **embedded at convert time** — no runtime file reads required. Claude Code and OpenCode keep references as separate files (cheaper context).
 
 The `pattern-manager` reference (1,020 lines of engineering principles and design patterns) is injected in compact mode — only the core principles and quick-reference guide (~320 lines).
+
+## Path resolution
+
+Canonical source uses bare paths (`docs/SDLC.md`, `skills/.../SKILL.md`). `convert.sh` rewrites them per tool:
+
+| Tool | Docs/skills prefix | Resolved at |
+|------|--------------------|-------------|
+| claude-code | `.sdd/docs` / `.sdd/skills` | Runtime (relative to project CWD) |
+| opencode | `__OPENCODE_ROOT__` placeholder | Install time — replaced with absolute `--target` path |
+| cursor | `.sdd/docs` / `.sdd/skills` | Runtime (relative to project CWD) |
+| aider | `.sdd/docs` / `.sdd/skills` | Runtime (relative to project CWD) |
+| windsurf | `.sdd/docs` / `.sdd/skills` | Runtime (relative to project CWD) |
+
+OpenCode resolves at install time because it is typically installed globally (`~/.config/opencode/`), where a project-relative path would not resolve correctly.
 
 ---
 
