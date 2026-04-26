@@ -21,13 +21,14 @@ This repository is the **canonical source** of the framework. The files here do 
 
 # Generate for a specific tool
 ./scripts/convert.sh --tool claude-code   # .claude/agents/ + .sdd/
-./scripts/convert.sh --tool opencode      # .opencode/
+./scripts/convert.sh --tool opencode      # agents/ (20: 6 orchestrators + 14 skill subagents) + docs/ + skills/
 ./scripts/convert.sh --tool cursor        # .cursor/rules/*.mdc
 ./scripts/convert.sh --tool aider         # CONVENTIONS.md
 ./scripts/convert.sh --tool windsurf      # .windsurfrules
 
 # Install a generated package in a target project
 ./scripts/install.sh --tool claude-code --target /path/to/project
+./scripts/install.sh --tool opencode --target ~/.config/opencode   # global (recommended)
 ./scripts/install.sh --auto --target /path/to/project   # detects installed tools
 ```
 
@@ -54,7 +55,9 @@ Agents and skill assets always use **paths without tool-specific prefixes**:
 - `skills/<name>/SKILL.md` — references to other skills
 - `./references/`, `./assets/` — internal references within a skill
 
-The `convert.sh` script rewrites these paths for each tool (e.g.: `docs/` → `.sdd/docs/` for Claude Code, `.opencode/docs/` for OpenCode).
+The `convert.sh` script rewrites these paths for each tool:
+- Claude Code / Cursor / Aider / Windsurf: `docs/` → `.sdd/docs/`, `skills/` → `.sdd/skills/`
+- OpenCode: `docs/` → `__OPENCODE_ROOT__/docs/`, substituted with the absolute target path at install time
 
 ### Pipeline phases
 
@@ -99,6 +102,17 @@ tools:
 
 Required fields checked by lint: `name`, `description`, `model`.
 
+The `tools:` block is canonical only. For OpenCode, `convert.sh` replaces it with:
+
+```yaml
+permission:
+  edit: allow    # tools.write + tools.edit
+  bash: deny     # tools.bash: false
+  task:
+    '*': deny
+    <subagent>: allow   # per-orchestrator allow list (see OpenCode section below)
+```
+
 ### Skill structure (`skills/<name>/`)
 
 ```
@@ -123,6 +137,55 @@ docs/03-quality/learning/L-XXX.md
 docs/04-release/CHANGELOG.md + RELEASE-vX.Y.Z.md + RUNBOOK.md
 ```
 
+### OpenCode integration specifics
+
+OpenCode receives the most complete conversion because it supports `permission.task` — explicit control over which subagents each agent can invoke via the Task tool.
+
+**Output structure** (`integrations/opencode/`):
+```
+agents/
+  Helm/         ← primary orchestrator
+  Lore/         ← subagent
+  Forge/        ← subagent
+  Ward/         ← subagent
+  Cast/         ← subagent
+  Trace/        ← subagent
+  GlossaryManager/    ← skill subagent (hidden: true)
+  SpecManager/        ← skill subagent (hidden: true)
+  AdrManager/         ← skill subagent (hidden: true)
+  PatternManager/     ← skill subagent (hidden: true)
+  ArchitectureManager/ ← skill subagent (hidden: true)
+  EpicManager/        ← skill subagent (hidden: true)
+  TaskManager/        ← skill subagent (hidden: true)
+  ReviewManager/      ← skill subagent (hidden: true)
+  QaManager/          ← skill subagent (hidden: true)
+  LearningManager/    ← skill subagent (hidden: true)
+  ChangelogManager/   ← skill subagent (hidden: true)
+  RunbookManager/     ← skill subagent (hidden: true)
+  CodebaseMapper/     ← skill subagent (hidden: true)
+  ReverseSpec/        ← skill subagent (hidden: true)
+docs/           ← SDLC.md, TIERS.md, MODELS.md
+skills/         ← reference documentation (read-only context, not loaded as agents)
+```
+
+**Delegation hierarchy:**
+```
+Helm → Lore | Forge | Ward | Cast | Trace
+Lore → GlossaryManager | SpecManager | AdrManager
+Forge → PatternManager | ArchitectureManager | EpicManager | TaskManager | engineering-*
+Ward → ReviewManager | QaManager | LearningManager | engineering-code-reviewer | engineering-security-engineer
+Cast → ChangelogManager | RunbookManager | engineering-technical-writer
+Trace → CodebaseMapper | ReverseSpec | AdrManager | GlossaryManager | engineering-codebase-onboarding-engineer
+```
+
+Agency-agents (from [msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents)) use kebab-case names in OpenCode (e.g. `engineering-code-reviewer`). The `permission.task` entries for these are hardcoded in `convert_opencode()` via the `opencode_task_permission()` function (`scripts/convert.sh`).
+
+**Skill agents** (`hidden: true`):
+- Not visible in the `@` autocomplete
+- Only invocable by their designated orchestrator via the Task tool
+- Their system prompt is the body of the canonical `SKILL.md`
+- `permission.task: {'*': deny}` — skills do not sub-delegate
+
 ---
 
 ## Adding a new agent or skill
@@ -131,3 +194,4 @@ docs/04-release/CHANGELOG.md + RELEASE-vX.Y.Z.md + RUNBOOK.md
 2. Use only canonical paths in the body (`docs/`, `skills/`, `./references/`, `./assets/`)
 3. Run `./scripts/lint-agents.sh` — must pass with zero errors
 4. Run `./scripts/convert.sh --all` to update `integrations/`
+5. **If adding a new skill:** it automatically becomes a hidden OpenCode subagent. If an orchestrator should be able to invoke it, add its TitleCase name to the corresponding `case` block inside `opencode_task_permission()` in `scripts/convert.sh`.

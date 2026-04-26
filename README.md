@@ -104,10 +104,33 @@ chmod +x scripts/*.sh
 ```
 
 **Claude Code** — agents to `.claude/agents/`, docs/skills to `.sdd/` (paths resolved relative to project root)  
-**OpenCode** — agents/docs/skills copied to `--target`; internal paths rewritten to the absolute target at install time  
+**OpenCode** — 20 agents (6 orchestrators + 14 skill subagents) + docs/skills to `--target`; paths rewritten to absolute target at install time  
 **Cursor** — 20 rule files in `.cursor/rules/` with `.sdd/docs` paths and embedded reference content  
 **Aider** — single `CONVENTIONS.md` with all agents, skills, and `.sdd/docs` paths  
 **Windsurf** — single `.windsurfrules` with all agents, skills, and `.sdd/docs` paths
+
+---
+
+## OpenCode agent hierarchy
+
+OpenCode is the only tool that gets the full multi-agent delegation model. Skills become hidden subagents invocable via the Task tool, and each orchestrator has explicit `permission.task` restrictions:
+
+```
+Helm (primary)
+├─ Lore   (subagent) → GlossaryManager, SpecManager, AdrManager
+├─ Forge  (subagent) → PatternManager, ArchitectureManager, EpicManager, TaskManager
+│                      + engineering-* (agency-agents)
+├─ Ward   (subagent) → ReviewManager, QaManager, LearningManager
+│                      + engineering-code-reviewer, engineering-security-engineer
+├─ Cast   (subagent) → ChangelogManager, RunbookManager
+│                      + engineering-technical-writer
+└─ Trace  (subagent) → CodebaseMapper, ReverseSpec, AdrManager, GlossaryManager
+                       + engineering-codebase-onboarding-engineer
+```
+
+All skill agents are `hidden: true` — they don't appear in the `@` autocomplete and are only invocable by their designated orchestrators. The `skills/` directory is also copied as read-only reference documentation.
+
+Agency-agents (from [msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents)) integrate via their kebab-case OpenCode names (e.g. `engineering-code-reviewer`).
 
 ---
 
