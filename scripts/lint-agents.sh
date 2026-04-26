@@ -3,7 +3,7 @@
 #
 # Checks:
 #   - YAML frontmatter present (opens and closes with ---)
-#   - Required fields: name, description, model
+#   - Required fields: name, description
 #   - No tool-specific paths (.opencode/, .cursor/, etc.) in canonical source
 
 set -uo pipefail
@@ -70,13 +70,13 @@ check_assets() {
 echo ""
 echo -e "${BLUE}=== Agents ===${NC}"
 for f in "$ROOT/agents"/*.md; do
-  check_md_file "$f" name description model
+  check_md_file "$f" name description
 done
 
 echo ""
 echo -e "${BLUE}=== Skills ===${NC}"
 for f in "$ROOT/skills"/*/SKILL.md; do
-  check_md_file "$f" name description model
+  check_md_file "$f" name description
 done
 
 echo ""

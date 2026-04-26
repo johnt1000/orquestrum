@@ -1,7 +1,6 @@
 ---
 name: architecture-manager
 description: Manages and updates high-level architecture documents. Maintains the systemic view of the project, flow diagrams, and traceability between specifications and technical decisions (ADRs).
-model: anthropic/claude-sonnet-4-6
 inject_references: full
 metadata:
   version: "1.0.0"

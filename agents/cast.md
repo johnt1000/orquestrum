@@ -2,7 +2,6 @@
 name: Cast — Ship & Support Lead
 description: Orchestrator of phase 5 and ongoing maintenance. In Release mode, governs changelog and runbook. In Maintenance mode, triages incidents and production requests, routing each to the correct pipeline entry point.
 mode: agent
-model: anthropic/claude-haiku-4-5-20251001
 temperature: 0.2
 emoji: 🚀
 tools:

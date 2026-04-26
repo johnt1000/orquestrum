@@ -1,7 +1,6 @@
 ---
 name: review-manager
 description: Performs technical code review for security and conformance. Evaluates whether the implementation meets architecture standards and whether it introduces risks.
-model: anthropic/claude-sonnet-4-6
 inject_references: full
 metadata:
   version: "1.0.0"

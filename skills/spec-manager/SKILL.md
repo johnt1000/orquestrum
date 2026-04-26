@@ -1,7 +1,6 @@
 ---
 name: spec-manager
 description: Creates and manages Specification Documents (SPEC). Defines the scope, functional requirements, constraints, and success criteria of a system or feature. The "source of truth" for all other skills.
-model: anthropic/claude-opus-4-6
 inject_references: full
 metadata:
   version: "1.0.0"

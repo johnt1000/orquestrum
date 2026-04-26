@@ -1,7 +1,6 @@
 ---
 name: changelog-manager
 description: Manages project releases and changelogs. Connects QA-Passed to delivered versions using Keep a Changelog and Semantic Versioning. Closes the SDLC pipeline loop — transforms validated artifacts into traceable deliveries.
-model: anthropic/claude-haiku-4-5-20251001
 inject_references: full
 metadata:
   version: "1.0.0"

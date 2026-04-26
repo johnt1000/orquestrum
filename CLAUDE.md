@@ -89,7 +89,6 @@ Critical rule: **refactoring never elevates by file count** — only elevates to
 name: Agent Name
 description: One-line description
 mode: primary | agent
-model: anthropic/claude-<model>
 temperature: 0.1
 emoji: 🏛️
 tools:
@@ -100,7 +99,7 @@ tools:
 ---
 ```
 
-Required fields checked by lint: `name`, `description`, `model`.
+Required fields checked by lint: `name`, `description`. Model is not set in frontmatter — see `docs/MODELS.md` for recommendations.
 
 The `tools:` block is canonical only. For OpenCode, `convert.sh` replaces it with:
 
@@ -166,7 +165,7 @@ skills/      ← reference documentation (read as files by orchestrators)
 
 ## Adding a new agent or skill
 
-1. Create the file with valid frontmatter (fields: `name`, `description`, `model`)
+1. Create the file with valid frontmatter (fields: `name`, `description`)
 2. Use only canonical paths in the body (`docs/`, `skills/`, `./references/`, `./assets/`)
 3. Run `./scripts/lint-agents.sh` — must pass with zero errors
 4. Run `./scripts/convert.sh --all` to update `integrations/`

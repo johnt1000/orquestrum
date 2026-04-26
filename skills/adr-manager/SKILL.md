@@ -1,7 +1,6 @@
 ---
 name: adr-manager
 description: Creates and manages Architecture Decision Records (ADRs) following a technical standard. Use when documenting architectural decisions, technology changes, or decision flows in development projects.
-model: anthropic/claude-opus-4-6
 inject_references: full
 metadata:
   version: "1.0.0"

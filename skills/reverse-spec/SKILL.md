@@ -1,7 +1,6 @@
 ---
 name: reverse-spec
 description: Extracts implicit requirements and behaviors from an existing project and documents them in SPEC format. Produces a draft that requires human validation — distinguishes "current behavior" from "confirmed requirement".
-model: anthropic/claude-opus-4-6
 inject_references: full
 metadata:
   version: "1.0.0"

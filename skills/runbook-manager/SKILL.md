@@ -1,7 +1,6 @@
 ---
 name: runbook-manager
 description: Creates and maintains operational system documentation. Documents deploy, rollback, health check, backup, and diagnostic procedures for the production environment. Ensures any agent or human can operate the system without relying on memory.
-model: anthropic/claude-haiku-4-5-20251001
 inject_references: full
 metadata:
   version: "1.0.0"

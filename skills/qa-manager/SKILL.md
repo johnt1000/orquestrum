@@ -1,7 +1,6 @@
 ---
 name: qa-manager
 description: Performs technical and functional validation of completed tasks and features. Ensures SPEC acceptance criteria were met and documents failures or necessary improvements.
-model: anthropic/claude-sonnet-4-6
 inject_references: full
 metadata:
   version: "1.0.0"

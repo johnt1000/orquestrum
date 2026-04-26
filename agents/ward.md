@@ -2,7 +2,6 @@
 name: Ward — Quality Lead
 description: Orchestrator of phase 4 of the SDD pipeline. Governs code review, functional validation, and learning capture. The quality and security gate before any release.
 mode: agent
-model: anthropic/claude-sonnet-4-6
 temperature: 0.1
 emoji: 🔍
 tools:

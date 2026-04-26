@@ -1,7 +1,6 @@
 ---
 name: epic-manager
 description: Transforms Spec requirements and Architecture definitions into development Epics. Organizes execution order and groups related tasks to ensure delivery of functional parts of the system.
-model: anthropic/claude-sonnet-4-6
 inject_references: full
 metadata:
   version: "1.0.0"

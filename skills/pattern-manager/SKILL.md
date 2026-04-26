@@ -1,7 +1,6 @@
 ---
 name: pattern-manager
 description: Documents language-agnostic design patterns adopted in the project. Operates in two modes — Catalog (which patterns are approved) and Adoption (where and why a pattern was applied). Ensures design decisions are traceable and consistent across components.
-model: anthropic/claude-sonnet-4-6
 inject_references: compact
 metadata:
   version: "1.0.0"

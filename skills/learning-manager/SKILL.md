@@ -1,7 +1,6 @@
 ---
 name: learning-manager
 description: Documents lessons learned, error patterns, and technical discoveries. Transforms incidents or experiments into structured knowledge to guide future decisions and prevent bug recurrence.
-model: anthropic/claude-sonnet-4-6
 inject_references: full
 metadata:
   version: "1.0.0"

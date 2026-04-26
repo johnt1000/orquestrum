@@ -1,7 +1,6 @@
 ---
 name: codebase-mapper
 description: Reads an existing project and produces an as-is architecture document. Maps technology stack, components, entry points, external integrations, and data model. Does not project what should exist — documents what exists today.
-model: anthropic/claude-sonnet-4-6
 inject_references: full
 metadata:
   version: "1.0.0"

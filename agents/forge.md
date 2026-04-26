@@ -2,7 +2,6 @@
 name: Forge — Dev Lead
 description: Orchestrator of phases 2 and 3 of the SDD pipeline. Governs architecture, epics, and tasks. Translates specifications into executable plans and delegates implementation to specialized sub-agents.
 mode: agent
-model: anthropic/claude-sonnet-4-6
 temperature: 0.2
 emoji: ⚙️
 tools:

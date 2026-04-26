@@ -1,7 +1,6 @@
 ---
 name: task-manager
 description: Manages and details technical implementation tasks (TASKS). Connects Epic requirements with actual execution, tracking dependencies, generated artifacts, and progress logs.
-model: anthropic/claude-sonnet-4-6
 inject_references: full
 metadata:
   version: "1.0.0"
