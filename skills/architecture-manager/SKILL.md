@@ -7,7 +7,7 @@ metadata:
   author: "Jônatas Rodrigues"
   phase: 2
   depends_on: [spec-manager, adr-manager]
-  produces: "docs/01-design/architecture/ARCHITECTURE-vX.md"
+  produces: "docs/01-design/architecture/ARCHITECTURE-vX-{slug}.md"
 ---
 
 # Architecture Manager Skill
@@ -22,8 +22,8 @@ Before any action, read: `./references/arch-references.md`
 
 | | Files |
 |--|---------|
-| **Reads** | `docs/00-discovery/spec/spec-vX.md`, `docs/00-discovery/adr/` (all accepted ADRs) |
-| **Writes** | `docs/01-design/architecture/ARCHITECTURE-vX.md` |
+| **Reads** | `docs/00-discovery/spec/spec-vX-{slug}.md`, `docs/00-discovery/adr/` (all accepted ADRs) |
+| **Writes** | `docs/01-design/architecture/ARCHITECTURE-vX-{slug}.md` |
 | **Depends on** | spec-manager, adr-manager |
 | **Must NOT touch** | `docs/00-discovery/` (read-only), `docs/02-planning/`, any code |
 | **Handoff to** | `epic-manager` (Forge) — expects ARCHITECTURE-vX with diagram and component map |
@@ -41,10 +41,19 @@ The artifact produced by this skill MUST contain the following mandatory section
 
 Invalid format: absence of any mandatory section blocks the next gate.
 
+## Naming Convention
+
+**Filename slug rule:**
+- Derive `{slug}` from the system/feature name in kebab-case-lowercase (e.g. "Core Chat Platform" → `core-chat-platform`)
+- Max 50 characters, truncated on the last complete word
+- Immutable after creation — version increments keep the same slug (e.g. `ARCHITECTURE-v1-core-chat-platform.md` → `ARCHITECTURE-v2-core-chat-platform.md`)
+- Cross-references always use the short form (`ARCHITECTURE-vX`) — never the full filename
+- **Exception:** `ARCHITECTURE-v0-as-is.md` produced by `codebase-mapper` keeps that exact name — do not add a slug.
+
 ## Execution Instructions
 
 1. **Traceability:** When creating an architecture document, check whether related ADRs exist in `docs/00-discovery/adr/` and list them in the `Decisions` section.
-2. **Versioning (vX):** If a previous file exists, increment the version (e.g. v1 to v2) when a component or flow changes. Text corrections or addition of ADRs do not justify a new version — update in-place.
+2. **Versioning (vX):** If a previous file exists, increment the version (e.g. v1 to v2) when a component or flow changes. Text corrections or addition of ADRs do not justify a new version — update in-place. The slug remains the same across versions.
 3. **Mermaid Diagrams:** Do not keep the static diagram from the template. You must generate a `graph TD` or `sequenceDiagram` that reflects the technical reality discussed in the chat or in the project files.
 4. **Field Population:**
    - **Overview:** Must be an explanation for both technical and non-technical stakeholders.

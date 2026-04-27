@@ -7,7 +7,7 @@ metadata:
   author: "Jônatas Rodrigues"
   phase: 4
   depends_on: [task-manager, review-manager]
-  produces: "docs/03-quality/qa/QA-vX.md"
+  produces: "docs/03-quality/qa/QA-{ref}-{slug}.md"
 ---
 
 # QA Manager Skill
@@ -22,11 +22,11 @@ Before any action, read: `./references/qa-references.md`
 
 | | Files |
 |--|---------|
-| **Reads** | `docs/00-discovery/spec/spec-vX.md` (success criteria), `docs/02-planning/tasks/T{ID}.md` (implemented artifacts), `docs/03-quality/review/REVIEW-vX.md` (security findings) |
-| **Writes** | `docs/03-quality/qa/QA-vX.md` |
+| **Reads** | `docs/00-discovery/spec/spec-vX-{slug}.md` (success criteria), `docs/02-planning/tasks/T{ID}-{slug}.md` (implemented artifacts), `docs/03-quality/review/REVIEW-{ref}-{slug}.md` (security findings) |
+| **Writes** | `docs/03-quality/qa/QA-{ref}-{slug}.md` |
 | **Depends on** | task-manager, review-manager |
 | **Must NOT touch** | `docs/00-discovery/` (read-only), `docs/01-design/` (read-only), `docs/02-planning/` (read-only), any code |
-| **Handoff to** | `cast` (Cast) — expects QA-vX with Passed status and all SC-IDs covered |
+| **Handoff to** | `cast` (Cast) — expects QA-{ref}-{slug} with Passed status and all SC-IDs covered |
 
 ## Output Schema
 
@@ -38,6 +38,15 @@ The artifact produced by this skill MUST contain the following mandatory section
 - Approval Status
 
 Invalid format: absence of any mandatory section blocks the next gate.
+
+## Naming Convention
+
+**Filename slug rule:**
+- `{ref}` identifies the scope: `T{ID}` (task-scoped), `E{ID}` (epic-scoped), or `v{N}` (release-scoped)
+- Derive `{slug}` from the scope title in kebab-case-lowercase (e.g. QA of T016 "Rebrand Talqe" → `QA-T016-rebrand-talqe.md`)
+- Max 50 characters for the slug portion, truncated on the last complete word
+- Immutable after creation
+- Cross-references use the short form (`QA-{ref}`) — never the full filename
 
 ## Execution Instructions
 
@@ -53,7 +62,7 @@ Invalid format: absence of any mandatory section blocks the next gate.
     - `Partial`: Functionality operational, but incomplete test coverage or minor non-blocking bugs.
     - `Failed`: SC-XX not covered, failing test, or missing coverage in a critical scenario.
 5.  **Learning Integration:** If unexpected technology behavior is discovered, recommend `learning-manager`.
-6.  **Location:** Save to `docs/03-quality/qa/QA-vX.md`.
+6.  **Location:** Save to `docs/03-quality/qa/QA-{ref}-{slug}.md`.
 
 ## Guardrails
 

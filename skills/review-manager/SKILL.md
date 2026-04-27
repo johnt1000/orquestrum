@@ -7,7 +7,7 @@ metadata:
   author: "Jônatas Rodrigues"
   phase: 4
   depends_on: [task-manager]
-  produces: "docs/03-quality/review/REVIEW-vX.md"
+  produces: "docs/03-quality/review/REVIEW-{ref}-{slug}.md"
 ---
 
 # Review Manager Skill
@@ -22,11 +22,11 @@ Before any action, read: `./references/review-references.md`
 
 | | Files |
 |--|---------|
-| **Reads** | `docs/02-planning/tasks/T{ID}.md` (completed tasks), `docs/00-discovery/adr/` (technical decisions), `docs/00-discovery/spec/spec-vX.md` |
-| **Writes** | `docs/03-quality/review/REVIEW-vX.md` |
+| **Reads** | `docs/02-planning/tasks/T{ID}-{slug}.md` (completed tasks), `docs/00-discovery/adr/` (technical decisions), `docs/00-discovery/spec/spec-vX-{slug}.md` |
+| **Writes** | `docs/03-quality/review/REVIEW-{ref}-{slug}.md` |
 | **Depends on** | task-manager (tasks must have status Completed) |
 | **Must NOT touch** | `docs/00-discovery/` (read-only), `docs/01-design/` (read-only), `docs/02-planning/` (read-only), any code |
-| **Handoff to** | `qa-manager` (Ward) — expects REVIEW-vX with Approved or Changes Requested status |
+| **Handoff to** | `qa-manager` (Ward) — expects REVIEW-{ref}-{slug} with Approved or Changes Requested status |
 
 ## Output Schema
 
@@ -40,6 +40,15 @@ The artifact produced by this skill MUST contain the following mandatory section
 
 Invalid format: absence of any mandatory section blocks the next gate.
 
+## Naming Convention
+
+**Filename slug rule:**
+- `{ref}` identifies the scope: `T{ID}` (task-scoped), `E{ID}` (epic-scoped), or `v{N}` (release-scoped)
+- Derive `{slug}` from the scope title in kebab-case-lowercase (e.g. review of T016 "Rebrand Talqe" → `REVIEW-T016-rebrand-talqe.md`)
+- Max 50 characters for the slug portion, truncated on the last complete word
+- Immutable after creation
+- Cross-references use the short form (`REVIEW-{ref}`) — never the full filename
+
 ## Execution Instructions
 
 1.  **Context:** Before reviewing, analyze the completed `docs/02-planning/tasks/` and the related `docs/00-discovery/adr/` to understand the technical premises.
@@ -48,7 +57,7 @@ Invalid format: absence of any mandatory section blocks the next gate.
     - `Approved`: The code is ready to be integrated.
     - `Changes Requested`: Improvements needed, but no critical risks. Create a new correction Task and record the link in the `Recommendations` section.
     - `Rejected`: Critical security or logic issues that prevent acceptance. Create a Task with `High` priority.
-4.  **Location:** Save to `docs/03-quality/review/REVIEW-vX.md`.
+4.  **Location:** Save to `docs/03-quality/review/REVIEW-{ref}-{slug}.md`.
 
 ## Guardrails
 

@@ -7,7 +7,7 @@ metadata:
   author: "Jônatas Rodrigues"
   phase: 3
   depends_on: [spec-manager, architecture-manager]
-  produces: "docs/02-planning/epics/E{ID}.md"
+  produces: "docs/02-planning/epics/E{ID}-{slug}.md"
 ---
 
 # Epic Manager Skill
@@ -22,8 +22,8 @@ Before any action, read: `./references/epic-references.md`
 
 | | Files |
 |--|---------|
-| **Reads** | `docs/00-discovery/spec/spec-vX.md`, `docs/01-design/architecture/ARCHITECTURE-vX.md` |
-| **Writes** | `docs/02-planning/epics/E{ID}.md` |
+| **Reads** | `docs/00-discovery/spec/spec-vX-{slug}.md`, `docs/01-design/architecture/ARCHITECTURE-vX-{slug}.md` |
+| **Writes** | `docs/02-planning/epics/E{ID}-{slug}.md` |
 | **Depends on** | spec-manager, architecture-manager |
 | **Must NOT touch** | `docs/00-discovery/` (read-only), `docs/01-design/` (read-only), `docs/04-release/`, any code |
 | **Handoff to** | `task-manager` (Forge) — expects Epic with Acceptance Criteria and linked SPEC |
@@ -40,10 +40,18 @@ The artifact produced by this skill MUST contain the following mandatory section
 
 Invalid format: absence of any mandatory section blocks the next gate.
 
+## Naming Convention
+
+**Filename slug rule:**
+- Derive `{slug}` from the epic title in kebab-case-lowercase (e.g. "AI Agent Support" → `ai-agent-support`)
+- Max 50 characters, truncated on the last complete word
+- Immutable after creation — title changes do not rename the file
+- Cross-references always use the short form (`E{ID}`) — never the full filename
+
 ## Execution Instructions
 
 1.  **Spec Mapping:** When creating an Epic, identify exactly which section of `docs/00-discovery/spec/` it addresses. An Epic must not be generic; it must be a "slice" of the specification.
-2.  **Identification (E{ID}):** Use the pattern `E001`, `E002`, etc. Check the last ID created in the `docs/02-planning/epics/` folder.
+2.  **Identification (E{ID}):** Use the pattern `E001`, `E002`, etc. Check the last ID created in the `docs/02-planning/epics/` folder. Derive the `{slug}` from the epic title (see Naming Convention above). The full filename is `E{ID}-{slug}.md`.
 3.  **Domain:** Classify the domain (e.g. Backend, Frontend, Infra, AI, Security) to facilitate task assignment.
 4.  **Execution Flow (Mermaid):** The diagram must show the dependency between tasks. If Task 2 depends on the completion of Task 1, the Mermaid must reflect `T1 --> T2`.
 5.  **Architecture Sync:** Check in `docs/01-design/architecture/` which components are affected by this Epic to ensure the scope is complete.

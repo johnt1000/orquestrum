@@ -47,13 +47,14 @@ Each skill invoked by Forge operates within strict boundaries:
 |-------|--------------|-----------------|----------------|
 | `pattern-manager` | GLOSSARY.md, existing PATTERNS.md, ADRs (read-only) | `docs/01-design/patterns/PATTERNS.md` | SPECs, Architecture, Tasks |
 | `architecture-manager` | Active SPEC (read-only), Accepted ADRs (read-only), PATTERNS.md | `docs/01-design/architecture/ARCHITECTURE-vX.md` | SPECs, ADRs, Tasks, any code |
-| `epic-manager` | Active SPEC (read-only), ARCHITECTURE-vX (read-only), GLOSSARY (read-only) | `docs/02-planning/epics/E{ID}.md` | SPECs, ADRs, Architecture, any code |
-| `task-manager` | Epic, active SPEC (read-only), Architecture (read-only), ADRs (read-only) | `docs/02-planning/tasks/T{ID}.md`, `docs/02-planning/tasks/logs/T{ID}-log.md` | SPECs, ADRs, Architecture, Epic descriptions |
+| `epic-manager` | Active SPEC (read-only), ARCHITECTURE-vX (read-only), GLOSSARY (read-only) | `docs/02-planning/epics/E{ID}-{slug}.md` | SPECs, ADRs, Architecture, any code |
+| `task-manager` | Epic, active SPEC (read-only), Architecture (read-only), ADRs (read-only) | `docs/02-planning/tasks/T{ID}-{slug}.md`, `docs/02-planning/tasks/logs/T{ID}-log.md`, `docs/02-planning/tasks/TASK-INDEX.md` | SPECs, ADRs, Architecture, Epic descriptions |
 
 **Pre-delivery verification:** before reporting to Helm, Forge MUST confirm:
 - Every Task has status `Completed` and a non-empty `Artifacts` section
 - Every Task log (T{ID}-log.md) has at least one dated cycle entry
 - Every Epic's `spec_ref` matches the active SPEC version
+- `docs/02-planning/tasks/TASK-INDEX.md` is up to date (all tasks listed with correct status)
 
 ---
 
@@ -131,6 +132,10 @@ After each executed task:
 1. Update Task status to `Completed`
 2. Confirm that `Artifacts` is filled with real paths
 3. Confirm that the log exists in `docs/02-planning/tasks/logs/`
+4. Update `docs/02-planning/tasks/TASK-INDEX.md`:
+   - If the file does not exist, create it from `skills/task-manager/assets/task-index-template.md`
+   - Add or update the row for this task (ID, title, status, tier, epic, filename)
+5. Update `docs/CHECKPOINT.md` `Active Artifacts` section with the latest task path (see `skills/checkpoint-manager/SKILL.md`)
 
 ---
 
@@ -138,11 +143,12 @@ After each executed task:
 
 Before signaling completion, verify:
 
-- [ ] `ARCHITECTURE-vX.md` exists with a non-generic diagram
+- [ ] `ARCHITECTURE-vX-{slug}.md` exists with a non-generic diagram
 - [ ] All Epics in scope have associated Tasks
 - [ ] All Tasks in scope have `Completed` status
 - [ ] `Artifacts` section of each Task filled with real paths
-- [ ] Logs exist for each completed Task
+- [ ] Logs exist for each completed Task (Tier-0: MICRO-LOG entry suffices)
+- [ ] `docs/02-planning/tasks/TASK-INDEX.md` is up to date
 - [ ] No Task with `Blocked` status without documented resolution
 
 ---
@@ -164,10 +170,11 @@ Upon completion, report:
 ```
 Phase: 2-3 Completed
 Artifacts produced:
-  - docs/01-design/architecture/ARCHITECTURE-vX.md
-  - docs/02-planning/epics/E00X.md (N epics)
-  - docs/02-planning/tasks/T00X.md (N tasks)
+  - docs/01-design/architecture/ARCHITECTURE-vX-{slug}.md
+  - docs/02-planning/epics/E00X-{slug}.md (N epics)
+  - docs/02-planning/tasks/T00X-{slug}.md (N tasks)
   - docs/02-planning/tasks/logs/T00X-log.md (N logs)
+  - docs/02-planning/tasks/TASK-INDEX.md
 Sub-agents used: [list]
 Code artifacts: [list of paths]
 Delivery gate: ✅ All criteria met

@@ -37,10 +37,29 @@ When delegating to orchestrators via the Task tool, use **exact** `subagent_type
 
 Before any decision, read:
 
-1. `docs/SDLC.md` — complete pipeline with phases, gates, and responsibilities
-2. `docs/TIERS.md` — tier classification (read before detecting phase)
+1. `docs/CHECKPOINT.md` — session state from previous context (if exists). See `skills/checkpoint-manager/SKILL.md`.
+2. `docs/SDLC.md` — complete pipeline with phases, gates, and responsibilities
+3. `docs/TIERS.md` — tier classification (read before detecting phase)
+
+> If `docs/CHECKPOINT.md` exists: restore tier, phase, active orchestrator, and active artifact paths before running phase detection. Validate that all listed artifact paths still exist on disk.
 
 > ⚠️ `templates/INDEX.md` is deprecated. Do not use it as a state reference.
+
+---
+
+# SESSION PROTOCOL
+
+Read `skills/checkpoint-manager/SKILL.md` for the full protocol. Summary:
+
+**On session START:**
+1. Read `docs/CHECKPOINT.md` (if exists) → restore state
+2. Validate all artifact paths listed under `Active Artifacts` exist on disk
+3. Resume from the `Pending Work` list — do not re-run completed phases
+
+**On session END** (after any meaningful unit of work is done):
+1. Write `docs/CHECKPOINT.md` using `skills/checkpoint-manager/assets/checkpoint-template.md`
+2. Record: current tier, phase, active orchestrator, all active artifact paths, pending items
+3. Each orchestrator (Lore, Forge, Ward, Cast) must update their section of `Active Artifacts` upon completing work — Helm writes the final consolidated checkpoint
 
 ---
 
@@ -167,12 +186,13 @@ Gates only apply at the corresponding tier. Consult `docs/TIERS.md` for the comp
 - [ ] At least 1 ADR exists in `docs/00-discovery/adr/`
 
 ## Gate 2→3: Design (Tier 2 only)
-- [ ] `docs/01-design/architecture/ARCHITECTURE-v1.md` exists
+- [ ] `docs/01-design/architecture/ARCHITECTURE-v1-{slug}.md` exists
 - [ ] Architecture has a non-generic Mermaid diagram
 
 ## Gate 3→4: Planning (Tier 1 and Tier 2)
 - [ ] At least 1 Task with `Completed` status and a filled `Artifacts` section exists
-- [ ] Log `T{ID}-log.md` exists with at least one entry
+- [ ] Log `T{ID}-log.md` exists with at least one entry (Tier-0: MICRO-LOG entry in `MICRO-LOG.md` suffices)
+- [ ] `docs/02-planning/tasks/TASK-INDEX.md` exists and is up to date
 
 ## Gate 4→5: Quality (Tier 2 only)
 - [ ] All Reviews in scope have `Approved` status

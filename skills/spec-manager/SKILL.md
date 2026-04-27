@@ -7,7 +7,7 @@ metadata:
   author: "Jônatas Rodrigues"
   phase: 1
   depends_on: []
-  produces: "docs/00-discovery/spec/spec-vX.md"
+  produces: "docs/00-discovery/spec/spec-vX-{slug}.md"
 ---
 
 # Spec Manager Skill
@@ -23,7 +23,7 @@ Before any action, read: `./references/spec-references.md`
 | | Files |
 |--|---------|
 | **Reads** | `docs/00-discovery/adr/` (existing ADRs), `docs/01-design/architecture/` (existing architectures) |
-| **Writes** | `docs/00-discovery/spec/spec-vX.md` |
+| **Writes** | `docs/00-discovery/spec/spec-vX-{slug}.md` |
 | **Depends on** | none (pipeline entry point) |
 | **Must NOT touch** | `docs/00-discovery/adr/` (read-only), `docs/01-design/`, `docs/02-planning/`, any code |
 | **Handoff to** | `adr-manager` (Lore) — expects SPEC with Active status and ≥3 assumptions |
@@ -42,12 +42,20 @@ The artifact produced by this skill MUST contain the following mandatory section
 
 Invalid format: absence of any mandatory section blocks the next gate.
 
+## Naming Convention
+
+**Filename slug rule:**
+- Derive `{slug}` from the feature/system name in kebab-case-lowercase (e.g. "Product Strategy" → `product-strategy`)
+- Max 50 characters, truncated on the last complete word
+- Immutable after creation — version increments do not change the slug; they produce a new version of the same doc (e.g. `spec-v2-product-strategy.md`)
+- Cross-references always use the short form (`spec-vX`) — never the full filename
+
 ## Execution Instructions
 
 1.  **Context Exploration:** Before generating the SPEC, obtain the 3 pillars: Domain, Objective and Scope. If the user provides a vague idea, help them refine it using requirements elicitation techniques.
 2.  **Assumption Mapping (FIRST STEP):** Before writing any requirement, map at least 3 assumptions. Ask the user: "What must be true for this feature to make sense?" Document unvalidated assumptions to become validation tasks.
 3.  **MoSCoW Prioritization:** When writing each requirement, assign a priority (M/S/C/W). Ask the user if unclear. Flag if more than 50% of requirements are Must.
-4.  **Versioning (vX):** Every SPEC is born as `v1 (Draft)`. When the system is implemented and validated, it moves to `Active`. Significant changes generate a version increment — status only changes upon QA validation.
+4.  **Versioning (vX):** Every SPEC is born as `v1 (Draft)`. When the system is implemented and validated, it moves to `Active`. Significant changes generate a version increment — status only changes upon QA validation. The slug remains the same across versions (e.g. `spec-v1-product-strategy.md` → `spec-v2-product-strategy.md`).
 5.  **Constraints:** Be rigorous here. Include technical limitations (e.g. "Must run on Proxmox with 2GB RAM"), legal (LGPD) or integration constraints.
 6.  **Success Criteria in BDD:** Write each criterion in Given/When/Then format with a concrete metric. Each criterion must trace to an RF-XX or RNF-XX.
 7.  **Flows (Mermaid):** The `Main Flow` must represent the user or data journey. Use `flowchart TD` for processes and `sequenceDiagram` if there are many message exchanges between agents/APIs.

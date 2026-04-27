@@ -7,7 +7,7 @@ metadata:
   author: "Jônatas Rodrigues <jonatas.rodriguess@gmail.com>"
   phase: 1
   depends_on: [spec-manager]
-  produces: "docs/00-discovery/adr/ADR-XXX.md"
+  produces: "docs/00-discovery/adr/ADR-XXX-{slug}.md"
 ---
 
 # ADR Manager Skill
@@ -22,8 +22,8 @@ Before any action, read: `./references/adr-references.md`
 
 | | Files |
 |--|---------|
-| **Reads** | `docs/00-discovery/spec/spec-vX.md`, `docs/00-discovery/adr/` (existing ADRs to check for duplicates) |
-| **Writes** | `docs/00-discovery/adr/ADR-XXX.md` |
+| **Reads** | `docs/00-discovery/spec/spec-vX-{slug}.md`, `docs/00-discovery/adr/` (existing ADRs to check for duplicates) |
+| **Writes** | `docs/00-discovery/adr/ADR-XXX-{slug}.md` |
 | **Depends on** | spec-manager (the problem context must exist before the decision) |
 | **Must NOT touch** | `docs/00-discovery/spec/` (read-only), `docs/01-design/`, `docs/02-planning/`, any code |
 | **Handoff to** | `forge` (Forge) — expects ADR with Accepted status |
@@ -40,13 +40,22 @@ The artifact produced by this skill MUST contain the following mandatory section
 
 Invalid format: absence of any mandatory section blocks the next gate.
 
+## Naming Convention
+
+**Filename slug rule:**
+- Derive `{slug}` from the decision title in kebab-case-lowercase (e.g. "CORS env variable" → `cors-env-variable`)
+- Max 50 characters, truncated on the last complete word
+- Immutable after creation — title changes do not rename the file
+- Cross-references always use the short form (`ADR-XXX`) — never the full filename
+
 ## Execution Instructions
 
 1. **Scenario Identification:** Whenever the user mentions an important technical decision or change of direction in the project, suggest creating an ADR.
 2. **Duplicate Check:** Before creating, verify whether an ADR on the same topic already exists in `docs/00-discovery/adr/`. If one exists, evaluate whether it is an `update` (deprecate the previous one) or a new independent ADR.
 3. **Template Usage:** Use the file at `./assets/adr-template.md` as the absolute base for the structure.
-4. **Field Population:**
+4.  **Field Population:**
    - **ID (ADR-XXX):** Ask the user for the next number in the sequence, or use `001` if it is the first.
+   - **Slug:** Derive from the decision title (see Naming Convention). The full filename is `ADR-XXX-{slug}.md`.
    - **Status:** Start as `🟡 Proposed` unless the user confirms the decision.
    - **Mermaid Flow:** Adapt the `Problem --> Options --> Decision --> Impact` graph to reflect the specific terms of the current discussion — use the real names of the technologies and options considered.
    - **Consequences:** List at least 2 positive and 2 negative points to maintain technical neutrality.

@@ -68,7 +68,7 @@ flowchart TD
 |-------|----------|---------|
 | [codebase-mapper](../skills/codebase-mapper/SKILL.md) | `ARCHITECTURE-v0-as-is.md` | First step — always before any other onboarding skill |
 | [reverse-spec](../skills/reverse-spec/SKILL.md) | `spec-v0-extracted.md` (Draft) | After codebase-mapper — extracts behaviors as requirements |
-| [adr-manager](../skills/adr-manager/SKILL.md) | `ADR-00X.md` (Accepted) | For each implicit architectural decision found in the code |
+| [adr-manager](../skills/adr-manager/SKILL.md) | `ADR-XXX-{slug}.md` (Accepted) | For each implicit architectural decision found in the code |
 | [glossary-manager](../skills/glossary-manager/SKILL.md) | `GLOSSARY.md` | To canonize domain terms found in the codebase |
 
 **Rule:** No Phase 0 or later skill may be used without codebase-mapper having produced the as-is architecture. The extracted spec must start as `Draft` and requires human validation before becoming `Active`.
@@ -89,8 +89,8 @@ flowchart TD
 
 | Skill | Artifact | Trigger |
 |-------|----------|---------|
-| [spec-manager](../skills/spec-manager/SKILL.md) | `spec-vX.md` | Start of any new feature |
-| [adr-manager](../skills/adr-manager/SKILL.md) | `ADR-XXX.md` | Relevant technical decision or technology change |
+| [spec-manager](../skills/spec-manager/SKILL.md) | `spec-vX-{slug}.md` | Start of any new feature |
+| [adr-manager](../skills/adr-manager/SKILL.md) | `ADR-XXX-{slug}.md` | Relevant technical decision or technology change |
 | [pattern-manager](../skills/pattern-manager/SKILL.md) | `PATTERNS.md` | After first SPEC — catalog patterns and register adoptions |
 
 **Rule:** No Epic may exist without an active SPEC. No Architecture may exist without at least one ADR to justify it. Every first adoption of a design pattern must have an associated ADR and an entry in `PATTERNS.md`.
@@ -101,7 +101,7 @@ flowchart TD
 
 | Skill | Artifact | Trigger |
 |-------|----------|---------|
-| [architecture-manager](../skills/architecture-manager/SKILL.md) | `ARCHITECTURE-vX.md` | Active SPEC + accepted ADRs |
+| [architecture-manager](../skills/architecture-manager/SKILL.md) | `ARCHITECTURE-vX-{slug}.md` | Active SPEC + accepted ADRs |
 
 **Rule:** Architecture is the materialization of decisions (ADRs) applied to requirements (SPEC). Every component change requires simultaneous diagram update.
 
@@ -111,10 +111,10 @@ flowchart TD
 
 | Skill | Artifact | Trigger |
 |-------|----------|---------|
-| [epic-manager](../skills/epic-manager/SKILL.md) | `E{ID}.md` | SPEC + Architecture defined |
-| [task-manager](../skills/task-manager/SKILL.md) | `T{ID}.md` + `logs/T{ID}-log.md` | Epic created |
+| [epic-manager](../skills/epic-manager/SKILL.md) | `E{ID}-{slug}.md` | SPEC + Architecture defined |
+| [task-manager](../skills/task-manager/SKILL.md) | `T{ID}-{slug}.md` + `logs/T{ID}-log.md` + `TASK-INDEX.md` | Epic created |
 
-**Rule:** Epics make vertical slices of the SPEC. Tasks are executable units that produce traceable code artifacts.
+**Rule:** Epics make vertical slices of the SPEC. Tasks are executable units that produce traceable code artifacts. Tier-0 tasks append to `MICRO-LOG.md` instead of creating individual files.
 
 ---
 
@@ -122,9 +122,9 @@ flowchart TD
 
 | Skill | Artifact | Trigger | Depends on |
 |-------|----------|---------|------------|
-| [review-manager](../skills/review-manager/SKILL.md) | `REVIEW-vX.md` | Task(s) with status `Completed` | task-manager |
-| [qa-manager](../skills/qa-manager/SKILL.md) | `QA-vX.md` | Task(s) `Completed` + Review `Approved` | task-manager, review-manager |
-| [learning-manager](../skills/learning-manager/SKILL.md) | `L-XXX.md` | QA `Failed` or unexpected technical difficulty | task-manager, qa-manager |
+| [review-manager](../skills/review-manager/SKILL.md) | `REVIEW-{ref}-{slug}.md` | Task(s) with status `Completed` | task-manager |
+| [qa-manager](../skills/qa-manager/SKILL.md) | `QA-{ref}-{slug}.md` | Task(s) `Completed` + Review `Approved` | task-manager, review-manager |
+| [learning-manager](../skills/learning-manager/SKILL.md) | `L-XXX-{slug}.md` | QA `Failed` or unexpected technical difficulty | task-manager, qa-manager |
 
 **Rule:** QA validates against the SPEC. Review validates against code and security. Learning closes the loop by turning failures into knowledge.
 
@@ -145,26 +145,36 @@ flowchart TD
 
 ```
 docs/
+├── CHECKPOINT.md                   ← session state (written by Helm/orchestrators)
 ├── 00-discovery/
 │   ├── glossary/      → GLOSSARY.md
-│   ├── spec/          → spec-v1.md, spec-v2.md ...
-│   └── adr/           → ADR-001.md, ADR-002.md ...
+│   ├── spec/          → spec-v1-{slug}.md, spec-v2-{slug}.md ...
+│   └── adr/           → ADR-001-{slug}.md, ADR-002-{slug}.md ...
 ├── 01-design/
-│   └── architecture/  → ARCHITECTURE-v1.md ...
+│   └── architecture/  → ARCHITECTURE-v0-as-is.md (codebase-mapper only)
+│                         ARCHITECTURE-v1-{slug}.md ...
 ├── 02-planning/
-│   ├── epics/         → E001.md, E002.md ...
+│   ├── epics/         → E001-{slug}.md, E002-{slug}.md ...
 │   └── tasks/
-│       ├── T001.md, T002.md ...
-│       └── logs/      → T001-log.md ...
+│       ├── TASK-INDEX.md           ← auto-maintained index of all tasks
+│       ├── MICRO-LOG.md            ← Tier-0 task entries (no individual files)
+│       ├── T001-{slug}.md, T002-{slug}.md ...
+│       └── logs/      → T001-log.md ...  (Tier 1/2 only; short form, no slug)
 ├── 03-quality/
-│   ├── review/        → REVIEW-v1.md ...
-│   ├── qa/            → QA-v1.md ...
-│   └── learning/      → L-001.md ...
+│   ├── review/        → REVIEW-{ref}-{slug}.md ...
+│   ├── qa/            → QA-{ref}-{slug}.md ...
+│   └── learning/      → L-001-{slug}.md ...
 └── 04-release/
     ├── CHANGELOG.md
     ├── RELEASE-v1.0.0.md ...
     └── RUNBOOK.md
 ```
+
+**Filename slug convention** (applies to all files above that include `{slug}`):
+- Derived from the document title in kebab-case-lowercase
+- Max 50 characters, truncated on the last complete word
+- Immutable after creation — title changes do not rename the file
+- Cross-references always use the short form (ID or version only)
 
 ---
 
@@ -178,17 +188,17 @@ Each phase boundary is a handoff point. The receiving orchestrator treats all up
 Discovery (Lore) → Design (Forge):
   Input:  SPEC [Active] + ADRs [Accepted] + GLOSSARY
   Fence:  Forge cannot modify SPEC, ADRs, or GLOSSARY
-  Output: ARCHITECTURE-vX with diagram + component map
+  Output: ARCHITECTURE-vX-{slug} with diagram + component map
 
 Design → Planning (Forge owns 2–3):
   Input:  ARCHITECTURE + SPEC [read-only] + ADRs [read-only] + PATTERNS
   Fence:  Cannot modify Architecture or SPEC during planning
-  Output: Epics with spec_ref + Tasks with artifact paths + Logs
+  Output: Epics with spec_ref + Tasks with artifact paths + Logs + TASK-INDEX
 
 Planning → Quality (Forge → Ward):
-  Input:  Completed Tasks with non-empty Artifacts sections + Logs
+  Input:  Completed Tasks with non-empty Artifacts sections + Logs + TASK-INDEX
   Fence:  Ward cannot modify Tasks — creates correction Tasks if needed
-  Output: REVIEW-vX [Approved] + QA-vX [Passed] + optional L-XXX
+  Output: REVIEW-{ref}-{slug} [Approved] + QA-{ref}-{slug} [Passed] + optional L-XXX-{slug}
 
 Quality → Release (Ward → Cast):
   Input:  QA [Passed] + no Critical findings open + approved artifact versions
@@ -246,6 +256,7 @@ Always use the `References` section of templates to keep this chain intact.
 
 | Phase | Skill | Role |
 |-------|-------|------|
+| cross-cutting | checkpoint-manager | Session continuity — CHECKPOINT.md read/write |
 | -1 | codebase-mapper | As-is map of existing projects |
 | -1 | reverse-spec | Requirements extraction from existing code |
 | 0 | glossary-manager | Canonical domain vocabulary |

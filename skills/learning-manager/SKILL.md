@@ -7,7 +7,7 @@ metadata:
   author: "Jônatas Rodrigues"
   phase: 4
   depends_on: [task-manager, qa-manager]
-  produces: "docs/03-quality/learning/L-XXX.md"
+  produces: "docs/03-quality/learning/L-XXX-{slug}.md"
 ---
 
 # Learning Manager Skill
@@ -22,8 +22,8 @@ Before any action, read: `./references/learning-references.md`
 
 | | Files |
 |--|---------|
-| **Reads** | `docs/02-planning/tasks/T{ID}.md` and its log, `docs/03-quality/qa/QA-vX.md` (failures), `docs/00-discovery/adr/` (related decisions) |
-| **Writes** | `docs/03-quality/learning/L-XXX.md` |
+| **Reads** | `docs/02-planning/tasks/T{ID}-{slug}.md` and its log, `docs/03-quality/qa/` (QA files with failures), `docs/00-discovery/adr/` (related decisions) |
+| **Writes** | `docs/03-quality/learning/L-XXX-{slug}.md` |
 | **Depends on** | task-manager, qa-manager (triggered by failure or discovery) |
 | **Must NOT touch** | `docs/00-discovery/` (read-only), `docs/01-design/` (read-only), `docs/02-planning/` (read-only), any code |
 | **Handoff to** | `cast` or `helm` — expects L-XXX with Root Cause and Corrective Action assigned |
@@ -39,6 +39,14 @@ The artifact produced by this skill MUST contain the following mandatory section
 
 Invalid format: absence of any mandatory section blocks the next gate.
 
+## Naming Convention
+
+**Filename slug rule:**
+- Derive `{slug}` from the incident/discovery title in kebab-case-lowercase (e.g. "Webhook syntax error" → `webhook-syntax-error`)
+- Max 50 characters, truncated on the last complete word
+- Immutable after creation
+- Cross-references always use the short form (`L-XXX`) — never the full filename
+
 ## Execution Instructions
 
 1.  **Trigger Identification:** Use this skill whenever:
@@ -49,7 +57,7 @@ Invalid format: absence of any mandatory section blocks the next gate.
 3.  **Patterns:** Identify whether the behavior is recurring. This will help the AI create guardrails in future tasks.
 4.  **Escalation to ADR:** If the root cause is architectural in nature (design decision, technology choice), signal to the user the need to create a corresponding ADR.
 5.  **Linking:** Always connect the learning to a Task (`docs/02-planning/tasks/`) or ADR (`docs/00-discovery/adr/`).
-6.  **Location:** Save to `docs/03-quality/learning/L-XXX.md`.
+6.  **Location:** Save to `docs/03-quality/learning/L-XXX-{slug}.md`.
 
 ## Guardrails
 
