@@ -63,7 +63,8 @@ Invalid format: absence of any mandatory section blocks the next gate.
 5.  **Agent Assignment:** Identify which AI agent (or human) is the primary responsible party.
 6.  **Artifact Registration:** List all created files — including mandatory test files (e.g. `*.spec.ts`, `*_test.go`, `*_spec.rb`).
 7.  **Log Maintenance:** Every Tier-1/2 Task must have an associated log in `docs/02-planning/tasks/logs/T{ID}-log.md`. Record the relevant Red/Green/Refactor cycles.
-8.  **Location:** Save to `docs/02-planning/tasks/`.
+8.  **Epic Status Sync (on Completed):** When marking a Task as `Completed`, read the parent Epic file (`docs/02-planning/epics/E{ID}-*.md` from `epic_ref`). Check whether **all tasks listed in the Epic's `Tasks` section** now have `Completed` status in TASK-INDEX.md. If yes → update the Epic's `status` field to `Completed`. This prevents Epic status from lagging behind its tasks indefinitely.
+9.  **Location:** Save to `docs/02-planning/tasks/`.
 
 ## Guardrails
 
@@ -74,6 +75,7 @@ Invalid format: absence of any mandatory section blocks the next gate.
 - **DO NOT** start a Task with status `Blocked` without explicitly describing which task blocks it in the `Dependencies` field.
 - **DO NOT** invent the next ID — always check the last file in `docs/02-planning/tasks/`.
 - **DO NOT** forget to update `TASK-INDEX.md` after every task state change.
+- **DO NOT** mark the last Task in an Epic as `Completed` without checking whether the Epic's own `status` field needs to be updated to `Completed`.
 
 **Context fence:**
 - Operate exclusively on files declared under `Reads`

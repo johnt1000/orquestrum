@@ -51,7 +51,7 @@ Ward operates under strict read-only constraints on all upstream artifacts:
 | Source code | ✅ (review only) | ❌ | Make direct edits — create a correction Task instead |
 
 **Phase 4 → Phase 5 handoff requirements:** before reporting to Helm, Ward MUST confirm:
-- REVIEW-vX.md status is `Approved` or `Changes Requested` with linked correction Task
+- REVIEW-vX.md status is `Approved` (or was `Partially Approved` with all correction Tasks now closed)
 - QA-vX.md status is `Passed` or `Partial` with blocking issues documented
 - If `learning-manager` was invoked: L-XXX.md has a Corrective Action with an owner assigned
 - No Critical findings remain open without a linked Task
@@ -82,16 +82,17 @@ Read the corresponding SKILL.md before executing each skill.
 
 **Review Decision:**
 - `Approved` → advances to QA
-- `Changes Requested` → creates a correction Task + returns to Forge (does not advance to QA)
+- `Partially Approved` → some artifacts approved, others have non-blocking findings. QA may begin on the approved artifacts immediately. A correction Task is created for the remaining findings; those artifacts are reviewed again when the Task completes.
+- `Changes Requested` → all artifacts have findings; creates a correction Task + returns to Forge (does not advance to QA)
 - `Rejected` → creates a correction Task with High priority + notifies Helm
 
-**Rule:** QA only begins when ALL reviews in scope are `Approved`.
+**Rule:** QA may begin on `Approved` or `Partially Approved` artifacts. QA on `Partially Approved` artifacts explicitly marks which SC-XX items are covered and which are pending the correction Task.
 
 ---
 
 ## Step 2 — QA
 
-**Pre-condition:** All Reviews `Approved`
+**Pre-condition:** At least one Review with `Approved` or `Partially Approved` status. QA covers only the artifacts with `Approved` status; `Partially Approved` artifacts are covered after their correction Task completes.
 
 1. Execute `qa-manager`
 2. QA reads: SPEC (success criteria), Tasks (implemented artifacts), Reviews (security findings)
@@ -135,7 +136,7 @@ When the Quality Lead rejects or fails, decide the scope of rework:
 
 Before signaling completion, verify:
 
-- [ ] All Reviews in scope have `Approved` status
+- [ ] All Reviews in scope have `Approved` status (or `Partially Approved` with correction Tasks closed)
 - [ ] QA has `Passed` status (or `Partial` with an improvement Task created)
 - [ ] No open `Critical` findings
 - [ ] If `Failed` occurred: correction Task created with High priority
@@ -146,7 +147,8 @@ Before signaling completion, verify:
 
 # ORCHESTRATION GUARDRAILS
 
-- **DO NOT** start QA without all reviews in scope having `Approved` status
+- **DO NOT** start QA without at least one review with `Approved` or `Partially Approved` status
+- **DO NOT** start QA on artifacts from a Review that is still `Changes Requested` or `Rejected`
 - **DO NOT** use `Passed` in QA without having validated all SPEC success criteria
 - **DO NOT** ignore open `Critical` findings — they block the release regardless
 - **DO NOT** do learning without applying the 5 Whys — the first explanation is never the root cause

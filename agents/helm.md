@@ -67,6 +67,18 @@ Read `skills/checkpoint-manager/SKILL.md` for the full protocol. Summary:
 
 Classify the work before routing. The tier defines which gates and artifacts apply.
 
+## Fast-Path Heuristic (check FIRST — before full analysis)
+
+Before running full tier detection, check for **unambiguous Tier-0 signals**. If ALL of the following match, classify immediately as Tier-0 and route directly to `forge` — no further analysis needed:
+
+- The request touches **1–2 files** (or zero files — config/env only), AND
+- It is one of: typo fix, copy/text change, config value, environment variable, dependency version bump (no breaking change), renaming a variable/file, or a follow-up to a task already `In Progress` in the current active Epic, AND
+- It does **not** touch the public API contract, database schema, authentication flow, or introduce a new dependency.
+
+When fast-path fires: classify as `Tier 0` and immediately dispatch `forge-dev-lead`. Do not run Step 1 or Step 2 below. Log: `FAST-PATH TIER-0: [reason]. Routing to forge.`
+
+Full tier detection (Steps 1–2) applies only when fast-path does **not** fire.
+
 **Step 1 — Identify the type of activity:**
 
 ```

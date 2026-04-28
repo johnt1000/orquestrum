@@ -56,21 +56,31 @@ Invalid format: absence of any mandatory section blocks the next gate.
     - Do the tests cover the happy path AND at least 1 error scenario per SC-XX?
     - Is no test skipped without documented justification?
     - In Tier 2: was the Red/Green/Refactor cycle followed (verifiable from the Task log)?
-3.  **Failure Mapping:** If a test fails, identify whether the error is in the code (new correction Task) or was a design failure (ADR or Spec adjustment).
-4.  **Global Status:**
-    - `Passed`: 100% of SC-XX validated by passing tests.
-    - `Partial`: Functionality operational, but incomplete test coverage or minor non-blocking bugs.
+3.  **Validation Method per SC (REQUIRED):** For each SC-XX, declare the `validation_method` used:
+    - `static` — code inspection only (no runtime execution)
+    - `e2e` — end-to-end test with all real dependencies active
+    - `automated` — automated unit/integration test with mocked dependencies
+    - `integration` — integration test with at least one live external dependency
+    **Constraint:** If the SC-XX involves an external integration (API, webhook, third-party service), `static` alone is **not sufficient** — maximum achievable status is `Partial`, not `Passed`. To achieve `Passed`, at least `integration` or `e2e` is required for those SC-XX items.
+4.  **Failure Mapping:** If a test fails, identify whether the error is in the code (new correction Task) or was a design failure (ADR or Spec adjustment).
+5.  **Global Status:**
+    - `Passed`: 100% of SC-XX validated by passing tests, with appropriate `validation_method` per SC.
+    - `Partial`: Functionality operational, but incomplete test coverage, minor non-blocking bugs, OR any SC involving an external integration validated by `static` only.
     - `Failed`: SC-XX not covered, failing test, or missing coverage in a critical scenario.
-5.  **Learning Integration:** If unexpected technology behavior is discovered, recommend `learning-manager`.
-6.  **Location:** Save to `docs/03-quality/qa/QA-{ref}-{slug}.md`.
+6.  **Critical-Path Debt Rule:** Before assigning `Partial` status, evaluate whether the unresolved item lies on a **critical user path** (onboarding, authentication, primary feature delivery, message/data submission). If yes → the item is **not eligible for post-release debt** regardless of its technical severity. It must be corrected before release. Downgrade the QA status to `Failed` and create a correction Task. Document the blocking reason explicitly: `CRITICAL PATH: [path name] — debt not accepted pre-release.`
+7.  **Learning Integration:** If unexpected technology behavior is discovered, recommend `learning-manager`.
+8.  **Location:** Save to `docs/03-quality/qa/QA-{ref}-{slug}.md`.
 
 ## Guardrails
 
 - **DO NOT** use `Passed` without having validated all success criteria listed in the SPEC — partial coverage is `Partial`, not `Passed`.
+- **DO NOT** use `Passed` for any SC-XX that involves an external integration and was validated only by `static` inspection — maximum is `Partial`.
+- **DO NOT** accept a `Partial` status for items on a critical user path (onboarding, auth, primary feature, message/data submission) — these must be `Passed` or the QA is `Failed`.
 - **DO NOT** record a test case without the Given/When/Then format — free-form descriptions are not traceable.
 - **DO NOT** leave `Failed` without creating (or indicating) a correction Task with the link in the `Next Actions` section.
 - **DO NOT** perform QA on tasks with a status other than `Completed` — only validate what has been declared done.
 - **DO NOT** ignore `Critical` findings from the Review when evaluating the final status — an open Critical implies status `Failed`.
+- **DO NOT** omit `validation_method` per SC-XX — undeclared method defaults to `static` (most restrictive).
 
 **Context fence:**
 - Operate exclusively on files declared under `Reads`

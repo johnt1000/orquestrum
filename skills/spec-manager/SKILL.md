@@ -60,8 +60,13 @@ Invalid format: absence of any mandatory section blocks the next gate.
 6.  **Success Criteria in BDD:** Write each criterion in Given/When/Then format with a concrete metric. Each criterion must trace to an RF-XX or RNF-XX.
 7.  **Flows (Mermaid):** The `Main Flow` must represent the user or data journey. Use `flowchart TD` for processes and `sequenceDiagram` if there are many message exchanges between agents/APIs.
 8.  **Reverse Traceability:** In the `References` section, if ADRs or Architectures related to the topic already exist, you must link them mandatorily.
-9.  **Location:** Always save to `docs/00-discovery/spec/`.
-10. **Template Usage:** Use the file at `./assets/spec-template.md` as the absolute base for the structure.
+9.  **Legacy Disposition (when replacing existing flows):** If the SPEC introduces a component, flow, or UI element that **replaces** an existing one, add a mandatory `legacy_disposition` field to the SPEC under a `## Legacy Disposition` section. Allowed values:
+    - `remove` — the legacy element must be deleted as part of this SPEC's implementation
+    - `maintain-with-feature-parity` — the legacy element remains but must reach functional parity with the new component before release
+    - `deprecate-with-sunset` — the legacy element is deprecated; include a target sunset milestone
+    This field is **verified by review-manager** before a Review can be `Approved`. Missing `legacy_disposition` when a replacement is detected is a blocker.
+10. **Location:** Always save to `docs/00-discovery/spec/`.
+11. **Template Usage:** Use the file at `./assets/spec-template.md` as the absolute base for the structure.
 
 ## Guardrails
 
@@ -71,6 +76,7 @@ Invalid format: absence of any mandatory section blocks the next gate.
 - **DO NOT** write success criteria outside Given/When/Then format — vague criteria are not testable.
 - **DO NOT** omit the `Out-of-Scope` section — it is as important as the positive scope.
 - **DO NOT** invent ADR or Architecture IDs in References — only link what already exists on disk.
+- **DO NOT** write a SPEC that replaces an existing flow without a `## Legacy Disposition` section — undeclared legacy state causes production bugs from co-existing conflicting flows.
 
 **Context fence:**
 - Operate exclusively on files declared under `Reads`

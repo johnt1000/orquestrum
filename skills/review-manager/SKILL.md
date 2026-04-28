@@ -26,7 +26,7 @@ Before any action, read: `./references/review-references.md`
 | **Writes** | `docs/03-quality/review/REVIEW-{ref}-{slug}.md` |
 | **Depends on** | task-manager (tasks must have status Completed) |
 | **Must NOT touch** | `docs/00-discovery/` (read-only), `docs/01-design/` (read-only), `docs/02-planning/` (read-only), any code |
-| **Handoff to** | `qa-manager` (Ward) — expects REVIEW-{ref}-{slug} with Approved or Changes Requested status |
+| **Handoff to** | `qa-manager` (Ward) — expects REVIEW-{ref}-{slug} with Approved or Partially Approved status (QA covers the approved subset; Partially Approved correction Tasks must close before final gate) |
 
 ## Output Schema
 
@@ -53,10 +53,18 @@ Invalid format: absence of any mandatory section blocks the next gate.
 
 1.  **Context:** Before reviewing, analyze the completed `docs/02-planning/tasks/` and the related `docs/00-discovery/adr/` to understand the technical premises.
 2.  **Security Focus:** As the project involves sensitive data (psychologists/patients), check for secret exposure, validation failures or non-compliance with LGPD.
-3.  **Status Criteria:**
-    - `Approved`: The code is ready to be integrated.
-    - `Changes Requested`: Improvements needed, but no critical risks. Create a new correction Task and record the link in the `Recommendations` section.
-    - `Rejected`: Critical security or logic issues that prevent acceptance. Create a Task with `High` priority.
+3.  **Finding Classification — Two Axes (REQUIRED):** Every finding must be classified on both axes:
+    - **Severity axis:** `Critical` | `High` | `Medium` | `Low`
+    - **Nature axis:** `structural` | `behavioral` | `cosmetic`
+      - `structural` — syntax error, compilation failure, missing import, broken build
+      - `behavioral` — the code deviates from what the SPEC requires at runtime (wrong logic, missing validation, incorrect data flow). This is a **release blocker** regardless of severity level.
+      - `cosmetic` — style, naming, formatting, comment quality — does not affect runtime behavior
+    **Rule:** Any finding with nature `behavioral` is a release blocker. It blocks `Approved` status even if its severity is `Low`. A `behavioral` finding must produce a correction Task before the Review can move to `Approved`.
+4.  **Status Criteria:**
+    - `Approved`: All reviewed artifacts are ready to be integrated. QA may begin immediately.
+    - `Partially Approved`: Some artifacts have no findings and are ready; others have non-blocking findings requiring a correction Task. QA may begin on the approved subset. Create a correction Task for the remaining artifacts; re-review those artifacts after the Task completes.
+    - `Changes Requested`: Improvements needed across all artifacts, no critical risks. Create a new correction Task and record the link in the `Recommendations` section. QA does not begin.
+    - `Rejected`: Critical security or logic issues that prevent acceptance. Create a Task with `High` priority. QA does not begin.
 4.  **Location:** Save to `docs/03-quality/review/REVIEW-{ref}-{slug}.md`.
 
 ## Guardrails
@@ -66,6 +74,8 @@ Invalid format: absence of any mandatory section blocks the next gate.
 - **DO NOT** leave the `Security Considerations` section empty — at minimum record "No risks were identified in this review" with justification.
 - **DO NOT** review code without checking conformance with the SPEC — the implementation may be technically correct but functionally wrong.
 - **DO NOT** use `Approved` when any `Critical` finding is open.
+- **DO NOT** use `Approved` when any `behavioral` finding is open — behavioral deviations from the SPEC are always release blockers regardless of their severity level.
+- **DO NOT** omit the nature axis (`structural | behavioral | cosmetic`) from any finding — findings without nature classification default to `behavioral` (most restrictive).
 
 **Context fence:**
 - Operate exclusively on files declared under `Reads`

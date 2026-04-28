@@ -26,7 +26,7 @@ Before any action, read: `./references/learning-references.md`
 | **Writes** | `docs/03-quality/learning/L-XXX-{slug}.md` |
 | **Depends on** | task-manager, qa-manager (triggered by failure or discovery) |
 | **Must NOT touch** | `docs/00-discovery/` (read-only), `docs/01-design/` (read-only), `docs/02-planning/` (read-only), any code |
-| **Handoff to** | `cast` or `helm` — expects L-XXX with Root Cause and Corrective Action assigned |
+| **Handoff to** | `cast` or `helm` — expects L-XXX with Root Cause, Corrective Action assigned, and populated `## Pipeline Entry Point` section |
 
 ## Output Schema
 
@@ -36,6 +36,7 @@ The artifact produced by this skill MUST contain the following mandatory section
 - Corrective Action
 - Risk of Recurrence
 - Knowledge Captured
+- Pipeline Entry Point
 
 Invalid format: absence of any mandatory section blocks the next gate.
 
@@ -57,7 +58,17 @@ Invalid format: absence of any mandatory section blocks the next gate.
 3.  **Patterns:** Identify whether the behavior is recurring. This will help the AI create guardrails in future tasks.
 4.  **Escalation to ADR:** If the root cause is architectural in nature (design decision, technology choice), signal to the user the need to create a corresponding ADR.
 5.  **Linking:** Always connect the learning to a Task (`docs/02-planning/tasks/`) or ADR (`docs/00-discovery/adr/`).
-6.  **Location:** Save to `docs/03-quality/learning/L-XXX-{slug}.md`.
+6.  **Pipeline Entry Point (REQUIRED):** Every Learning document must end with a `## Pipeline Entry Point` section that Cast reads directly when starting the next cycle. Populate a table with one row per required follow-up action:
+
+    | Field | Values |
+    |-------|--------|
+    | `agent` | `lore` \| `forge` \| `ward` \| `cast` \| `helm` |
+    | `action` | `new-spec` \| `new-task` \| `adr-required` \| `runbook-update` \| `monitor-only` |
+    | `priority` | `High` \| `Medium` \| `Low` |
+    | `description` | One sentence describing what must be done |
+
+    If no follow-up is required, write a single row: `helm | monitor-only | Low | No pipeline action required.`
+7.  **Location:** Save to `docs/03-quality/learning/L-XXX-{slug}.md`.
 
 ## Guardrails
 
@@ -66,6 +77,7 @@ Invalid format: absence of any mandatory section blocks the next gate.
 - **DO NOT** assign `confidence: High` without concrete evidence (error log, reproduction test, confirmed diagnosis).
 - **DO NOT** archive a Learning before the fix has been validated by QA.
 - **DO NOT** leave `Patterns` empty if the same type of error has occurred before — check other files in `docs/03-quality/learning/`.
+- **DO NOT** omit the `## Pipeline Entry Point` section — without it, Cast has no machine-readable instruction to start the next cycle and the learning is operationally inert.
 
 **Context fence:**
 - Operate exclusively on files declared under `Reads`

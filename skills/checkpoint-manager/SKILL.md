@@ -31,6 +31,7 @@ You manage the session continuity file (`docs/CHECKPOINT.md`) that allows orches
 2. If it exists → read it. Restore: tier, phase, active orchestrator, active artifact paths, pending work.
 3. If it does not exist → this is a fresh project. Skip and proceed with normal BOOTSTRAP (SDLC detection).
 4. Validate: do the active artifact paths listed actually exist on disk? Flag any that are missing.
+5. **Cross-validate task state (stale checkpoint detection):** For every task listed under `Pending Work` with a task reference (`T{ID}`), read its actual file at `docs/02-planning/tasks/T{ID}-*.md` (or check `docs/02-planning/tasks/TASK-INDEX.md`). If the task's `status` field is `Completed` in the file but the checkpoint lists it as pending → the checkpoint is **stale** for that item. Log a warning: `⚠️ STALE: T{ID} is Completed on disk but listed as pending in checkpoint.` Remove the item from `Pending Work` and update the checkpoint before proceeding. Do not resume work on a task that is already done.
 
 ### On session END (write)
 

@@ -56,6 +56,16 @@ Invalid format: absence of any mandatory section blocks the next gate.
 4.  **Execution Flow (Mermaid):** The diagram must show the dependency between tasks. If Task 2 depends on the completion of Task 1, the Mermaid must reflect `T1 --> T2`.
 5.  **Architecture Sync:** Check in `docs/01-design/architecture/` which components are affected by this Epic to ensure the scope is complete.
 6.  **Template Usage:** Use the file at `./assets/epic-template.md` as the absolute base for the structure.
+7.  **Epic Status Lifecycle:** The Epic `status` field must always reflect the aggregate state of its tasks:
+    - `Not Started` → no tasks started
+    - `In Progress` → at least one task started, not all completed
+    - `Completed` → all listed tasks have `Completed` status (set by task-manager on last task completion)
+    - `Cancelled` → see Cancellation Protocol below
+    Epic status must never be set manually to `Completed` without all tasks being `Completed` in TASK-INDEX.md.
+8.  **Cancellation Protocol:** When an Epic is moved to `Cancelled` status, it is **mandatory** to create one of the following before closing:
+    - An ADR in `docs/00-discovery/adr/` documenting the cancellation decision (preferred when there is an architectural implication), OR
+    - A cancellation note appended to the Epic file itself under a `## Cancellation Record` section.
+    The record must include: (a) reason for cancellation, (b) state of partially-completed artifacts (list them), (c) inherited technical debt or risk from incomplete work. Without this record, the Epic must not be marked `Cancelled`.
 
 ## Guardrails
 
@@ -64,6 +74,8 @@ Invalid format: absence of any mandatory section blocks the next gate.
 - **DO NOT** invent the next ID — always check the last file in `docs/02-planning/epics/`.
 - **DO NOT** group distinct domains in a single Epic (e.g. Backend + Infra together) — separate by responsibility.
 - **DO NOT** list tasks without creating the Mermaid dependency graph — the execution flow is mandatory.
+- **DO NOT** mark an Epic as `Completed` unless all its tasks have `Completed` status in TASK-INDEX.md.
+- **DO NOT** mark an Epic as `Cancelled` without first creating an ADR or a `## Cancellation Record` section — unclosed cancellations leave invisible technical debt.
 
 **Context fence:**
 - Operate exclusively on files declared under `Reads`
