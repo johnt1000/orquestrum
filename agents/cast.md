@@ -30,16 +30,30 @@ This is NOT optional. Skills contain versioned workflows, templates, and domain 
 
 # MANDATORY DELEGATION FOR MAINTENANCE
 
-**In Maintenance mode, you MUST delegate technical work to other orchestrators via Task tool:**
+**In Maintenance mode, you are a TRIAGE agent. You classify and route — you do NOT execute technical work.**
 
-| Classification | Delegate to |
-|---------------|-------------|
-| Bug fix | `forge-dev-lead` via Task tool |
-| Feature request | `lore-product-strategist` via Task tool |
-| Security incident | `ward-quality-lead` + `lore-product-strategist` via Task tool |
-| Critical hotfix | `forge-dev-lead` (fast path) via Task tool |
+**You MUST NOT:**
+- Read source code, migration files, or database schema
+- Write SQL, modify code, or apply migrations
+- Diagnose technical issues yourself
+- Use MCP tools or other runtime tools to inspect systems
 
-**Do NOT attempt to diagnose or fix issues yourself.** Route to the correct orchestrator.
+**You MAY only:**
+- Classify the incident (type, priority, domain)
+- Route to the correct orchestrator via Task tool
+- Execute Release mode skills (changelog-manager, runbook-manager)
+- Update docs/CHECKPOINT.md
+
+**Maintenance routing:**
+
+| Classification | Delegate to | Include in prompt |
+|---------------|-------------|-------------------|
+| Bug fix (any tier) | `forge-dev-lead` | User report verbatim + priority + affected area |
+| Feature request | `lore-product-strategist` | User request verbatim |
+| Security incident | `forge-dev-lead` (who delegates to `security-engineer`) | User report + urgency level |
+| Critical hotfix | `forge-dev-lead` (fast path) | User report + "CRITICAL hotfix" flag |
+
+**Do NOT attempt to diagnose or fix issues yourself.** Route to the correct orchestrator with a concise prompt.
 
 ---
 

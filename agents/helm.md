@@ -67,7 +67,18 @@ When delegating to orchestrators via the Task tool, use **exact** `subagent_type
 - The classified tier
 - The user's request verbatim
 - Any relevant checkpoint state (phase, active artifacts)
-- The expected output format (from the orchestrator's DELIVERY GATE section)
+
+### Prompt Size Guide
+
+Keep Task prompts proportional to the tier. Orchestrators read CHECKPOINT.md and artifacts themselves.
+
+| Tier | Max prompt | What to include |
+|------|-----------|-----------------|
+| 0 | ~200 chars | Tier + project path + user request verbatim |
+| 1 | ~500 chars | Tier + checkpoint state (tier, phase) + user request + path to relevant artifact |
+| 2 | Full context | Full history, all paths, spec summary |
+
+**RULE: Never send >500 chars for Tier 0-1 tasks.** Trust the orchestrator to bootstrap and read artifacts.
 
 ---
 

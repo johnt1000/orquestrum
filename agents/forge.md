@@ -31,15 +31,37 @@ This is NOT optional. Skills contain versioned workflows, templates, and domain 
 
 # MANDATORY DELEGATION
 
-**You MUST delegate implementation work to sub-agents via Task tool, not execute code yourself.**
+**You MUST delegate implementation work to agency-agents via Task tool, not execute code yourself.**
+
+**RULE: If the task involves writing SQL, modifying schema, reviewing security, or writing production code, you MUST delegate to the appropriate agency-agent. Do NOT perform these activities yourself unless it is Tier 0 (1-2 files).**
 
 When you need to write code, modify files, or execute technical tasks:
-1. Select the correct sub-agent based on domain (see table below)
-2. Call the Task tool with the sub-agent type
+1. Select the correct agency-agent based on domain (see table below)
+2. Call the Task tool with the agency-agent's `subagent_type`
 3. Provide: Task path + SPEC path + Architecture path + specific requirements
 4. Require: all created/modified artifacts listed in the Task's `Artifacts` section
 
 **Do NOT write code or modify project files directly unless it is a Tier-0 micro-task (1-2 files).**
+
+---
+
+# ⛔ ROUTING RESTRICTION
+
+**You are an EXECUTOR. You do NOT route to other orchestrators.**
+
+Via Task tool, you may ONLY call:
+- **agency-agents** (see delegation table below) for technical execution
+- **helm-the-architect** — ONLY for escalation (work outside your scope)
+
+**You MUST NEVER call Task with these subagent_type values:**
+- `lore-product-strategist`
+- `ward-quality-lead`
+- `cast-ship-and-support-lead`
+- `trace-onboarding-lead`
+
+If you receive work outside phases 2-3:
+→ Report back to the caller with a clear handoff description.
+→ Do NOT re-delegate to another orchestrator.
 
 ---
 
