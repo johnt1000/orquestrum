@@ -26,9 +26,20 @@ This repository is the **canonical source** of the framework. The files here do 
 ./scripts/convert.sh --all --provider glm       # zai-coding-plan/glm-*
 
 # Install a generated package in a target project
+```bash
 ./scripts/install.sh --tool claude-code --target /path/to/project
 ./scripts/install.sh --tool opencode --target ~/.config/opencode   # global (recommended)
-./scripts/install.sh --auto --target /path/to/project   # detects installed tools
+./scripts/install.sh --auto --target /path/to/your/project   # detects installed tools
+```
+
+# Install external dependencies (agency-agents, anthropics/skills)
+```bash
+# Install all external dependencies
+./scripts/deps.sh --target ~/.config/opencode
+
+# Install specific dependency only
+./scripts/deps.sh --target ~/.config/opencode --only agency   # agency-agents
+./scripts/deps.sh --target ~/.config/opencode --only skills   # anthropics/skills (includes supabase)
 ```
 
 > Always run `lint-agents.sh` before `convert.sh`. Lint fails with exit 1 on errors.
@@ -100,7 +111,7 @@ tools:
 ---
 ```
 
-Required fields checked by lint: `name`, `description`. Model is not set in frontmatter — see `docs/MODELS.md` for tier assignments.
+Required fields checked by lint: `name`, `description`. Model is not set in frontmatter — see `docs/MODELS.md` for tier assignments. All agents use the provider-selected model (deep/balanced/mechanical) based on their tier assignment in the convert step.
 
 ### Skill structure (`skills/<name>/`)
 
@@ -111,6 +122,25 @@ references/       ← reference material the skill reads before executing
 ```
 
 Skills declare a `chain` field in frontmatter for automatic sequencing (e.g. glossary-manager → spec-manager → adr-manager).
+
+### External dependencies (via scripts/deps.sh)
+
+Use `scripts/deps.sh` to install external agent and skill repositories:
+
+```bash
+./scripts/deps.sh --target ~/.config/opencode           # All dependencies
+./scripts/deps.sh --target ~/.config/opencode --only agency   # agency-agents
+./scripts/deps.sh --target ~/.config/opencode --only skills   # anthropics/skills
+```
+
+**Installed dependencies:**
+- **agency-agents** (msitarzewski/agency-agents) — 184+ specialized agents
+- **anthropics/skills** — 17 skills including Supabase integration
+- **supabase/agent-skills** — Skipped (already included in anthropics/skills)
+
+> Note: `deps.sh` clones to temporary directories (`mktemp -d`) and does not pollute the Orquestrum repository.
+
+---
 
 ### Project artifacts generated (in target project, never here)
 

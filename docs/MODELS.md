@@ -74,43 +74,6 @@ Canonical source files reference models without provider prefix (e.g. `claude-op
 
 ---
 
-## Model Propagation
-
-Each primary agent defines its sub-skill models in the `MODEL PER SUB-SKILL` section of its file. The propagation flow is:
-
-```
-Helm — The Architect (deep)
-  ↓ instructs orchestrator model
-Lore — Product Strategist (balanced)
-  ↓ instructs sub-skill model
-  ├── glossary-manager (mechanical)
-  ├── spec-manager (deep)
-  └── adr-manager (deep)
-
-Forge — Dev Lead (balanced)
-  ├── architecture-manager (balanced)
-  ├── pattern-manager (balanced)
-  ├── epic-manager (balanced)
-  └── task-manager (balanced)
-
-Ward — Quality Lead (balanced)
-  ├── review-manager (balanced)
-  ├── qa-manager (balanced)
-  └── learning-manager (balanced)
-
-Cast — Ship & Support Lead (mechanical)
-  ├── changelog-manager (mechanical)
-  └── runbook-manager (mechanical)
-
-Trace — Onboarding Lead (balanced)
-  ├── codebase-mapper (balanced)
-  ├── reverse-spec (deep)
-  ├── adr-manager (deep)
-  └── glossary-manager (mechanical)
-```
-
----
-
 ## Estimated Cost per Tier
 
 | Tier | Agents/Skills involved | Active tiers | Note |

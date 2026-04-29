@@ -105,6 +105,26 @@ chmod +x scripts/*.sh
 ./scripts/install.sh --auto --target /path/to/your/project
 ```
 
+### Install external dependencies
+
+Orquestrum integrates with external agent and skill repositories. Use `scripts/deps.sh` to install them:
+
+```bash
+# Install all external dependencies (agency-agents + anthropics/skills including supabase)
+./scripts/deps.sh --target ~/.config/opencode
+
+# Install specific dependency only
+./scripts/deps.sh --target ~/.config/opencode --only agency   # agency-agents (~184 agents)
+./scripts/deps.sh --target ~/.config/opencode --only skills   # anthropics/skills (~17 skills, includes supabase)
+```
+
+**External dependencies:**
+- **agency-agents** (msitarzewski/agency-agents) — 184+ specialized agents for Forge delegation
+- **anthropics/skills** — 17 skills including Supabase integration
+- **supabase/agent-skills** — Skipped (already included in anthropics/skills)
+
+> Note: `deps.sh` clones to temporary directories (`mktemp -d`) and does not pollute the Orquestrum repository.
+
 **Claude Code** — agents to `.claude/agents/`, docs/skills to `.sdd/` (paths resolved relative to project root)  
 **OpenCode** — 6 flat agent files with `mode: primary` (all visible in Tab picker), docs/skills to `--target`  
 **Cursor** — 20 rule files in `.cursor/rules/` with `.sdd/docs` paths and embedded reference content  
@@ -130,7 +150,23 @@ Helm (primary, restricted task permissions)
 
 Skills remain as documentation in `skills/` — orchestrators read `__OPENCODE_ROOT__/skills/<name>/SKILL.md` and execute instructions inline. Skills are **not** registered as separate agents.
 
-Agency-agents (from [msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents)) integrate via their kebab-case OpenCode names (e.g. `engineering-code-reviewer`). Since non-Helm orchestrators have no `permission.task` restriction, they can call agency-agents freely.
+Agency-agents (from [msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents)) are callable by all non-Helm orchestrators. Forge delegates to them via the Task tool using exact `subagent_type` values.
+
+**Delegation mapping** (Forge → agency-agents):
+
+| Task Domain | `subagent_type` | Notes |
+|------------|---------------|-------|
+| Backend / API | `senior-developer` | Laravel/Livewire/FluxUI specialist |
+| Database / Schema | `database-optimizer` | PostgreSQL/MySQL schema & query optimization |
+| Security / Auth | `security-engineer` | Threat modeling, secure code review |
+| UI / UX / Frontend | `frontend-developer` | React/Vue/Angular, UI implementation |
+| AI / Automation / n8n | `ai-engineer` | ML pipelines, AI-powered features |
+| Infra / Docker / CI-CD | `devops-automator` | Infrastructure automation, cloud ops |
+
+When delegating, Forge provides a prompt template that requires:
+- List of all created/modified artifacts
+- Confirmation of acceptance criteria met
+- Description of any deviations from the plan
 
 ---
 
