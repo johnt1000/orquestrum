@@ -23,7 +23,8 @@ log() { echo -e "${BLUE}[convert]${NC} $*"; }
 ok()  { echo -e "${GREEN}[✓]${NC} $*"; }
 err() { echo -e "${RED}[✗]${NC} $*" >&2; }
 
-PROVIDER="claude"
+PROVIDER=""
+PROVIDER_EXPLICIT="false"
 
 usage() {
   echo "Usage: $0 --tool <tool> | --all [--provider <provider>]"
@@ -137,12 +138,10 @@ convert_claude_code() {
 # ─── OpenCode ────────────────────────────────────────────────────────────────
 
 # Helper: emit OpenCode frontmatter for an orchestrator agent.
-# Replaces the canonical tools: block with permission: (edit/bash/task).
-# For primary agent: name is "Helm - The Architect" (with dash)
-# For subagents: name is already kebab-case-lowercase (e.g. "lore-product-strategist")
-# Task permissions differ by mode:
-#   - primary (Helm): restricted to 5 orchestrators only
-#   - subagent: unrestricted ("*": allow)
+# All agents are emitted as mode: primary (visible in Tab picker).
+# Helm has restricted task permissions; all others have unrestricted.
+# Model is resolved from the selected provider based on agent tier.
+# Display names use friendly format (e.g. "Forge - Dev Lead").
 # Args: file
 opencode_agent_frontmatter() {
   local file="$1"
@@ -151,25 +150,59 @@ opencode_agent_frontmatter() {
   local temp; temp="$(frontmatter_field "$file" "temperature")"
   local emoji; emoji="$(frontmatter_field "$file" "emoji")"
   local mode; mode="$(frontmatter_field "$file" "mode")"
-  
-  local actual_mode="$mode"
-  if [[ "$mode" == "agent" ]]; then
-    actual_mode="subagent"
+
+  local display_name="$canonical_name"
+  local is_helm="false"
+  local model_tier="balanced"
+
+  case "$canonical_name" in
+    "Helm - The Architect"|"Helm - The Architect")
+      display_name="Helm - The Architect"
+      is_helm="true"
+      model_tier="deep"
+      ;;
+    "lore-product-strategist")
+      display_name="Lore - Product Strategist"
+      model_tier="balanced"
+      ;;
+    "forge-dev-lead")
+      display_name="Forge - Dev Lead"
+      model_tier="balanced"
+      ;;
+    "ward-quality-lead")
+      display_name="Ward - Quality Lead"
+      model_tier="balanced"
+      ;;
+    "cast-ship-and-support-lead")
+      display_name="Cast - Ship & Support"
+      model_tier="mechanical"
+      ;;
+    "trace-onboarding-lead")
+      display_name="Trace - Onboarding"
+      model_tier="balanced"
+      ;;
+  esac
+
+  local agent_model=""
+  if [[ "$PROVIDER_EXPLICIT" == "true" ]]; then
+    agent_model="$(resolve_model_tier "$PROVIDER" "$model_tier")"
   fi
 
   {
     echo "---"
-    echo "name: $canonical_name"
+    echo "name: $display_name"
     echo "description: $desc"
-    echo "mode: $actual_mode"
+    echo "mode: primary"
+    if [[ -n "$agent_model" ]]; then
+      echo "model: $agent_model"
+    fi
     echo "temperature: $temp"
     echo "emoji: $emoji"
     echo "permission:"
     echo "  edit: allow"
     echo "  bash: deny"
     echo "  task:"
-    if [[ "$mode" == "primary" ]]; then
-      # Helm: restricted to 5 orchestrators (deny all, then allow specific)
+    if [[ "$is_helm" == "true" ]]; then
       echo "    \"*\": deny"
       echo "    lore-product-strategist: allow"
       echo "    forge-dev-lead: allow"
@@ -177,7 +210,6 @@ opencode_agent_frontmatter() {
       echo "    cast-ship-and-support-lead: allow"
       echo "    trace-onboarding-lead: allow"
     else
-      # Subagents: unrestricted access to any agent (agency-agents, etc)
       echo "    \"*\": allow"
     fi
     echo "---"
@@ -405,7 +437,7 @@ TOOL=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --tool)     TOOL="$2"; shift 2 ;;
-    --provider) PROVIDER="$2"; shift 2 ;;
+    --provider) PROVIDER="$2"; PROVIDER_EXPLICIT="true"; shift 2 ;;
     --all)      TOOL="all"; shift ;;
     -h|--help)  usage ;;
     *) err "Unknown argument: $1"; usage ;;
@@ -421,15 +453,19 @@ fi
 
 source "$PROFILES"
 
-case "$PROVIDER" in
-  claude|copilot|glm) ;;
-  *) err "Unknown provider: $PROVIDER (valid: claude, copilot, glm)"; exit 1 ;;
-esac
+if [[ "$PROVIDER_EXPLICIT" == "true" ]]; then
+  case "$PROVIDER" in
+    claude|copilot|glm) ;;
+    *) err "Unknown provider: $PROVIDER (valid: claude, copilot, glm)"; exit 1 ;;
+  esac
 
-log "Provider: $PROVIDER"
-log "  deep:       $(resolve_model_tier "$PROVIDER" deep)"
-log "  balanced:   $(resolve_model_tier "$PROVIDER" balanced)"
-log "  mechanical: $(resolve_model_tier "$PROVIDER" mechanical)"
+  log "Provider: $PROVIDER"
+  log "  deep:       $(resolve_model_tier "$PROVIDER" deep)"
+  log "  balanced:   $(resolve_model_tier "$PROVIDER" balanced)"
+  log "  mechanical: $(resolve_model_tier "$PROVIDER" mechanical)"
+else
+  log "Provider: none (model not set — user chooses at runtime)"
+fi
 
 echo ""
 case "$TOOL" in

@@ -18,6 +18,8 @@ Tier 2 — Full     → Complete pipeline             (~13 LLM calls)
 
 Tiers prevent over-engineering: a typo fix never triggers a SPEC. A new payment module always does.
 
+Forge can also operate as a direct primary for Tier 0 work — bypassing Helm entirely for the fastest path to execution.
+
 ---
 
 ## Agents
@@ -31,13 +33,13 @@ Six orchestrators, each owning one or more pipeline phases:
 | **Lore**  | Product Strategist — owns glossary, specs, and architectural decisions                | 0–1             |
 | **Forge** | Dev Lead — translates specs into architecture, epics, and executable tasks            | 2–3             |
 | **Ward**  | Quality Lead — code review, functional QA, and failure learning                       | 4               |
-| **Cast**  | Ship & Support Lead — versioned releases, runbooks, and production triage             | 5 + sustentação |
+| **Cast**  | Ship & Support Lead — versioned releases, runbooks, and production triage             | 5 + maintenance |
 
 ---
 
 ## Skills
 
-16 specialized skills delegated by agents:
+16 specialized skills delegated by agents. Skills declare `chain` in their frontmatter for automatic sequencing:
 
 | Phase | Skill                  | Produces                                | Chains to |
 | ----- | ---------------------- | --------------------------------------- | --------- |
@@ -72,17 +74,14 @@ chmod +x scripts/*.sh
 ### Generate integration packages
 
 ```bash
-# All tools at once (default provider: claude)
+# No provider — model not set, user chooses at runtime
 ./scripts/convert.sh --all
+./scripts/convert.sh --tool opencode
 
-# Choose a provider — models are resolved at conversion time
-./scripts/convert.sh --all --provider claude    # anthropic/claude-* (default)
+# Choose a provider — models are resolved and locked in the generated agents
+./scripts/convert.sh --all --provider claude    # anthropic/claude-*
 ./scripts/convert.sh --all --provider copilot   # github-copilot/claude-*
 ./scripts/convert.sh --all --provider glm       # zai-coding-plan/glm-*
-
-# Or per tool + provider
-./scripts/convert.sh --tool opencode --provider glm
-./scripts/convert.sh --tool claude-code --provider copilot
 ```
 
 ### Install into a project
@@ -107,7 +106,7 @@ chmod +x scripts/*.sh
 ```
 
 **Claude Code** — agents to `.claude/agents/`, docs/skills to `.sdd/` (paths resolved relative to project root)  
-**OpenCode** — 6 flat agent files (`agents/<Name>.md`) + docs/skills to `--target`; paths rewritten to absolute target at install time  
+**OpenCode** — 6 flat agent files with `mode: primary` (all visible in Tab picker), docs/skills to `--target`  
 **Cursor** — 20 rule files in `.cursor/rules/` with `.sdd/docs` paths and embedded reference content  
 **Aider** — single `CONVENTIONS.md` with all agents, skills, and `.sdd/docs` paths  
 **Windsurf** — single `.windsurfrules` with all agents, skills, and `.sdd/docs` paths
@@ -116,20 +115,20 @@ chmod +x scripts/*.sh
 
 ## OpenCode agent hierarchy
 
-OpenCode receives 6 flat agent files (`agents/helm-the-architect.md`, `agents/lore-product-strategist.md`, …). The filename without `.md` is the agent type used by OpenCode's Task tool.
+All 6 agents are emitted as `mode: primary` — they appear in the Tab picker and can be called directly by the user or via Task tool by other agents.
 
 **Helm** is the only agent with a restricted `permission.task` — it can only route to the 5 orchestrators:
 
 ```
-Helm (primary, permission.task: lore-product-strategist | forge-dev-lead | ward-quality-lead | cast-ship-and-support-lead | trace-onboarding-lead)
-├─ lore-product-strategist  (subagent) — executes skills inline; can call any agent including agency-agents
-├─ forge-dev-lead (subagent) — executes skills inline; can call any agent including agency-agents
-├─ ward-quality-lead  (subagent) — executes skills inline; can call any agent including agency-agents
-├─ cast-ship-and-support-lead (subagent) — executes skills inline; can call any agent including agency-agents
-└─ trace-onboarding-lead (subagent) — executes skills inline; can call any agent including agency-agents
+Helm (primary, restricted task permissions)
+├─ Lore - Product Strategist (primary, unrestricted) — can call any agent
+├─ Forge - Dev Lead (primary, unrestricted) — can call any agent, Tier 0 fast-path
+├─ Ward - Quality Lead (primary, unrestricted) — can call any agent
+├─ Cast - Ship & Support (primary, unrestricted) — can call any agent
+└─ Trace - Onboarding (primary, unrestricted) — can call any agent
 ```
 
-Skills remain as documentation in `skills/` — orchestrators read `__OPENCODE_ROOT__/skills/<name>/SKILL.md` and execute instructions inline. Skills are **not** registered as separate agents, keeping the setup simple.
+Skills remain as documentation in `skills/` — orchestrators read `__OPENCODE_ROOT__/skills/<name>/SKILL.md` and execute instructions inline. Skills are **not** registered as separate agents.
 
 Agency-agents (from [msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents)) integrate via their kebab-case OpenCode names (e.g. `engineering-code-reviewer`). Since non-Helm orchestrators have no `permission.task` restriction, they can call agency-agents freely.
 
@@ -147,13 +146,17 @@ Models are organized in three tiers based on reasoning requirements:
 
 See `docs/MODELS.md` for the full assignment breakdown. Provider profiles are defined in `models/profiles.sh`.
 
+When generated **without** `--provider`, the `model` field is omitted from agent frontmatter — the user chooses the model at runtime. When generated **with** `--provider`, the model is locked per the tier assignment.
+
 ---
 
 ## Static RAG
 
 Skills for Cursor, Aider, and Windsurf include their reference knowledge **embedded at convert time** — no runtime file reads required. Claude Code and OpenCode keep references as separate files (cheaper context).
 
-The `pattern-manager` reference (1,020 lines of engineering principles and design patterns) is injected in compact mode — only the core principles and quick-reference guide (~320 lines).
+The `pattern-manager` reference uses a **fragmented structure** — an index file lists all patterns, and individual pattern files are loaded on demand. This reduces context from ~8,000 tokens (monolithic) to ~2,000-4,000 tokens per session.
+
+---
 
 ## Path resolution
 
@@ -166,8 +169,6 @@ Canonical source uses bare paths (`docs/SDLC.md`, `skills/.../SKILL.md`). `conve
 | cursor | `.sdd/docs` / `.sdd/skills` | Runtime (relative to project CWD) |
 | aider | `.sdd/docs` / `.sdd/skills` | Runtime (relative to project CWD) |
 | windsurf | `.sdd/docs` / `.sdd/skills` | Runtime (relative to project CWD) |
-
-OpenCode resolves at install time because it is typically installed globally (`~/.config/opencode/`), where a project-relative path would not resolve correctly.
 
 ---
 
@@ -183,14 +184,14 @@ OpenCode resolves at install time because it is typically installed globally (`~
 
 The lint checks:
 
-- Frontmatter has required fields: `name`, `description`, `model`
+- Frontmatter has required fields: `name`, `description`
 - No hardcoded tool-specific paths (`.opencode/`, `.claude/`, `.cursor/`) in canonical source
 
 ### Adding an agent or skill
 
-1. Create the file with valid frontmatter (`name`, `description`, `model` required)
+1. Create the file with valid frontmatter (`name`, `description` required)
 2. Use only canonical paths in the body: `docs/`, `skills/`, `./references/`, `./assets/`
-3. For skills: add `inject_references: full` (or `compact`) to frontmatter
+3. For skills: add `chain` (optional) and `inject_references: full|compact` to frontmatter
 4. Run `./scripts/lint-agents.sh` — must pass with zero errors
 5. Run `./scripts/convert.sh --all` to update `integrations/`
 
@@ -200,9 +201,9 @@ The lint checks:
 
 ```
 agents/       ← 6 orchestrator agents (canonical source)
-models/       ← Provider profiles (profiles.sh)
-skills/       ← 14 specialized skills (SKILL.md + assets/ + references/)
-docs/         ← Pipeline governance (SDLC.md, TIERS.md, MODELS.md)
+models/       ← Provider profiles (profiles.sh) for --provider flag
+skills/       ← 16 specialized skills (SKILL.md + assets/ + references/)
+docs/         ← Pipeline governance (SDLC.md, TIERS.md, MODELS.md, CONVENTIONS.md)
 scripts/      ← convert.sh, install.sh, lint-agents.sh
 integrations/ ← Generated by convert.sh — do not edit manually
 ```

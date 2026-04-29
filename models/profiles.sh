@@ -43,6 +43,12 @@ resolve_model_tier() {
 
 apply_provider_models() {
   local provider="$1"
+
+  if [[ -z "$provider" ]]; then
+    cat
+    return
+  fi
+
   local deep balanced mechanical
 
   deep="$(resolve_model_tier "$provider" "deep")"

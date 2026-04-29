@@ -2,6 +2,8 @@
 
 Work classification guide for each job's process level. The goal is proportional to impact: hotfixes don't need a SPEC; architectural features need everything.
 
+> **Note:** This document is a human-readable reference. The Helm agent uses an inline decision matrix for tier classification — this file is no longer read at bootstrap.
+
 ---
 
 ## The 3 Tiers
