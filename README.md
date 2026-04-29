@@ -39,7 +39,7 @@ Six orchestrators, each owning one or more pipeline phases:
 
 ## Skills
 
-16 specialized skills delegated by agents. Skills declare `chain` in their frontmatter for automatic sequencing:
+17 specialized skills delegated by agents. Skills declare `chain` in their frontmatter for automatic sequencing:
 
 | Phase | Skill                  | Produces                                | Chains to |
 | ----- | ---------------------- | --------------------------------------- | --------- |
@@ -58,6 +58,7 @@ Six orchestrators, each owning one or more pipeline phases:
 | 4     | `learning-manager`     | Root cause analysis of failures         | — |
 | 5     | `changelog-manager`    | SemVer changelog + release document     | runbook-manager |
 | 5     | `runbook-manager`      | Operational procedures                  | — |
+| 5     | `archive-manager`      | Consolidated task/log summaries         | runbook-manager |
 
 ---
 

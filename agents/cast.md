@@ -27,6 +27,7 @@ Do NOT execute a skill from memory. Always:
 - About to generate changelog or release notes? → `skill(name="changelog-manager")`
 - About to update operational runbook? → `skill(name="runbook-manager")`
 - About to update checkpoint? → `skill(name="checkpoint-manager")`
+- About to archive completed tasks/logs? → `skill(name="archive-manager")`
 - None match? → proceed without skill loading.
 
 ---
@@ -104,6 +105,14 @@ Read according to mode:
 - [ ] `RUNBOOK.md` covers all components of the current Architecture
 - [ ] Migration Notes written if there is a schema or API change
 - [ ] No secrets or credentials in the artifacts
+
+### Step 3 — Archive (Optional)
+
+After release is confirmed:
+
+1. Execute `archive-manager` to consolidate completed tasks/logs into summary files
+2. This reduces repository clutter while preserving traceability
+3. **Never run archive before the release is confirmed and pushed**
 
 ---
 
