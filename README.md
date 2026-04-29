@@ -71,15 +71,17 @@ chmod +x scripts/*.sh
 ### Generate integration packages
 
 ```bash
-# All tools at once
+# All tools at once (default provider: claude)
 ./scripts/convert.sh --all
 
-# Or per tool
-./scripts/convert.sh --tool claude-code   # → integrations/claude-code/
-./scripts/convert.sh --tool opencode      # → integrations/opencode/
-./scripts/convert.sh --tool cursor        # → integrations/cursor/
-./scripts/convert.sh --tool aider         # → integrations/aider/
-./scripts/convert.sh --tool windsurf      # → integrations/windsurf/
+# Choose a provider — models are resolved at conversion time
+./scripts/convert.sh --all --provider claude    # anthropic/claude-* (default)
+./scripts/convert.sh --all --provider copilot   # github-copilot/claude-*
+./scripts/convert.sh --all --provider glm       # zai-coding-plan/glm-*
+
+# Or per tool + provider
+./scripts/convert.sh --tool opencode --provider glm
+./scripts/convert.sh --tool claude-code --provider copilot
 ```
 
 ### Install into a project
@@ -129,6 +131,20 @@ Helm (primary, permission.task: lore-product-strategist | forge-dev-lead | ward-
 Skills remain as documentation in `skills/` — orchestrators read `__OPENCODE_ROOT__/skills/<name>/SKILL.md` and execute instructions inline. Skills are **not** registered as separate agents, keeping the setup simple.
 
 Agency-agents (from [msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents)) integrate via their kebab-case OpenCode names (e.g. `engineering-code-reviewer`). Since non-Helm orchestrators have no `permission.task` restriction, they can call agency-agents freely.
+
+---
+
+## Model assignment
+
+Models are organized in three tiers based on reasoning requirements:
+
+| Tier | `claude` | `copilot` | `glm` | Used by |
+|------|----------|-----------|-------|---------|
+| **Deep** | `anthropic/claude-opus-4-6` | `github-copilot/claude-opus-4.5` | `zai-coding-plan/glm-5.1` | Helm, spec-manager, adr-manager, reverse-spec |
+| **Balanced** | `anthropic/claude-sonnet-4-6` | `github-copilot/claude-sonnet-4.5` | `zai-coding-plan/glm-4.7` | Lore, Forge, Ward, Trace + most skills |
+| **Mechanical** | `anthropic/claude-haiku-4-5-20251001` | `github-copilot/claude-haiku-4.5` | `zai-coding-plan/glm-4.5-air` | Cast, glossary, changelog, runbook |
+
+See `docs/MODELS.md` for the full assignment breakdown. Provider profiles are defined in `models/profiles.sh`.
 
 ---
 
@@ -183,6 +199,7 @@ The lint checks:
 
 ```
 agents/       ← 6 orchestrator agents (canonical source)
+models/       ← Provider profiles (profiles.sh)
 skills/       ← 14 specialized skills (SKILL.md + assets/ + references/)
 docs/         ← Pipeline governance (SDLC.md, TIERS.md, MODELS.md)
 scripts/      ← convert.sh, install.sh, lint-agents.sh

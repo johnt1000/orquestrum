@@ -12,6 +12,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 INTEGRATIONS="$ROOT/integrations"
+PROFILES="$ROOT/models/profiles.sh"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -22,10 +23,13 @@ log() { echo -e "${BLUE}[convert]${NC} $*"; }
 ok()  { echo -e "${GREEN}[✓]${NC} $*"; }
 err() { echo -e "${RED}[✗]${NC} $*" >&2; }
 
+PROVIDER="claude"
+
 usage() {
-  echo "Usage: $0 --tool <tool> | --all"
+  echo "Usage: $0 --tool <tool> | --all [--provider <provider>]"
   echo ""
   echo "  Tools: claude-code, opencode, cursor, aider, windsurf"
+  echo "  Providers: claude (default), copilot, glm"
   exit 1
 }
 
@@ -115,7 +119,7 @@ convert_claude_code() {
 
   for agent in "$ROOT/agents"/*.md; do
     local name; name="$(basename "$agent")"
-    rewrite_paths ".sdd/docs" ".sdd/skills" "$agent" > "$out/.claude/agents/$name"
+    strip_frontmatter "$agent" | rewrite_paths ".sdd/docs" ".sdd/skills" | apply_provider_models "$PROVIDER" > "$out/.claude/agents/$name"
   done
 
   cp "$ROOT/docs/"*.md "$out/.sdd/docs/"
@@ -174,7 +178,7 @@ opencode_agent_frontmatter() {
     fi
     echo "---"
     echo ""
-    strip_frontmatter "$file" | rewrite_paths "__OPENCODE_ROOT__/docs" "__OPENCODE_ROOT__/skills"
+    strip_frontmatter "$file" | rewrite_paths "__OPENCODE_ROOT__/docs" "__OPENCODE_ROOT__/skills" | apply_provider_models "$PROVIDER"
   }
 }
 
@@ -227,7 +231,7 @@ convert_cursor() {
     local slug; slug="$(basename "$agent" .md)"
     local name; name="$(frontmatter_field "$agent" "name")"
     local desc; desc="$(frontmatter_field "$agent" "description")"
-    local body; body="$(strip_frontmatter "$agent" | rewrite_paths ".sdd/docs" ".sdd/skills")"
+    local body; body="$(strip_frontmatter "$agent" | rewrite_paths ".sdd/docs" ".sdd/skills" | apply_provider_models "$PROVIDER")"
 
     {
       echo "---"
@@ -251,7 +255,7 @@ convert_cursor() {
 
     local name; name="$(frontmatter_field "$skill_file" "name")"
     local desc; desc="$(frontmatter_field "$skill_file" "description")"
-    local body; body="$(strip_frontmatter "$skill_file" | rewrite_paths ".sdd/docs" ".sdd/skills")"
+    local body; body="$(strip_frontmatter "$skill_file" | rewrite_paths ".sdd/docs" ".sdd/skills" | apply_provider_models "$PROVIDER")"
     local ref_content; ref_content="$(skill_reference_content "$skill_dir")"
 
     {
@@ -297,7 +301,7 @@ convert_aider() {
       echo ""
       echo "## Agent: ${name}"
       echo ""
-      strip_frontmatter "$agent" | rewrite_paths ".sdd/docs" ".sdd/skills"
+      strip_frontmatter "$agent" | rewrite_paths ".sdd/docs" ".sdd/skills" | apply_provider_models "$PROVIDER"
       echo ""
     } >> "$conv"
   done
@@ -321,7 +325,7 @@ convert_aider() {
       echo ""
       echo "## Skill: ${name}"
       echo ""
-      strip_frontmatter "$skill_file" | rewrite_paths ".sdd/docs" ".sdd/skills"
+      strip_frontmatter "$skill_file" | rewrite_paths ".sdd/docs" ".sdd/skills" | apply_provider_models "$PROVIDER"
       skill_reference_content "$skill_dir"
       echo ""
     } >> "$conv"
@@ -355,7 +359,7 @@ convert_windsurf() {
       echo ""
       echo "## ${name}"
       echo ""
-      strip_frontmatter "$agent" | rewrite_paths ".sdd/docs" ".sdd/skills"
+      strip_frontmatter "$agent" | rewrite_paths ".sdd/docs" ".sdd/skills" | apply_provider_models "$PROVIDER"
       echo ""
     } >> "$rules"
   done
@@ -379,7 +383,7 @@ convert_windsurf() {
       echo ""
       echo "## Skill: ${name}"
       echo ""
-      strip_frontmatter "$skill_file" | rewrite_paths ".sdd/docs" ".sdd/skills"
+      strip_frontmatter "$skill_file" | rewrite_paths ".sdd/docs" ".sdd/skills" | apply_provider_models "$PROVIDER"
       skill_reference_content "$skill_dir"
       echo ""
     } >> "$rules"
@@ -395,14 +399,32 @@ TOOL=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --tool) TOOL="$2"; shift 2 ;;
-    --all)  TOOL="all"; shift ;;
-    -h|--help) usage ;;
+    --tool)     TOOL="$2"; shift 2 ;;
+    --provider) PROVIDER="$2"; shift 2 ;;
+    --all)      TOOL="all"; shift ;;
+    -h|--help)  usage ;;
     *) err "Unknown argument: $1"; usage ;;
   esac
 done
 
 [[ -z "$TOOL" ]] && usage
+
+if [[ ! -f "$PROFILES" ]]; then
+  err "Provider profiles not found: $PROFILES"
+  exit 1
+fi
+
+source "$PROFILES"
+
+case "$PROVIDER" in
+  claude|copilot|glm) ;;
+  *) err "Unknown provider: $PROVIDER (valid: claude, copilot, glm)"; exit 1 ;;
+esac
+
+log "Provider: $PROVIDER"
+log "  deep:       $(resolve_model_tier "$PROVIDER" deep)"
+log "  balanced:   $(resolve_model_tier "$PROVIDER" balanced)"
+log "  mechanical: $(resolve_model_tier "$PROVIDER" mechanical)"
 
 echo ""
 case "$TOOL" in

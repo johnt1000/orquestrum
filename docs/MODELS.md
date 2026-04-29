@@ -6,59 +6,71 @@ The goal is proportional to the level of reasoning required: more expensive mode
 
 ---
 
-## Available Models
+## Provider Profiles
 
-| Model | Profile | When to use |
-|-------|---------|------------|
-| `claude-opus-4-6` | Deep reasoning, ambiguity resolution, creative synthesis | Requirements elicitation, trade-off analysis, inference from code |
-| `claude-sonnet-4-6` | Balanced, non-trivial structured tasks | Structured design, code review, validation, decomposition |
-| `claude-haiku-4-5-20251001` | Fast, mechanical, template-driven | Release formatting, term definition, operational doc updates |
+Models are organized in three tiers. Use `--provider <name>` with `convert.sh` to generate integrations for a specific provider.
 
----
+| Tier | `claude` | `copilot` | `glm` | When to use |
+|------|----------|-----------|-------|-------------|
+| **Deep** | `anthropic/claude-opus-4-6` | `github-copilot/claude-opus-4.5` | `zai-coding-plan/glm-5.1` | Requirements elicitation, trade-off analysis, inference from code |
+| **Balanced** | `anthropic/claude-sonnet-4-6` | `github-copilot/claude-sonnet-4.5` | `zai-coding-plan/glm-4.7` | Structured design, code review, validation, decomposition |
+| **Mechanical** | `anthropic/claude-haiku-4-5-20251001` | `github-copilot/claude-haiku-4.5` | `zai-coding-plan/glm-4.5-air` | Release formatting, term definition, operational doc updates |
 
-## Primary Agents
-
-| Agent | Model | Justification |
-|-------|-------|--------------|
-| `helm` | `claude-opus-4-6` | Meta-orchestrator; tier error = cascading waste across the entire pipeline |
-| `lore` | `claude-sonnet-4-6` | Structured orchestration; critical sub-skills (spec, adr) already use opus |
-| `forge` | `claude-sonnet-4-6` | Orchestration; translates SPEC into structured plans; design follows patterns and ADRs |
-| `ward` | `claude-sonnet-4-6` | Structured validation against defined criteria; checklists with reasoning |
-| `cast` | `claude-haiku-4-5-20251001` | Structured triage; changelog and runbook are highly mechanical |
-| `trace` | `claude-sonnet-4-6` | Reading + structured categorization of code; critical sub-skills use opus |
+Canonical source files reference models without provider prefix (e.g. `claude-opus-4-6`). The `convert.sh` script resolves the full model ID at conversion time based on the selected provider.
 
 ---
 
-## Skills
+## Assignment by Tier
 
-### Opus — Deep Reasoning
+### Deep — Primary Agents
 
-| Skill | Model | Justification |
-|-------|-------|--------------|
-| `spec-manager` | `claude-opus-4-6` | Most critical pipeline input; wrong spec = cascading failure across all subsequent artifacts |
-| `adr-manager` | `claude-opus-4-6` | Trade-off analysis and technical decision consequences; requires deep reasoning |
-| `reverse-spec` | `claude-opus-4-6` | Requirements inference from ambiguous code — weak signal, high error risk |
+| Agent | Justification |
+|-------|--------------|
+| `helm` | Meta-orchestrator; tier error = cascading waste across the entire pipeline |
 
-### Sonnet — Structured Non-Trivial
+### Deep — Skills
 
-| Skill | Model | Justification |
-|-------|-------|--------------|
-| `architecture-manager` | `claude-sonnet-4-6` | Structured design; follows established patterns and accepted ADRs |
-| `pattern-manager` | `claude-sonnet-4-6` | Structured catalog and adoption; selection against known pattern list |
-| `epic-manager` | `claude-sonnet-4-6` | Structured decomposition of SPEC into vertical slices |
-| `task-manager` | `claude-sonnet-4-6` | Structured execution + test case derivation (TDD) from SC-XX |
-| `review-manager` | `claude-sonnet-4-6` | Security checklist + reasoning about architectural conformance |
-| `qa-manager` | `claude-sonnet-4-6` | Structured Given/When/Then validation; SC-XX → test mapping |
-| `learning-manager` | `claude-sonnet-4-6` | Structured root cause analysis (5 Whys method) |
-| `codebase-mapper` | `claude-sonnet-4-6` | Reading + structured categorization of stack, components and entry points |
+| Skill | Justification |
+|-------|--------------|
+| `spec-manager` | Most critical pipeline input; wrong spec = cascading failure across all subsequent artifacts |
+| `adr-manager` | Trade-off analysis and technical decision consequences; requires deep reasoning |
+| `reverse-spec` | Requirements inference from ambiguous code — weak signal, high error risk |
 
-### Haiku — Mechanical / Template-Driven
+### Balanced — Primary Agents
 
-| Skill | Model | Justification |
-|-------|-------|--------------|
-| `glossary-manager` | `claude-haiku-4-5-20251001` | Domain term extraction and definition — fixed structure, predictable output |
-| `changelog-manager` | `claude-haiku-4-5-20251001` | Release formatting (Keep a Changelog + SemVer) — highly mechanical |
-| `runbook-manager` | `claude-haiku-4-5-20251001` | Operational documentation updates — template-driven, no creativity required |
+| Agent | Justification |
+|-------|--------------|
+| `lore` | Structured orchestration; critical sub-skills (spec, adr) already use deep |
+| `forge` | Orchestration; translates SPEC into structured plans; design follows patterns and ADRs |
+| `ward` | Structured validation against defined criteria; checklists with reasoning |
+| `trace` | Reading + structured categorization of code; critical sub-skills use deep |
+
+### Balanced — Skills
+
+| Skill | Justification |
+|-------|--------------|
+| `architecture-manager` | Structured design; follows established patterns and accepted ADRs |
+| `pattern-manager` | Structured catalog and adoption; selection against known pattern list |
+| `epic-manager` | Structured decomposition of SPEC into vertical slices |
+| `task-manager` | Structured execution + test case derivation (TDD) from SC-XX |
+| `review-manager` | Security checklist + reasoning about architectural conformance |
+| `qa-manager` | Structured Given/When/Then validation; SC-XX → test mapping |
+| `learning-manager` | Structured root cause analysis (5 Whys method) |
+| `codebase-mapper` | Reading + structured categorization of stack, components and entry points |
+
+### Mechanical — Primary Agents
+
+| Agent | Justification |
+|-------|--------------|
+| `cast` | Structured triage; changelog and runbook are highly mechanical |
+
+### Mechanical — Skills
+
+| Skill | Justification |
+|-------|--------------|
+| `glossary-manager` | Domain term extraction and definition — fixed structure, predictable output |
+| `changelog-manager` | Release formatting (Keep a Changelog + SemVer) — highly mechanical |
+| `runbook-manager` | Operational documentation updates — template-driven, no creativity required |
 
 ---
 
@@ -67,42 +79,42 @@ The goal is proportional to the level of reasoning required: more expensive mode
 Each primary agent defines its sub-skill models in the `MODEL PER SUB-SKILL` section of its file. The propagation flow is:
 
 ```
-Helm — The Architect (opus)
+Helm — The Architect (deep)
   ↓ instructs orchestrator model
-Lore — Product Strategist (sonnet)
+Lore — Product Strategist (balanced)
   ↓ instructs sub-skill model
-  ├── glossary-manager (haiku)
-  ├── spec-manager (opus)
-  └── adr-manager (opus)
+  ├── glossary-manager (mechanical)
+  ├── spec-manager (deep)
+  └── adr-manager (deep)
 
-Forge — Dev Lead (sonnet)
-  ├── architecture-manager (sonnet)
-  ├── pattern-manager (sonnet)
-  ├── epic-manager (sonnet)
-  └── task-manager (sonnet)
+Forge — Dev Lead (balanced)
+  ├── architecture-manager (balanced)
+  ├── pattern-manager (balanced)
+  ├── epic-manager (balanced)
+  └── task-manager (balanced)
 
-Ward — Quality Lead (sonnet)
-  ├── review-manager (sonnet)
-  ├── qa-manager (sonnet)
-  └── learning-manager (sonnet)
+Ward — Quality Lead (balanced)
+  ├── review-manager (balanced)
+  ├── qa-manager (balanced)
+  └── learning-manager (balanced)
 
-Cast — Ship & Support Lead (haiku)
-  ├── changelog-manager (haiku)
-  └── runbook-manager (haiku)
+Cast — Ship & Support Lead (mechanical)
+  ├── changelog-manager (mechanical)
+  └── runbook-manager (mechanical)
 
-Trace — Onboarding Lead (sonnet)
-  ├── codebase-mapper (sonnet)
-  ├── reverse-spec (opus)
-  ├── adr-manager (opus)
-  └── glossary-manager (haiku)
+Trace — Onboarding Lead (balanced)
+  ├── codebase-mapper (balanced)
+  ├── reverse-spec (deep)
+  ├── adr-manager (deep)
+  └── glossary-manager (mechanical)
 ```
 
 ---
 
 ## Estimated Cost per Tier
 
-| Tier | Agents/Skills involved | Active models | Note |
+| Tier | Agents/Skills involved | Active tiers | Note |
 |------|----------------------|--------------|------|
-| **Tier 0** | task-manager, log | sonnet | ~2 sonnet calls |
-| **Tier 1** | epic-manager, task-manager, qa-manager | sonnet | ~5 sonnet calls |
-| **Tier 2** | full pipeline | opus (spec, adr) + sonnet (majority) + haiku (changelog, runbook, glossary) | ~13 calls; opus concentrated in discovery phase |
+| **Tier 0** | task-manager, log | balanced | ~2 balanced calls |
+| **Tier 1** | epic-manager, task-manager, qa-manager | balanced | ~5 balanced calls |
+| **Tier 2** | full pipeline | deep (spec, adr) + balanced (majority) + mechanical (changelog, runbook, glossary) | ~13 calls; deep concentrated in discovery phase |
