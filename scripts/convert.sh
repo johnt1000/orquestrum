@@ -99,6 +99,9 @@ skill_reference_content() {
   # spec-references.md, architecture-manager → arch-references.md), so use a glob.
   local ref_file
   ref_file="$(ls "$skill_dir/references/"*-references.md 2>/dev/null | head -1)"
+  if [[ -z "$ref_file" ]]; then
+    ref_file="$(ls "$skill_dir/references/"*-index.md 2>/dev/null | head -1)"
+  fi
   [[ -z "$ref_file" ]] && return
 
   printf '\n---\n\n## Reference Knowledge\n\n'
@@ -124,6 +127,7 @@ convert_claude_code() {
 
   cp "$ROOT/docs/"*.md "$out/.sdd/docs/"
   cp -r "$ROOT/skills/"* "$out/.sdd/skills/"
+  find "$out/.sdd/skills/" -name "*.bak" -delete
 
   ok "claude-code → $out"
   echo "    .claude/agents/   ← copy to your project's .claude/agents/"
@@ -212,6 +216,7 @@ convert_opencode() {
 
   # Copy skills as reference documentation (for reading by orchestrators)
   cp -r "$ROOT/skills/"* "$out/skills/"
+  find "$out/skills/" -name "*.bak" -delete
 
   ok "opencode → $out"
   echo "    Install global:   ./scripts/install.sh --tool opencode --target ~/.config/opencode"

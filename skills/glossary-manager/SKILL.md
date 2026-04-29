@@ -8,7 +8,12 @@ metadata:
   phase: 0
   depends_on: []
   produces: "docs/00-discovery/glossary/GLOSSARY.md"
+chain:
+  next: spec-manager
+  condition: "glossary is new or was updated (phase 0 complete)"
 ---
+
+> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
 
 # Glossary Manager Skill
 
@@ -30,13 +35,10 @@ Before any action, read: `./references/glossary-references.md`
 
 ## Output Schema
 
-The artifact produced by this skill MUST contain the following mandatory sections:
 - Context
 - Domain Terms table
 - Acronyms
 - References
-
-Invalid format: absence of any mandatory section blocks the next gate.
 
 ## Execution Instructions
 
@@ -55,11 +57,6 @@ Invalid format: absence of any mandatory section blocks the next gate.
 - **DO NOT** create the glossary without consulting the user about the critical domain terms.
 - **DO NOT** omit LGPD terms when the project involves personal or sensitive data.
 - **DO NOT** mark a term as `Deprecated` without indicating the replacement term.
-
-**Context fence:**
-- Operate exclusively on files declared under `Reads`
-- DO NOT read files from later pipeline phases not listed in the I/O Contract
-- DO NOT infer context from files not explicitly listed above
 
 ## Context Reflection
 

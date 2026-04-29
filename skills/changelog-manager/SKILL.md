@@ -8,7 +8,12 @@ metadata:
   phase: 5
   depends_on: [qa-manager]
   produces: "docs/04-release/RELEASE-vX.Y.Z.md"
+chain:
+  next: runbook-manager
+  condition: "release documented, runbook needs update"
 ---
+
+> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
 
 # Changelog Manager Skill
 
@@ -30,11 +35,8 @@ Before any action, read: `./references/changelog-references.md`
 
 ## Output Schema
 
-The artifact produced by this skill MUST contain the following mandatory sections:
 - Changelog entry (Added/Changed/Fixed/Removed)
 - Release document with version, date, and artifact list
-
-Invalid format: absence of any mandatory section blocks the next gate.
 
 ## Execution Instructions
 
@@ -54,11 +56,6 @@ Invalid format: absence of any mandatory section blocks the next gate.
 - **DO NOT** leave Migration Notes empty when there is a database schema or API contract change.
 - **DO NOT** invent the version number — always derive it from the type of change via Semantic Versioning.
 - **DO NOT** move items from `[Unreleased]` to a version without dating the entry.
-
-**Context fence:**
-- Operate exclusively on files declared under `Reads`
-- DO NOT read files from later pipeline phases not listed in the I/O Contract
-- DO NOT infer context from files not explicitly listed above
 
 ## Context Reflection
 

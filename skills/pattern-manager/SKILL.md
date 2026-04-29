@@ -8,7 +8,12 @@ metadata:
   phase: 1
   depends_on: [spec-manager]
   produces: "docs/00-discovery/patterns/PATTERNS.md"
+chain:
+  next: architecture-manager
+  condition: "patterns cataloged, ready for architecture design"
 ---
+
+> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
 
 # Pattern Manager Skill
 
@@ -16,7 +21,9 @@ You act as a Tech Lead / Principal Engineer responsible for maintaining the proj
 
 ## Pre-execution (REQUIRED)
 
-Before any action, read: `./references/pattern-references.md`
+Before any action, read the pattern index: `./references/pattern-index.md`
+
+The index lists all available patterns organized by layer. After reading the index, load **only the relevant pattern files** for the current task using `./references/pattern-{slug}.md` (e.g. `pattern-repository.md`, `pattern-strategy.md`). Do NOT read all pattern files at once — the index provides enough context to select the right ones.
 
 ## I/O Contract
 
@@ -30,12 +37,9 @@ Before any action, read: `./references/pattern-references.md`
 
 ## Output Schema
 
-The artifact produced by this skill MUST contain the following mandatory sections:
 - Pattern Catalog
 - Pattern Adoption Log
 - Decision Rationale
-
-Invalid format: absence of any mandatory section blocks the next gate.
 
 ## Operation Modes
 
@@ -56,7 +60,7 @@ Invalid format: absence of any mandatory section blocks the next gate.
    - Retry/fault-tolerant → **Retry + Exponential Backoff**
 
 2. For each pattern identified as a candidate:
-   - Consult `./references/pattern-references.md` for trade-offs
+   - Consult the relevant `./references/pattern-{slug}.md` file for trade-offs
    - Assess whether the complexity is justified by the project size/criticality
    - Decide: Adopted | Under Evaluation | Prohibited
 
@@ -106,11 +110,6 @@ Invalid format: absence of any mandatory section blocks the next gate.
 - **DO NOT** mix two patterns in the same adoption record — one record per pattern per context
 - **DO NOT** force a pattern where a simple CRUD suffices — complexity without reason is technical debt
 - **DO NOT** omit negative trade-offs — every pattern has a cost (complexity, learning curve, overhead)
-
-**Context fence:**
-- Operate exclusively on files declared under `Reads`
-- DO NOT read files from later pipeline phases not listed in the I/O Contract
-- DO NOT infer context from files not explicitly listed above
 
 ## Context Reflection
 

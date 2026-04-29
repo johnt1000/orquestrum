@@ -8,7 +8,12 @@ metadata:
   phase: 1
   depends_on: []
   produces: "docs/00-discovery/spec/spec-vX-{slug}.md"
+chain:
+  next: adr-manager
+  condition: "SPEC is new or has changed (ADR needed for decisions)"
 ---
+
+> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
 
 # Spec Manager Skill
 
@@ -30,7 +35,8 @@ Before any action, read: `./references/spec-references.md`
 
 ## Output Schema
 
-The artifact produced by this skill MUST contain the following mandatory sections:
+Mandatory sections (see `docs/CONVENTIONS.md` for shared rules):
+
 - Context
 - Assumptions table
 - Functional Requirements
@@ -39,8 +45,6 @@ The artifact produced by this skill MUST contain the following mandatory section
 - Flows
 - Success Criteria
 - References
-
-Invalid format: absence of any mandatory section blocks the next gate.
 
 ## Naming Convention
 
@@ -77,11 +81,6 @@ Invalid format: absence of any mandatory section blocks the next gate.
 - **DO NOT** omit the `Out-of-Scope` section — it is as important as the positive scope.
 - **DO NOT** invent ADR or Architecture IDs in References — only link what already exists on disk.
 - **DO NOT** write a SPEC that replaces an existing flow without a `## Legacy Disposition` section — undeclared legacy state causes production bugs from co-existing conflicting flows.
-
-**Context fence:**
-- Operate exclusively on files declared under `Reads`
-- DO NOT read files from later pipeline phases not listed in the I/O Contract
-- DO NOT infer context from files not explicitly listed above
 
 ## Context Reflection
 

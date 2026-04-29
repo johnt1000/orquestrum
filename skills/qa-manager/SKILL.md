@@ -8,7 +8,12 @@ metadata:
   phase: 4
   depends_on: [task-manager, review-manager]
   produces: "docs/03-quality/qa/QA-{ref}-{slug}.md"
+chain:
+  next: learning-manager
+  condition: "QA failed or critical finding (learning needed)"
 ---
+
+> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
 
 # QA Manager Skill
 
@@ -30,14 +35,13 @@ Before any action, read: `./references/qa-references.md`
 
 ## Output Schema
 
-The artifact produced by this skill MUST contain the following mandatory sections:
+Mandatory sections (see `docs/CONVENTIONS.md` for shared rules):
+
 - Scope
 - Test Results
 - Security Validation
 - Success Criteria Coverage
 - Approval Status
-
-Invalid format: absence of any mandatory section blocks the next gate.
 
 ## Naming Convention
 
@@ -81,11 +85,6 @@ Invalid format: absence of any mandatory section blocks the next gate.
 - **DO NOT** perform QA on tasks with a status other than `Completed` — only validate what has been declared done.
 - **DO NOT** ignore `Critical` findings from the Review when evaluating the final status — an open Critical implies status `Failed`.
 - **DO NOT** omit `validation_method` per SC-XX — undeclared method defaults to `static` (most restrictive).
-
-**Context fence:**
-- Operate exclusively on files declared under `Reads`
-- DO NOT read files from later pipeline phases not listed in the I/O Contract
-- DO NOT infer context from files not explicitly listed above
 
 ## Context Reflection
 

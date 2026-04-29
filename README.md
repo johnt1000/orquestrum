@@ -37,24 +37,25 @@ Six orchestrators, each owning one or more pipeline phases:
 
 ## Skills
 
-14 specialized skills delegated by agents:
+16 specialized skills delegated by agents:
 
-| Phase | Skill                  | Produces                                |
-| ----- | ---------------------- | --------------------------------------- |
-| -1    | `codebase-mapper`      | Architecture as-is from existing code   |
-| -1    | `reverse-spec`         | Extracted spec from existing behavior   |
-| 0     | `glossary-manager`     | Canonical domain vocabulary             |
-| 1     | `spec-manager`         | Requirements + success criteria         |
-| 1     | `adr-manager`          | Architectural decision records          |
-| 1     | `pattern-manager`      | Design pattern catalog and adoption log |
-| 2     | `architecture-manager` | System diagram + component map          |
-| 3     | `epic-manager`         | Vertical feature slices                 |
-| 3     | `task-manager`         | Executable tasks with TDD derivation    |
-| 4     | `review-manager`       | Code review (security, SOLID, LGPD)     |
-| 4     | `qa-manager`           | Functional QA against spec criteria     |
-| 4     | `learning-manager`     | Root cause analysis of failures         |
-| 5     | `changelog-manager`    | SemVer changelog + release document     |
-| 5     | `runbook-manager`      | Operational procedures                  |
+| Phase | Skill                  | Produces                                | Chains to |
+| ----- | ---------------------- | --------------------------------------- | --------- |
+| -1    | `codebase-mapper`      | Architecture as-is from existing code   | reverse-spec |
+| -1    | `reverse-spec`         | Extracted spec from existing behavior   | — |
+| 0     | `glossary-manager`     | Canonical domain vocabulary             | spec-manager |
+| 0–1   | `discovery-manager`    | Combined glossary + spec (efficient)    | adr-manager |
+| 1     | `spec-manager`         | Requirements + success criteria         | adr-manager |
+| 1     | `adr-manager`          | Architectural decision records          | pattern-manager |
+| 1     | `pattern-manager`      | Design pattern catalog and adoption log | architecture-manager |
+| 2     | `architecture-manager` | System diagram + component map          | — |
+| 3     | `epic-manager`         | Vertical feature slices                 | task-manager |
+| 3     | `task-manager`         | Executable tasks with TDD derivation    | — |
+| 4     | `review-manager`       | Code review (security, SOLID, LGPD)     | qa-manager |
+| 4     | `qa-manager`           | Functional QA against spec criteria     | learning-manager |
+| 4     | `learning-manager`     | Root cause analysis of failures         | — |
+| 5     | `changelog-manager`    | SemVer changelog + release document     | runbook-manager |
+| 5     | `runbook-manager`      | Operational procedures                  | — |
 
 ---
 

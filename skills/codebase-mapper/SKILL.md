@@ -8,7 +8,12 @@ metadata:
   phase: -1
   depends_on: []
   produces: "docs/01-design/architecture/ARCHITECTURE-v0-as-is.md"
+chain:
+  next: reverse-spec
+  condition: "codebase mapped, ready for spec extraction"
 ---
+
+> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
 
 # Codebase Mapper Skill
 
@@ -30,15 +35,12 @@ Before any action, read: `./references/codebase-mapper-references.md`
 
 ## Output Schema
 
-The artifact produced by this skill MUST contain the following mandatory sections:
 - System Overview
 - Technology Stack
 - Component Map
 - Data Flow
 - Integration Points
 - Identified Risks
-
-Invalid format: absence of any mandatory section blocks the next gate.
 
 ## Execution Instructions
 
@@ -74,11 +76,6 @@ Invalid format: absence of any mandatory section blocks the next gate.
 - **DO NOT** modify any code files during the mapping.
 - **DO NOT** mark as "debt" what may be an intentional decision — use `⚠️ Observation` without judgment.
 - **DO NOT** attempt to map everything at once in large codebases — prioritize by layer: infra → data → domain → interface.
-
-**Context fence:**
-- Operate exclusively on files declared under `Reads`
-- DO NOT read files from later pipeline phases not listed in the I/O Contract
-- DO NOT infer context from files not explicitly listed above
 
 ## Context Reflection
 

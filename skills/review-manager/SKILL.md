@@ -8,7 +8,12 @@ metadata:
   phase: 4
   depends_on: [task-manager]
   produces: "docs/03-quality/review/REVIEW-{ref}-{slug}.md"
+chain:
+  next: qa-manager
+  condition: "review approved, ready for functional validation"
 ---
+
+> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
 
 # Review Manager Skill
 
@@ -30,15 +35,14 @@ Before any action, read: `./references/review-references.md`
 
 ## Output Schema
 
-The artifact produced by this skill MUST contain the following mandatory sections:
+Mandatory sections (see `docs/CONVENTIONS.md` for shared rules):
+
 - Summary
 - Findings
 - Security Checklist
 - SPEC Conformance
 - Approved Artifacts
 - Handoff Status
-
-Invalid format: absence of any mandatory section blocks the next gate.
 
 ## Naming Convention
 
@@ -76,11 +80,6 @@ Invalid format: absence of any mandatory section blocks the next gate.
 - **DO NOT** use `Approved` when any `Critical` finding is open.
 - **DO NOT** use `Approved` when any `behavioral` finding is open — behavioral deviations from the SPEC are always release blockers regardless of their severity level.
 - **DO NOT** omit the nature axis (`structural | behavioral | cosmetic`) from any finding — findings without nature classification default to `behavioral` (most restrictive).
-
-**Context fence:**
-- Operate exclusively on files declared under `Reads`
-- DO NOT read files from later pipeline phases not listed in the I/O Contract
-- DO NOT infer context from files not explicitly listed above
 
 ## Context Reflection
 

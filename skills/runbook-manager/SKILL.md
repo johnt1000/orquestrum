@@ -10,6 +10,8 @@ metadata:
   produces: "docs/04-release/RUNBOOK.md"
 ---
 
+> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
+
 # Runbook Manager Skill
 
 You act as an SRE (Site Reliability Engineer) and DevOps Engineer, ensuring that the operational knowledge of the system is documented clearly, actionably and safely.
@@ -30,15 +32,12 @@ Before any action, read: `./references/runbook-references.md`
 
 ## Output Schema
 
-The artifact produced by this skill MUST contain the following mandatory sections:
 - Environment Variables
 - Deploy Steps
 - Rollback
 - Health Checks
 - Log Reading
 - Common Problems
-
-Invalid format: absence of any mandatory section blocks the next gate.
 
 ## Execution Instructions
 
@@ -58,11 +57,6 @@ Invalid format: absence of any mandatory section blocks the next gate.
 - **DO NOT** create the runbook without covering at least: Deploy, Rollback, Health Check and Log Reading.
 - **DO NOT** describe ambiguous steps — use exact commands where possible (e.g. `docker compose up -d` instead of "bring up the containers").
 - **DO NOT** consult the Learning Manager for already-documented problems — reference the Learning directly in the diagnostics section.
-
-**Context fence:**
-- Operate exclusively on files declared under `Reads`
-- DO NOT read files from later pipeline phases not listed in the I/O Contract
-- DO NOT infer context from files not explicitly listed above
 
 ## Context Reflection
 

@@ -39,7 +39,6 @@ Before any decision, read:
 
 1. `docs/CHECKPOINT.md` — session state from previous context (if exists). See `skills/checkpoint-manager/SKILL.md`.
 2. `docs/SDLC.md` — complete pipeline with phases, gates, and responsibilities
-3. `docs/TIERS.md` — tier classification (read before detecting phase)
 
 > If `docs/CHECKPOINT.md` exists: restore tier, phase, active orchestrator, and active artifact paths before running phase detection. Validate that all listed artifact paths still exist on disk.
 
@@ -67,54 +66,32 @@ Read `skills/checkpoint-manager/SKILL.md` for the full protocol. Summary:
 
 Classify the work before routing. The tier defines which gates and artifacts apply.
 
-## Fast-Path Heuristic (check FIRST — before full analysis)
+## Fast-Path Heuristic (check FIRST)
 
-Before running full tier detection, check for **unambiguous Tier-0 signals**. If ALL of the following match, classify immediately as Tier-0 and route directly to `forge` — no further analysis needed:
+If ALL match → classify immediately as **Tier 0** and dispatch `forge-dev-lead`:
+- Touches **1–2 files** (or zero — config/env only)
+- Is one of: typo fix, text change, config value, env var, dep bump (no breaking change), variable/file rename, follow-up to `In Progress` task
+- Does **not** touch public API, database schema, auth flow, or introduce new dependency
 
-- The request touches **1–2 files** (or zero files — config/env only), AND
-- It is one of: typo fix, copy/text change, config value, environment variable, dependency version bump (no breaking change), renaming a variable/file, or a follow-up to a task already `In Progress` in the current active Epic, AND
-- It does **not** touch the public API contract, database schema, authentication flow, or introduce a new dependency.
+Log: `FAST-PATH TIER-0: [reason]. Routing to forge.`
 
-When fast-path fires: classify as `Tier 0` and immediately dispatch `forge-dev-lead`. Do not run Step 1 or Step 2 below. Log: `FAST-PATH TIER-0: [reason]. Routing to forge.`
+## Decision Matrix
 
-Full tier detection (Steps 1–2) applies only when fast-path does **not** fire.
+When fast-path does not fire, use this matrix (first matching row wins):
 
-**Step 1 — Identify the type of activity:**
+| Activity | < 3 files, no API/schema change | 3–10 files OR schema change | > 10 files OR new API |
+|----------|:---:|:---:|:---:|
+| New feature | 2 | 2 | 2 |
+| Feature in existing SPEC | 1 | 1 | 2 |
+| Bug fix | 0 | 1 | 1 |
+| Refactoring | 0 | 1¹ | 1¹ |
+| Non-functional improvement | 1 | 1 | 2 |
+| Security patch | 1 | 1 | 2 |
+| Dep upgrade | 0 | 0 | 1 |
+| Docs-only | 0 | 0 | 0 |
+| Breaking change / deprecation | 2 | 2 | 2 |
 
-```
-Is it pure refactoring? (zero observable behavior change)
-  → Base tier 0–1. Ignore file count.
-  → Elevates to Tier 2 ONLY if it implies a new architectural decision.
-
-Is it a non-functional improvement? (performance, observability, security, UX)
-  → Base tier 1. Update NFR in existing SPEC.
-
-Is it a bug fix?
-  → Base tier 0–1. Does not elevate to Tier 2 by size.
-  → Tier 1 if it touches critical business logic or requires a regression test.
-
-Is it a security patch?
-  → Base tier 1. ADR recommended. Tier 2 if it changes the public interface.
-
-Is it a dependency upgrade?
-  → Base tier 0. Tier 1 if there is a functional breaking change.
-
-Is it docs-only? (doc, existing ADR, RUNBOOK, no code change)
-  → Tier 0 always. No other criteria apply.
-
-Is it a breaking change or deprecation?
-  → Tier 2 always. Requires SPEC with migration notes + mandatory ADR.
-```
-
-**Step 2 — Apply size criteria (only for Features and Bug fixes):**
-
-```
-1. Changes API contract, public interface or database schema AND requires a new SPEC? → TIER 2
-2. Requires a new architectural decision (new database, framework, new pattern)?       → TIER 2
-3. Is it a new feature not covered by the existing SPEC?                               → TIER 2
-4. Is it a feature within an existing SPEC OR changes the database without altering interface? → TIER 1
-5. None of the above (hotfix, config, text, 1-2 files)?                               → TIER 0
-```
+¹ Refactoring: ignore file count; only elevates to Tier 2 if it introduces a new architectural decision.
 
 Report the classified tier in the OUTPUT before triggering any orchestrator.
 
@@ -254,23 +231,15 @@ TIER 2 — Full detection:
 
 # MAINTENANCE ROUTING
 
-When an incident, request, or maintenance activity arrives, classify before routing:
+When an incident, request, or maintenance activity arrives, use the same tier detection matrix above, then route:
 
-| Classification | Tier | Routing |
-|---------------|------|---------|
-| Critical bug (system down) | 0→1 fast path | cast → hotfix → forge → ward |
-| Minor bug | 0–1 | cast → forge (new Task) |
-| Feature request | 2 | cast → lore (new SPEC) |
-| Security incident | 1–2 | cast → ward + lore (ADR) |
-| Infrastructure issue | 0–1 | cast (runbook update + learning) |
-| Refactoring | 0–1¹ | forge directly (Task + Log; ignore file count) |
-| Improvement (NFR) | 1 | forge → task (update NFR in existing SPEC) |
-| Security patch | 1 | forge + ward; ADR recommended |
-| Dependency upgrade | 0–1 | forge (Tier 1 if breaking change) |
-| Docs-only | 0 | forge directly (Task + Log) |
-| Breaking change / Deprecation | 2 | lore (new SPEC + mandatory ADR) |
+| Tier | Routing |
+|------|---------|
+| 0 | cast → forge (Task + Log) |
+| 1 | cast → forge (Task + QA if needed) |
+| 2 | cast → lore (new SPEC) for feature requests; cast → ward + lore (ADR) for security incidents |
 
-¹ Refactoring elevates to Tier 2 only if it introduces a new architectural decision.
+**Critical bug fast-path:** system down → cast (hotfix) → forge → ward, bypassing normal gate checks.
 
 ---
 

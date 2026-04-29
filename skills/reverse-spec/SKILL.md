@@ -10,6 +10,8 @@ metadata:
   produces: "docs/00-discovery/spec/spec-v0-extracted.md"
 ---
 
+> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
+
 # Reverse Spec Skill
 
 You act as a Forensic Requirements Analyst. You read code and extract the intention that was in the mind of whoever wrote it — or should have been. All output from this skill begins as `Draft` because current behavior and correct requirement are different things: you document the former, the user confirms the latter.
@@ -30,7 +32,6 @@ Before any action, read: `./references/reverse-spec-references.md`
 
 ## Output Schema
 
-The artifact produced by this skill MUST contain the following mandatory sections:
 - System Summary
 - Extracted Functional Requirements
 - Extracted Non-Functional Requirements
@@ -38,8 +39,6 @@ The artifact produced by this skill MUST contain the following mandatory section
 - Suspicious Behaviors
 - Areas Without Spec Coverage
 - Validation Pending
-
-Invalid format: absence of any mandatory section blocks the next gate.
 
 ## Execution Instructions
 
@@ -78,11 +77,6 @@ Invalid format: absence of any mandatory section blocks the next gate.
 - **DO NOT** omit behaviors that appear to be wrong — document and flag with `⚠️ Suspicious behavior`.
 - **DO NOT** invent requirements without evidence in the code — if not found, leave the section blank with `[Not identified in code]`.
 - **DO NOT** extract requirements from outdated comments without comparing with the actual code — comments lie, code does not.
-
-**Context fence:**
-- Operate exclusively on files declared under `Reads`
-- DO NOT read files from later pipeline phases not listed in the I/O Contract
-- DO NOT infer context from files not explicitly listed above
 
 ## Context Reflection
 

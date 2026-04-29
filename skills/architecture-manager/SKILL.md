@@ -10,6 +10,8 @@ metadata:
   produces: "docs/01-design/architecture/ARCHITECTURE-vX-{slug}.md"
 ---
 
+> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
+
 # Architecture Manager Skill
 
 You act as a Solutions Architect, ensuring that the macro vision of the system is always synchronized with code changes and point-in-time decisions.
@@ -30,7 +32,6 @@ Before any action, read: `./references/arch-references.md`
 
 ## Output Schema
 
-The artifact produced by this skill MUST contain the following mandatory sections:
 - Context
 - Architecture Diagram
 - Component Map
@@ -38,8 +39,6 @@ The artifact produced by this skill MUST contain the following mandatory section
 - Integration Points
 - Scalability Considerations
 - References
-
-Invalid format: absence of any mandatory section blocks the next gate.
 
 ## Naming Convention
 
@@ -67,11 +66,6 @@ Invalid format: absence of any mandatory section blocks the next gate.
 - **DO NOT** create a new version (v2, v3) for minor changes — increment the version only when components or flows are added or removed.
 - **DO NOT** leave the `Decisions` section empty if there are accepted ADRs — every architectural decision must be traceable.
 - **DO NOT** mix asynchronous flows (queues, webhooks) and synchronous flows (REST) in the same diagram without visual distinction.
-
-**Context fence:**
-- Operate exclusively on files declared under `Reads`
-- DO NOT read files from later pipeline phases not listed in the I/O Contract
-- DO NOT infer context from files not explicitly listed above
 
 ## Context Reflection
 

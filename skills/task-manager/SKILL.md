@@ -10,6 +10,8 @@ metadata:
   produces: "docs/02-planning/tasks/T{ID}-{slug}.md"
 ---
 
+> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
+
 # Task Manager Skill
 
 You are a Senior Software Engineer responsible for executing tasks with technical precision and maintaining full traceability of what was built.
@@ -30,15 +32,14 @@ Before any action, read: `./references/task-references.md`
 
 ## Output Schema
 
-The artifact produced by this skill MUST contain the following mandatory sections:
+Mandatory sections (see `docs/CONVENTIONS.md` for shared rules):
+
 - Objective
 - Acceptance Criteria
 - Artifacts
 - TDD Log reference
 - epic_ref
 - spec_ref
-
-Invalid format: absence of any mandatory section blocks the next gate.
 
 ## Naming Convention
 
@@ -76,11 +77,6 @@ Invalid format: absence of any mandatory section blocks the next gate.
 - **DO NOT** invent the next ID — always check the last file in `docs/02-planning/tasks/`.
 - **DO NOT** forget to update `TASK-INDEX.md` after every task state change.
 - **DO NOT** mark the last Task in an Epic as `Completed` without checking whether the Epic's own `status` field needs to be updated to `Completed`.
-
-**Context fence:**
-- Operate exclusively on files declared under `Reads`
-- DO NOT read files from later pipeline phases not listed in the I/O Contract
-- DO NOT infer context from files not explicitly listed above
 
 ## Context Reflection
 

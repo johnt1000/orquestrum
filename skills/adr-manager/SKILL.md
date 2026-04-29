@@ -8,7 +8,12 @@ metadata:
   phase: 1
   depends_on: [spec-manager]
   produces: "docs/00-discovery/adr/ADR-XXX-{slug}.md"
+chain:
+  next: pattern-manager
+  condition: "ADR references patterns not yet cataloged"
 ---
+
+> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
 
 # ADR Manager Skill
 
@@ -30,15 +35,14 @@ Before any action, read: `./references/adr-references.md`
 
 ## Output Schema
 
-The artifact produced by this skill MUST contain the following mandatory sections:
+Mandatory sections (see `docs/CONVENTIONS.md` for shared rules):
+
 - Context
 - Decision
 - Status
 - Consequences
 - Alternatives Considered
 - References
-
-Invalid format: absence of any mandatory section blocks the next gate.
 
 ## Naming Convention
 
@@ -74,11 +78,6 @@ Invalid format: absence of any mandatory section blocks the next gate.
 - **DO NOT** describe the solution in the `Context` field — Context describes the problem, not the answer.
 - **DO NOT** omit the `superseded_by` field in deprecated ADRs — always point to the replacement ADR.
 - **DO NOT** create duplicate ADRs — check the folder before writing.
-
-**Context fence:**
-- Operate exclusively on files declared under `Reads`
-- DO NOT read files from later pipeline phases not listed in the I/O Contract
-- DO NOT infer context from files not explicitly listed above
 
 ## Context Reflection
 

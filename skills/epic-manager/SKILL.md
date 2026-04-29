@@ -8,7 +8,12 @@ metadata:
   phase: 3
   depends_on: [spec-manager, architecture-manager]
   produces: "docs/02-planning/epics/E{ID}-{slug}.md"
+chain:
+  next: task-manager
+  condition: "epic created, ready for task decomposition"
 ---
+
+> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
 
 # Epic Manager Skill
 
@@ -30,15 +35,14 @@ Before any action, read: `./references/epic-references.md`
 
 ## Output Schema
 
-The artifact produced by this skill MUST contain the following mandatory sections:
+Mandatory sections (see `docs/CONVENTIONS.md` for shared rules):
+
 - Objective
 - Scope
 - Acceptance Criteria
 - Tasks
 - spec_ref
 - arch_ref
-
-Invalid format: absence of any mandatory section blocks the next gate.
 
 ## Naming Convention
 
@@ -76,11 +80,6 @@ Invalid format: absence of any mandatory section blocks the next gate.
 - **DO NOT** list tasks without creating the Mermaid dependency graph — the execution flow is mandatory.
 - **DO NOT** mark an Epic as `Completed` unless all its tasks have `Completed` status in TASK-INDEX.md.
 - **DO NOT** mark an Epic as `Cancelled` without first creating an ADR or a `## Cancellation Record` section — unclosed cancellations leave invisible technical debt.
-
-**Context fence:**
-- Operate exclusively on files declared under `Reads`
-- DO NOT read files from later pipeline phases not listed in the I/O Contract
-- DO NOT infer context from files not explicitly listed above
 
 ## Context Reflection
 

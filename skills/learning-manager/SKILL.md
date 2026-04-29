@@ -10,6 +10,8 @@ metadata:
   produces: "docs/03-quality/learning/L-XXX-{slug}.md"
 ---
 
+> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
+
 # Learning Manager Skill
 
 You act as a Knowledge Engineer and Post-Mortem Specialist, analyzing root causes and extracting patterns of success and failure.
@@ -30,15 +32,14 @@ Before any action, read: `./references/learning-references.md`
 
 ## Output Schema
 
-The artifact produced by this skill MUST contain the following mandatory sections:
+Mandatory sections (see `docs/CONVENTIONS.md` for shared rules):
+
 - Incident Summary
 - Root Cause (5 Whys)
 - Corrective Action
 - Risk of Recurrence
 - Knowledge Captured
 - Pipeline Entry Point
-
-Invalid format: absence of any mandatory section blocks the next gate.
 
 ## Naming Convention
 
@@ -78,11 +79,6 @@ Invalid format: absence of any mandatory section blocks the next gate.
 - **DO NOT** archive a Learning before the fix has been validated by QA.
 - **DO NOT** leave `Patterns` empty if the same type of error has occurred before — check other files in `docs/03-quality/learning/`.
 - **DO NOT** omit the `## Pipeline Entry Point` section — without it, Cast has no machine-readable instruction to start the next cycle and the learning is operationally inert.
-
-**Context fence:**
-- Operate exclusively on files declared under `Reads`
-- DO NOT read files from later pipeline phases not listed in the I/O Contract
-- DO NOT infer context from files not explicitly listed above
 
 ## Context Reflection
 
