@@ -35,6 +35,8 @@ Before any action, read: `./references/codebase-mapper-references.md`
 
 ## Output Schema
 
+Use the file at `./assets/codebase-map-template.md` as the absolute base for the structure.
+
 - System Overview
 - Technology Stack
 - Component Map

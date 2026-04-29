@@ -61,12 +61,13 @@ install_tool() {
 
   local abs_target; abs_target="$(eval echo "$target")"
   log "Installing $tool → $abs_target"
+  rm -rf "$abs_target"
   mkdir -p "$abs_target"
   cp -r "$src"/. "$abs_target/"
 
   case "$tool" in
     opencode)
-      find "$abs_target/agents" -name "*.md" -exec \
+      find "$abs_target" -name "*.md" -exec \
         sed -i '' "s|__OPENCODE_ROOT__|${abs_target}|g" {} \;
       ;;
   esac

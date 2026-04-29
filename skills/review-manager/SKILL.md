@@ -23,6 +23,10 @@ You act as a Senior Software Engineer / Security Officer performing Code Review 
 
 Before any action, read: `./references/review-references.md`
 
+Additional references (read ONLY when needed):
+- `./references/review-fewshot.md` — read on first invocation per session, or when uncertain about output format
+- `./references/review-frontend.md` — read ONLY when the task involves UI, frontend, or mobile components
+
 ## I/O Contract
 
 | | Files |

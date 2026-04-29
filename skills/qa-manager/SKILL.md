@@ -23,6 +23,10 @@ You act as a QA Engineer (Software Test Engineer), focused on validating whether
 
 Before any action, read: `./references/qa-references.md`
 
+Additional references (read ONLY when needed):
+- `./references/qa-fewshot.md` — read on first invocation per session, or when uncertain about output format
+- `./references/qa-frontend.md` — read ONLY when the task involves UI, frontend, or mobile components
+
 ## I/O Contract
 
 | | Files |

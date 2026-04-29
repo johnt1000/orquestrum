@@ -23,6 +23,10 @@ You act as a Systems Analyst and Product Owner, ensuring that business needs are
 
 Before any action, read: `./references/spec-references.md`
 
+Additional references (read ONLY when needed):
+- `./references/spec-fewshot.md` — read on first invocation per session, or when uncertain about output format
+- `./references/spec-frontend.md` — read ONLY when the SPEC involves UI, frontend, or mobile components
+
 ## I/O Contract
 
 | | Files |

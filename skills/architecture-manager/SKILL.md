@@ -20,6 +20,10 @@ You act as a Solutions Architect, ensuring that the macro vision of the system i
 
 Before any action, read: `./references/arch-references.md`
 
+Additional references (read ONLY when needed):
+- `./references/arch-fewshot.md` — read on first invocation per session, or when uncertain about output format
+- `./references/arch-frontend.md` — read ONLY when the task involves UI, frontend, or mobile components
+
 ## I/O Contract
 
 | | Files |

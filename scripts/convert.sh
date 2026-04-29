@@ -75,8 +75,10 @@ rewrite_paths() {
     -e "s|docs/SDLC\.md|${docs_prefix}/SDLC.md|g" \
     -e "s|docs/TIERS\.md|${docs_prefix}/TIERS.md|g" \
     -e "s|docs/MODELS\.md|${docs_prefix}/MODELS.md|g" \
+    -e "s|docs/CONVENTIONS\.md|${docs_prefix}/CONVENTIONS.md|g" \
     -e "s|skills/\([a-zA-Z_-]*\)/SKILL\.md|${skills_prefix}/\1/SKILL.md|g" \
     -e "s|skills/\([a-zA-Z_-]*\)/references/|${skills_prefix}/\1/references/|g" \
+    -e "s|skills/\([a-zA-Z_-]*\)/assets/|${skills_prefix}/\1/assets/|g" \
     ${file:+"$file"}
 }
 
@@ -249,6 +251,17 @@ convert_opencode() {
   # Copy skills as reference documentation (for reading by orchestrators)
   cp -r "$ROOT/skills/"* "$out/skills/"
   find "$out/skills/" -name "*.bak" -delete
+
+  # Rewrite paths in skill files
+  find "$out/skills/" -name "*.md" -exec sed -i '' \
+    -e "s|docs/SDLC\.md|__OPENCODE_ROOT__/docs/SDLC.md|g" \
+    -e "s|docs/TIERS\.md|__OPENCODE_ROOT__/docs/TIERS.md|g" \
+    -e "s|docs/MODELS\.md|__OPENCODE_ROOT__/docs/MODELS.md|g" \
+    -e "s|docs/CONVENTIONS\.md|__OPENCODE_ROOT__/docs/CONVENTIONS.md|g" \
+    -e "s|skills/\([a-zA-Z_-]*\)/SKILL\.md|__OPENCODE_ROOT__/skills/\1/SKILL.md|g" \
+    -e "s|skills/\([a-zA-Z_-]*\)/references/|__OPENCODE_ROOT__/skills/\1/references/|g" \
+    -e "s|skills/\([a-zA-Z_-]*\)/assets/|__OPENCODE_ROOT__/skills/\1/assets/|g" \
+    {} \;
 
   ok "opencode → $out"
   echo "    Install global:   ./scripts/install.sh --tool opencode --target ~/.config/opencode"

@@ -5,7 +5,7 @@ inject_references: compact
 metadata:
   version: "1.0.0"
   author: "Jônatas Rodrigues"
-  phase: 1
+  phase: 2
   depends_on: [spec-manager]
   produces: "docs/00-discovery/patterns/PATTERNS.md"
 chain:
@@ -21,7 +21,7 @@ You act as a Tech Lead / Principal Engineer responsible for maintaining the proj
 
 ## Pre-execution (REQUIRED)
 
-Before any action, read the pattern index: `./references/pattern-index.md`
+Before any action, read the pattern index: `./references/pattern-references.md`
 
 The index lists all available patterns organized by layer. After reading the index, load **only the relevant pattern files** for the current task using `./references/pattern-{slug}.md` (e.g. `pattern-repository.md`, `pattern-strategy.md`). Do NOT read all pattern files at once — the index provides enough context to select the right ones.
 
