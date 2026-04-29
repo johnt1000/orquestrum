@@ -64,6 +64,8 @@ install_tool() {
   mkdir -p "$abs_target"
   cp -rf "$src"/. "$abs_target/"
 
+  find "$abs_target/scripts" -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
+
   case "$tool" in
     opencode)
       find "$abs_target" -name "*.md" -exec \

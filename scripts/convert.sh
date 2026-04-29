@@ -101,9 +101,9 @@ skill_reference_content() {
   # Reference file names are not uniformly derived from skill name (e.g. spec-manager →
   # spec-references.md, architecture-manager → arch-references.md), so use a glob.
   local ref_file
-  ref_file="$(ls "$skill_dir/references/"*-references.md 2>/dev/null | head -1)"
+  ref_file="$(ls "$skill_dir/references/"*-references.md 2>/dev/null | head -1)" || true
   if [[ -z "$ref_file" ]]; then
-    ref_file="$(ls "$skill_dir/references/"*-index.md 2>/dev/null | head -1)"
+    ref_file="$(ls "$skill_dir/references/"*-index.md 2>/dev/null | head -1)" || true
   fi
   [[ -z "$ref_file" ]] && return
 
@@ -121,7 +121,7 @@ convert_claude_code() {
   local out="$INTEGRATIONS/claude-code"
   log "Generating claude-code..."
   rm -rf "$out"
-  mkdir -p "$out/.claude/agents" "$out/.sdd/docs" "$out/.sdd/skills"
+  mkdir -p "$out/.claude/agents" "$out/.sdd/docs" "$out/.sdd/skills" "$out/.sdd/scripts"
 
   for agent in "$ROOT/agents"/*.md; do
     local name; name="$(basename "$agent")"
@@ -130,6 +130,7 @@ convert_claude_code() {
 
   cp "$ROOT/docs/"*.md "$out/.sdd/docs/"
   cp -r "$ROOT/skills/"* "$out/.sdd/skills/"
+  cp "$ROOT/scripts/archive-cleanup.sh" "$out/.sdd/scripts/"
   find "$out/.sdd/skills/" -name "*.bak" -delete
 
   ok "claude-code → $out"
@@ -224,7 +225,7 @@ convert_opencode() {
   local out="$INTEGRATIONS/opencode"
   log "Generating opencode..."
   rm -rf "$out"
-  mkdir -p "$out/agents" "$out/docs" "$out/skills"
+  mkdir -p "$out/agents" "$out/docs" "$out/skills" "$out/scripts"
 
   # Generate agent files with intelligent filename strategy:
   # - primary agent (Helm): name="Helm - The Architect" → filename=helm-the-architect.md
@@ -252,6 +253,9 @@ convert_opencode() {
   cp -r "$ROOT/skills/"* "$out/skills/"
   find "$out/skills/" -name "*.bak" -delete
 
+  # Copy utility scripts
+  cp "$ROOT/scripts/archive-cleanup.sh" "$out/scripts/"
+
   # Rewrite paths in skill files
   find "$out/skills/" -name "*.md" -exec sed -i '' \
     -e "s|docs/SDLC\.md|__OPENCODE_ROOT__/docs/SDLC.md|g" \
@@ -274,7 +278,7 @@ convert_cursor() {
   local out="$INTEGRATIONS/cursor"
   log "Generating cursor..."
   rm -rf "$out"
-  mkdir -p "$out/.cursor/rules"
+  mkdir -p "$out/.cursor/rules" "$out/.sdd/scripts"
 
   # Agents
   for agent in "$ROOT/agents"/*.md; do
@@ -323,6 +327,8 @@ convert_cursor() {
     } > "$out/.cursor/rules/${skill_name}.mdc"
   done
 
+  cp "$ROOT/scripts/archive-cleanup.sh" "$out/.sdd/scripts/"
+
   ok "cursor → $out"
   echo "    .cursor/rules/    ← copy to your project root"
 }
@@ -333,7 +339,7 @@ convert_aider() {
   local out="$INTEGRATIONS/aider"
   log "Generating aider..."
   rm -rf "$out"
-  mkdir -p "$out"
+  mkdir -p "$out/scripts"
 
   local conv="$out/CONVENTIONS.md"
   {
@@ -381,6 +387,8 @@ convert_aider() {
     } >> "$conv"
   done
 
+  cp "$ROOT/scripts/archive-cleanup.sh" "$out/scripts/"
+
   ok "aider → $out"
   echo "    CONVENTIONS.md    ← copy to your project root"
 }
@@ -391,7 +399,7 @@ convert_windsurf() {
   local out="$INTEGRATIONS/windsurf"
   log "Generating windsurf..."
   rm -rf "$out"
-  mkdir -p "$out"
+  mkdir -p "$out/scripts"
 
   local rules="$out/.windsurfrules"
   {
@@ -438,6 +446,8 @@ convert_windsurf() {
       echo ""
     } >> "$rules"
   done
+
+  cp "$ROOT/scripts/archive-cleanup.sh" "$out/scripts/"
 
   ok "windsurf → $out"
   echo "    .windsurfrules    ← copy to your project root"

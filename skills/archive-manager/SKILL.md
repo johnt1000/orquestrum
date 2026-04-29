@@ -79,48 +79,28 @@ For each release that has completed tasks not yet archived:
 
 ### Step 4 — Physically Delete Archived Files
 
-**⛔ CRITICAL: Use the Bash tool with `rm` to PHYSICALLY delete files.**
-
-- NEVER truncate files to 0 bytes
-- NEVER use the Edit tool to clear file content
-- NEVER leave empty files behind
-
-**Delete completed tasks (one at a time):**
-```bash
-rm "docs/02-planning/tasks/T001-setup.md"
-rm "docs/02-planning/tasks/T002-config.md"
-```
-
-**Delete completed logs (one at a time):**
-```bash
-rm "docs/02-planning/tasks/logs/T001-log.md"
-rm "docs/02-planning/tasks/logs/T002-log.md"
-```
-
-**Delete superseded versions:**
-
-You MUST delete superseded SPEC and Architecture versions. These are typically the largest files in docs/ (20-40KB each) and the primary source of repository bloat. Skipping this step defeats the purpose of the archive.
+Run the deterministic cleanup script to delete all files that were consolidated into the archives:
 
 ```bash
-# SPEC — keep only the active version from CHECKPOINT.md
-rm "docs/00-discovery/spec/spec-v0-extracted.md"
-rm "docs/00-discovery/spec/spec-v1-product-strategy.md"
-# ... delete all except the active version
+# Always run dry-run first to preview what will be deleted
+scripts/archive-cleanup.sh --project . --dry-run
 
-# Architecture — keep only the active version from CHECKPOINT.md
-rm "docs/01-design/architecture/ARCHITECTURE-v0-as-is.md"
-rm "docs/01-design/architecture/ARCHITECTURE-v1.md"
-# ... delete all except the active version
+# Review the output carefully, then execute
+scripts/archive-cleanup.sh --project .
 ```
 
-**Delete released QA and Review files:**
-- `docs/03-quality/qa/QA-*.md` — delete if status is `Passed` and the epic is fully released
-- `docs/03-quality/review/REVIEW-*.md` — delete if status is `Approved` and the epic is fully released
+**What the script deletes:**
+- Completed task files (`T{ID}*.md`) and their logs
+- Superseded SPEC and Architecture versions (keeps only active from CHECKPOINT.md)
+- Passed QA and Approved Review files for archived epics
+- Any empty `.md` files (cleanup of previous failed attempts)
 
-**NEVER delete:**
-- MICRO-LOG.md
-- TASK-INDEX.md
-- Any file in the Protected Artifacts list above
+**What the script protects (never deletes):**
+- ADRs, Glossary, Learnings, CHANGELOG, RUNBOOK, MICRO-LOG, TASK-INDEX, CHECKPOINT
+- Active SPEC and Architecture versions
+- ARCHIVE-*.md files themselves
+
+**If the script is unavailable**, fall back to manual `rm` via Bash tool — one file at a time. NEVER truncate or empty files.
 
 ### Step 5 — Update Registry
 
