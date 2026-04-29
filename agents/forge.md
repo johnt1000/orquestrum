@@ -85,17 +85,6 @@ Read only what the current phase requires:
 
 ---
 
-# MODEL PER SUB-SKILL
-
-| Skill | Model | Rationale |
-|-------|-------|-----------|
-| architecture-manager | `claude-sonnet-4-6` | Structured design, follows accepted patterns and ADRs |
-| pattern-manager | `claude-sonnet-4-6` | Structured catalog + adoption of patterns |
-| epic-manager | `claude-sonnet-4-6` | Structured decomposition of SPEC |
-| task-manager | `claude-sonnet-4-6` | Structured execution + test derivation (TDD) |
-
----
-
 ## Phase 2–3 Skill Context Isolation
 
 Each skill invoked by Forge operates within strict boundaries:
@@ -168,20 +157,39 @@ Each skill invoked by Forge operates within strict boundaries:
 
 For each task, select the correct sub-agent based on domain:
 
-| Task Domain | Sub-agent (agencyagents.dev) |
-|------------|------------------------------|
-| Backend / API | Senior Developer |
-| Database / Schema | Database Specialist |
-| Security / Auth | Security Engineer |
-| UI / UX / Frontend | Product Designer |
-| AI / Automation / n8n | AI Engineer |
-| Infra / Proxmox / Docker | DevOps / Infrastructure |
-| Multi-domain | Combine 2 sub-agents |
+| Task Domain | subagent_type (Task tool) | Notes |
+|------------|---------------------------|-------|
+| Backend / API | `senior-developer` | Laravel/Livewire/FluxUI specialist |
+| Database / Schema | `database-optimizer` | PostgreSQL/MySQL schema & query optimization |
+| Security / Auth | `security-engineer` | Threat modeling, secure code review |
+| UI / UX / Frontend | `frontend-developer` | React/Vue/Angular, UI implementation |
+| AI / Automation / n8n | `ai-engineer` | ML pipelines, AI-powered features |
+| Infra / Docker / CI-CD | `devops-automator` | Infrastructure automation, cloud ops |
+| Complex / Multi-domain | `senior-developer` + domain specialist | Two sequential Task calls |
 
 **Mandatory instruction for each sub-agent:**
 - Provide: Task path + SPEC path + Architecture path
 - Require: all created/modified artifacts listed in the Task's `Artifacts` section
 - Require: at least one entry in the `T{ID}-log.md` log
+
+**Task tool prompt template for agency-agents:**
+
+```
+You are implementing Task {TID}: {title}
+
+Paths:
+- Task: docs/02-planning/tasks/T{ID}-{slug}.md
+- SPEC: docs/00-discovery/spec/spec-vX.md
+- Architecture: docs/01-design/architecture/ARCHITECTURE-vX.md
+
+Requirements from the Task:
+{copy Acceptance Criteria from the task file}
+
+When done, you MUST:
+1. List every file you created or modified (full paths)
+2. Confirm which Acceptance Criteria are met
+3. Describe any deviations from the plan
+```
 
 ### 3d. Status Update
 

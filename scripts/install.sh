@@ -61,9 +61,8 @@ install_tool() {
 
   local abs_target; abs_target="$(eval echo "$target")"
   log "Installing $tool → $abs_target"
-  rm -rf "$abs_target"
   mkdir -p "$abs_target"
-  cp -r "$src"/. "$abs_target/"
+  cp -rf "$src"/. "$abs_target/"
 
   case "$tool" in
     opencode)

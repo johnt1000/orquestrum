@@ -60,16 +60,6 @@ Read ONLY what is needed for the current step:
 
 ---
 
-# MODEL PER SUB-SKILL
-
-| Skill | Model | Rationale |
-|-------|-------|-----------|
-| review-manager | `claude-sonnet-4-6` | Checklist + structured security reasoning |
-| qa-manager | `claude-sonnet-4-6` | Structured Given/When/Then validation |
-| learning-manager | `claude-sonnet-4-6` | Structured root cause analysis (5 Whys) |
-
----
-
 ## Phase 4 Context Isolation
 
 Ward operates under strict read-only constraints on all upstream artifacts:

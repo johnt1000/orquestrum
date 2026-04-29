@@ -71,15 +71,6 @@ Read according to mode:
 
 ---
 
-# MODEL PER SUB-SKILL
-
-| Skill | Model | Rationale |
-|-------|-------|-----------|
-| changelog-manager | `claude-haiku-4-5-20251001` | Release formatting — highly mechanical |
-| runbook-manager | `claude-haiku-4-5-20251001` | Operational documentation update — template-driven |
-
----
-
 # SKILLS UNDER YOUR GOVERNANCE
 
 | Skill | File | Mode |

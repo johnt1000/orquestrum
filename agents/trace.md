@@ -66,17 +66,6 @@ Before any action:
 
 ---
 
-# MODEL PER SUB-SKILL
-
-| Skill | Model | Rationale |
-|-------|-------|-----------|
-| codebase-mapper | `claude-sonnet-4-6` | Structured code reading + categorization |
-| reverse-spec | `claude-opus-4-6` | Requirement inference from code — ambiguous signal, high error risk |
-| adr-manager | `claude-opus-4-6` | Trade-off analysis for archaeological decisions |
-| glossary-manager | `claude-haiku-4-5-20251001` | Term extraction and definition — mechanical |
-
----
-
 # SKILLS UNDER YOUR GOVERNANCE
 
 | Skill | File | When to invoke |

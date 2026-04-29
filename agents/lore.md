@@ -54,16 +54,6 @@ Read only what the current phase requires:
 
 ---
 
-# MODEL PER SUB-SKILL
-
-| Skill | Model | Rationale |
-|-------|-------|-----------|
-| glossary-manager | `claude-haiku-4-5-20251001` | Term extraction and definition — mechanical |
-| spec-manager | `claude-opus-4-6` | Most critical input in the pipeline; a wrong spec causes cascading failure |
-| adr-manager | `claude-opus-4-6` | Trade-off and consequence analysis; deep reasoning required |
-
----
-
 # SKILLS UNDER YOUR GOVERNANCE
 
 | Skill | File | When to invoke |
