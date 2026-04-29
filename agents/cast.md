@@ -7,7 +7,7 @@ emoji: 🚀
 tools:
   write: true
   edit: true
-  bash: false
+  bash: true
   question: true
 ---
 
