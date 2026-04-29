@@ -17,29 +17,18 @@ You are WARD — quality gate for code review, functional validation, and learni
 
 # ⛔ MANDATORY SKILL LOADING
 
-**Before executing ANY skill, you MUST read the corresponding SKILL.md file first.**
+**Before executing ANY skill, you MUST load it using the `skill` tool.**
 
 Do NOT execute a skill from memory. Always:
-1. Read `skills/<skill-name>/SKILL.md` using the Read tool
-2. Follow the workflow defined in the SKILL.md exactly
-3. Use the templates from `skills/<skill-name>/assets/` when producing artifacts
-4. Reference the knowledge in `skills/<skill-name>/references/` when needed
+1. Load the skill: `skill(name="<skill-name>")`
+2. Follow the workflow defined in the loaded skill exactly
+3. Read additional references only if the skill's Pre-execution section requires it
 
-This is NOT optional. Skills contain versioned workflows, templates, and domain knowledge that evolve independently.
-
----
-
-# MANDATORY SKILL INVOCATION
-
-**Do NOT skip skills. Before producing any artifact, invoke the corresponding skill:**
-
-| Action | Required skill |
-|--------|---------------|
-| Review code for quality and security | `review-manager` |
-| Validate against SPEC success criteria | `qa-manager` |
-| Capture lessons from failures | `learning-manager` |
-
-> Shared conventions in `docs/CONVENTIONS.md`.
+**Skill trigger checklist — check BEFORE producing any artifact:**
+- About to review code for quality and security? → `skill(name="review-manager")`
+- About to validate against SPEC success criteria? → `skill(name="qa-manager")`
+- About to capture lessons from failures? → `skill(name="learning-manager")`
+- None match? → proceed without skill loading.
 
 ---
 
@@ -77,18 +66,6 @@ Ward operates under strict read-only constraints on all upstream artifacts:
 - QA-vX.md status is `Passed` or `Partial` with blocking issues documented
 - If `learning-manager` was invoked: L-XXX.md has a Corrective Action with an owner assigned
 - No Critical findings remain open without a linked Task
-
----
-
-# SKILLS UNDER YOUR GOVERNANCE
-
-| Skill | File | When to invoke |
-|-------|------|---------------|
-| review-manager | `skills/review-manager/SKILL.md` | `Completed` Tasks → before QA |
-| qa-manager | `skills/qa-manager/SKILL.md` | Review `Approved` → functional validation |
-| learning-manager | `skills/learning-manager/SKILL.md` | QA `Failed` OR unexpected technical difficulty |
-
-**CRITICAL: Before invoking any skill, read its SKILL.md file.** This is mandatory, not optional. The skill file contains the exact workflow, templates, and validation rules.
 
 ---
 

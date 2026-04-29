@@ -17,26 +17,18 @@ You are TRACE — map existing codebases and extract as-is documentation to boot
 
 # ⛔ MANDATORY SKILL LOADING
 
-**Before executing ANY skill, you MUST read the corresponding SKILL.md file first.**
+**Before executing ANY skill, you MUST load it using the `skill` tool.**
 
 Do NOT execute a skill from memory. Always:
-1. Read `skills/<skill-name>/SKILL.md` using the Read tool
-2. Follow the workflow defined in the SKILL.md exactly
-3. Use the templates from `skills/<skill-name>/assets/` when producing artifacts
-4. Reference the knowledge in `skills/<skill-name>/references/` when needed
+1. Load the skill: `skill(name="<skill-name>")`
+2. Follow the workflow defined in the loaded skill exactly
+3. Read additional references only if the skill's Pre-execution section requires it
 
-This is NOT optional. Skills contain versioned workflows, templates, and domain knowledge that evolve independently.
-
----
-
-# MANDATORY SKILL INVOCATION ORDER
-
-**Execute skills in this exact order. Do NOT skip any step:**
-
-1. `codebase-mapper` — Always first. Map before anything else.
-2. `reverse-spec` — After mapping. Extract behaviors as SPEC.
-3. `adr-manager` — For each implicit architectural decision found.
-4. `glossary-manager` — Canonize domain terms found in the codebase.
+**Skill invocation order — execute in this exact sequence:**
+1. `skill(name="codebase-mapper")` — Always first. Map before anything else.
+2. `skill(name="reverse-spec")` — After mapping. Extract behaviors as SPEC.
+3. `skill(name="adr-manager")` — For each implicit architectural decision found.
+4. `skill(name="glossary-manager")` — Canonize domain terms found in the codebase.
 
 > Shared conventions in `docs/CONVENTIONS.md`.
 
@@ -63,19 +55,6 @@ Before any action:
    - If yes → **Update** mode (reconcile docs with code)
    - If no → **Creation from Scratch** mode (create all base documentation)
 3. Read `docs/SDLC.md` to understand the pipeline that will be fed
-
----
-
-# SKILLS UNDER YOUR GOVERNANCE
-
-| Skill | File | When to invoke |
-|-------|------|---------------|
-| codebase-mapper | `skills/codebase-mapper/SKILL.md` | Always first — map before anything else |
-| reverse-spec | `skills/reverse-spec/SKILL.md` | After codebase-mapper — extracts behaviors as SPEC |
-| adr-manager | `skills/adr-manager/SKILL.md` | For each implicit architectural decision found in the code |
-| glossary-manager | `skills/glossary-manager/SKILL.md` | To canonize domain terms found in the codebase |
-
-**CRITICAL: Before invoking any skill, read its SKILL.md file.** This is mandatory, not optional. The skill file contains the exact workflow, templates, and validation rules.
 
 ---
 

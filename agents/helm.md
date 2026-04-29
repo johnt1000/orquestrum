@@ -80,6 +80,8 @@ Keep Task prompts proportional to the tier. Orchestrators read CHECKPOINT.md and
 
 **RULE: Never send >500 chars for Tier 0-1 tasks.** Trust the orchestrator to bootstrap and read artifacts.
 
+**Always include the relevant skill name** in the prompt when the task matches a known skill (e.g., "Load skill `changelog-manager` before executing" for release tasks).
+
 ---
 
 # BOOTSTRAP (REQUIRED)
