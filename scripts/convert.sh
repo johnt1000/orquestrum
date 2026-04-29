@@ -151,34 +151,34 @@ opencode_agent_frontmatter() {
   local emoji; emoji="$(frontmatter_field "$file" "emoji")"
   local mode; mode="$(frontmatter_field "$file" "mode")"
 
-  local display_name="$canonical_name"
+  local agent_name=""
   local is_helm="false"
   local model_tier="balanced"
 
   case "$canonical_name" in
     "Helm - The Architect"|"Helm - The Architect")
-      display_name="Helm - The Architect"
+      agent_name="helm-the-architect"
       is_helm="true"
       model_tier="deep"
       ;;
     "lore-product-strategist")
-      display_name="Lore - Product Strategist"
+      agent_name="lore-product-strategist"
       model_tier="balanced"
       ;;
     "forge-dev-lead")
-      display_name="Forge - Dev Lead"
+      agent_name="forge-dev-lead"
       model_tier="balanced"
       ;;
     "ward-quality-lead")
-      display_name="Ward - Quality Lead"
+      agent_name="ward-quality-lead"
       model_tier="balanced"
       ;;
     "cast-ship-and-support-lead")
-      display_name="Cast - Ship & Support"
+      agent_name="cast-ship-and-support-lead"
       model_tier="mechanical"
       ;;
     "trace-onboarding-lead")
-      display_name="Trace - Onboarding"
+      agent_name="trace-onboarding-lead"
       model_tier="balanced"
       ;;
   esac
@@ -190,7 +190,7 @@ opencode_agent_frontmatter() {
 
   {
     echo "---"
-    echo "name: $display_name"
+    echo "name: $agent_name"
     echo "description: $desc"
     echo "mode: primary"
     if [[ -n "$agent_model" ]]; then
