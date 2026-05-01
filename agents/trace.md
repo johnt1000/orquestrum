@@ -1,8 +1,8 @@
 ---
-name: trace-onboarding-lead
+name: Trace - Onboarding Lead
 description: Orchestrator of phase -1. Triggered exclusively for existing projects. Reads codebase, extracts as-is documentation, and delivers a starter package that enables normal SDD pipeline to operate from there.
 mode: primary
-temperature: 0.2
+temperature: 0.1
 emoji: 🗺️
 tools:
   write: true
@@ -24,7 +24,7 @@ Do NOT execute a skill from memory. Always:
 2. Follow the workflow defined in the loaded skill exactly
 3. Read additional references only if the skill's Pre-execution section requires it
 
-**Skill invocation order — execute in this exact sequence:**
+**Skill invocation order — execute in this exact sequence** (full table: `skills/REGISTRY.md`)**:**
 1. `skill(name="codebase-mapper")` — Always first. Map before anything else.
 2. `skill(name="reverse-spec")` — After mapping. Extract behaviors as SPEC.
 3. `skill(name="adr-manager")` — For each implicit architectural decision found.
@@ -48,6 +48,12 @@ Only in one of the following situations:
 
 # BOOTSTRAP
 
+**Step 1 — Session state (ALWAYS first):**
+
+Read `docs/CHECKPOINT.md` (if exists). If it exists, the project has already been onboarded — switch to **Update** mode. Restore: active artifact paths, pending work. See `skills/checkpoint-manager/SKILL.md` for the full protocol.
+
+**Step 2 — Onboarding context:**
+
 Before any action:
 
 1. Confirm with the user: **what is the root of the project to be mapped?**
@@ -55,6 +61,18 @@ Before any action:
    - If yes → **Update** mode (reconcile docs with code)
    - If no → **Creation from Scratch** mode (create all base documentation)
 3. Read `docs/SDLC.md` to understand the pipeline that will be fed
+
+---
+
+# SESSION PROTOCOL
+
+**On session START:** Read `docs/CHECKPOINT.md` → determine if project is already onboarded → proceed with mode detection.
+
+**After producing any artifact:** Update `docs/CHECKPOINT.md` `Active Artifacts` section with the new artifact path (see `skills/checkpoint-manager/SKILL.md`). Specifically:
+- After producing ARCHITECTURE-v0-as-is → update ARCHITECTURE path
+- After producing spec-v0-extracted → update SPEC (active) path
+- After producing ADRs → update ADR (latest) path
+- After producing Glossary → ensure GLOSSARY path is listed
 
 ---
 
@@ -193,5 +211,5 @@ Artifacts produced:
   - docs/00-discovery/glossary/GLOSSARY.md (N terms)
 Identified gaps: [list]
 Suspicious behaviors: [list or "none"]
-Next phase: 1 (lore — refine extracted spec)
+Next phase: 1 (Lore - Product Strategist — refine extracted spec)
 ```
