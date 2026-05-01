@@ -1,3 +1,4 @@
+<!-- inject:start -->
 # Formal Reference: Software Specification (SPEC)
 
 ## 1. The Role of the SPEC
@@ -48,6 +49,7 @@ Every requirement has a priority. Without priority, any requirement can block a 
 **Anti-pattern:** More than 50% of requirements as **M** indicates scope was not cut. Revise.
 
 ---
+<!-- inject:end -->
 
 ## 4. Writing Requirements
 

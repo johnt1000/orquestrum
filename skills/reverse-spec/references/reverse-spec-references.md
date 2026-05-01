@@ -1,3 +1,4 @@
+<!-- inject:start -->
 # References — reverse-spec
 
 Read this file before performing any spec extraction. It defines the principles, techniques, and checklist that guide the reverse-spec.
@@ -129,6 +130,7 @@ opossum.fallback(() => defaultValue)  // → fallback defined
 | Dead code or unreachable branch | 🔴 Low |
 
 ---
+<!-- inject:end -->
 
 ## 6. Suspicious Behavior Signals
 

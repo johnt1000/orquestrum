@@ -2,6 +2,7 @@
 name: review-manager
 description: Performs technical code review for security and conformance. Evaluates whether the implementation meets architecture standards and whether it introduces risks.
 inject_references: full
+inject_fewshot: compact
 metadata:
   version: "1.0.0"
   author: "Jônatas Rodrigues"

@@ -1,3 +1,4 @@
+<!-- inject:start -->
 # Formal Reference: System Design and Documentation
 
 ## 1. Separation Principles
@@ -17,6 +18,7 @@ An architecture document is a living organism.
 
 - Whenever a new component is added to the system, the `Components` field and the `System Diagram` MUST be updated simultaneously.
 - The `Data Flow` section must highlight whether there is asynchronous processing (queues, webhooks) or synchronous processing (REST APIs).
+<!-- inject:end -->
 
 ## 4. Integration with ADRs
 

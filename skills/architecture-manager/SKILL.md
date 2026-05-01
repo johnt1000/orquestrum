@@ -1,7 +1,8 @@
 ---
 name: architecture-manager
 description: Manages and updates high-level architecture documents. Maintains the systemic view of the project, flow diagrams, and traceability between specifications and technical decisions (ADRs).
-inject_references: full
+inject_references: compact
+inject_fewshot: compact
 metadata:
   version: "1.0.0"
   author: "Jônatas Rodrigues"

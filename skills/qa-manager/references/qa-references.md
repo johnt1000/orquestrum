@@ -1,3 +1,4 @@
+<!-- inject:start -->
 # Formal Reference: Quality Assurance (QA)
 
 ## 1. What to validate
@@ -45,6 +46,7 @@ When creating a session, it should work correctly.
 → Not testable. What does "work correctly" mean?
 
 ---
+<!-- inject:end -->
 
 ## 3. Result Severity Classification
 

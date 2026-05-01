@@ -1,3 +1,4 @@
+<!-- inject:start -->
 # Formal Reference: Task Execution and Code Quality
 
 ## 1. Task Granularity
@@ -86,6 +87,7 @@ SPEC SC-01:
 | **Accumulated skips** | `test.skip` / `xit` accumulated without issue | Each skip needs justification in the log |
 
 ---
+<!-- inject:end -->
 
 ## 7. Definition of Done (DoD) — Checklist
 

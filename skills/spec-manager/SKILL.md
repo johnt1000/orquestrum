@@ -1,7 +1,8 @@
 ---
 name: spec-manager
 description: Creates and manages Specification Documents (SPEC). Defines the scope, functional requirements, constraints, and success criteria of a system or feature. The "source of truth" for all other skills.
-inject_references: full
+inject_references: compact
+inject_fewshot: compact
 metadata:
   version: "1.0.0"
   author: "Jônatas Rodrigues"

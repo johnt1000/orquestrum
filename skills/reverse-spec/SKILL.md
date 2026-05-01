@@ -1,7 +1,7 @@
 ---
 name: reverse-spec
 description: Extracts implicit requirements and behaviors from an existing project and documents them in SPEC format. Produces a draft that requires human validation — distinguishes "current behavior" from "confirmed requirement".
-inject_references: full
+inject_references: compact
 metadata:
   version: "1.0.0"
   author: "Jônatas Rodrigues"

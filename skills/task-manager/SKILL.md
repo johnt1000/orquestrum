@@ -1,7 +1,8 @@
 ---
 name: task-manager
 description: Manages and details technical implementation tasks (TASKS). Connects Epic requirements with actual execution, tracking dependencies, generated artifacts, and progress logs.
-inject_references: full
+inject_references: compact
+inject_fewshot: compact
 metadata:
   version: "1.0.0"
   author: "Jônatas Rodrigues"

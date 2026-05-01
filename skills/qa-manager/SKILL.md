@@ -1,7 +1,8 @@
 ---
 name: qa-manager
 description: Performs technical and functional validation of completed tasks and features. Ensures SPEC acceptance criteria were met and documents failures or necessary improvements.
-inject_references: full
+inject_references: compact
+inject_fewshot: compact
 metadata:
   version: "1.0.0"
   author: "Jônatas Rodrigues"
