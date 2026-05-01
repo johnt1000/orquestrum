@@ -274,7 +274,8 @@ for archive in "${ARCHIVES[@]}"; do
       [[ -z "$eid" ]] && continue
       for qa_file in "$QA_DIR"/QA-${eid}*.md "$QA_DIR"/QA-${eid}.md; do
         if [[ -f "$qa_file" ]]; then
-          if grep -qi "status.*passed\|resultado.*passed\|passed" "$qa_file" 2>/dev/null; then
+          if ! grep -qi "not passed\|not approved" "$qa_file" 2>/dev/null && \
+               grep -qi "passed\|approved" "$qa_file" 2>/dev/null; then
             do_delete "$qa_file"
           else
             warn "  QA not passed, keeping: $(basename "$qa_file")"
@@ -283,7 +284,8 @@ for archive in "${ARCHIVES[@]}"; do
       done
       for review_file in "$REVIEW_DIR"/REVIEW-${eid}*.md "$REVIEW_DIR"/REVIEW-${eid}.md; do
         if [[ -f "$review_file" ]]; then
-          if grep -qi "status.*approved\|resultado.*approved\|approved" "$review_file" 2>/dev/null; then
+          if ! grep -qi "not passed\|not approved" "$review_file" 2>/dev/null && \
+               grep -qi "passed\|approved" "$review_file" 2>/dev/null; then
             do_delete "$review_file"
           else
             warn "  Review not approved, keeping: $(basename "$review_file")"
@@ -301,16 +303,16 @@ done
 if ! $SKIP_SUPERSEDED; then
   log "Processing superseded SPEC/Architecture versions..."
   if [[ -d "$SPEC_DIR" && -n "$ACTIVE_SPEC" ]]; then
-    find "$SPEC_DIR" -name "spec-v*.md" ! -name "$ACTIVE_SPEC" 2>/dev/null | while IFS= read -r f; do
+    while IFS= read -r f; do
       [[ -z "$f" ]] && continue
       do_delete "$f"
-    done
+    done < <(find "$SPEC_DIR" -name "spec-v*.md" ! -name "$ACTIVE_SPEC" 2>/dev/null)
   fi
   if [[ -d "$ARCH_DIR" && -n "$ACTIVE_ARCH" ]]; then
-    find "$ARCH_DIR" -name "ARCHITECTURE-v*.md" ! -name "$ACTIVE_ARCH" 2>/dev/null | while IFS= read -r f; do
+    while IFS= read -r f; do
       [[ -z "$f" ]] && continue
       do_delete "$f"
-    done
+    done < <(find "$ARCH_DIR" -name "ARCHITECTURE-v*.md" ! -name "$ACTIVE_ARCH" 2>/dev/null)
   fi
   echo ""
 fi
@@ -361,9 +363,9 @@ if [[ -d "$SPEC_DIR" ]]; then
     ok "Check 3: Only active SPEC remains — PASS ($ACTIVE_SPEC)"
   else
     err "Check 3: $spec_count non-active SPEC file(s) remain — FAIL"
-    find "$SPEC_DIR" -name "*.md" ! -name "$ACTIVE_SPEC" 2>/dev/null | while IFS= read -r f; do
+    while IFS= read -r f; do
       err "  Remaining: $f"
-    done
+    done < <(find "$SPEC_DIR" -name "*.md" ! -name "$ACTIVE_SPEC" 2>/dev/null)
     FAILED=1
   fi
 else
@@ -377,9 +379,9 @@ if [[ -d "$ARCH_DIR" ]]; then
     ok "Check 4: Only active Architecture remains — PASS ($ACTIVE_ARCH)"
   else
     err "Check 4: $arch_count non-active Architecture file(s) remain — FAIL"
-    find "$ARCH_DIR" -name "*.md" ! -name "$ACTIVE_ARCH" 2>/dev/null | while IFS= read -r f; do
+    while IFS= read -r f; do
       err "  Remaining: $f"
-    done
+    done < <(find "$ARCH_DIR" -name "*.md" ! -name "$ACTIVE_ARCH" 2>/dev/null)
     FAILED=1
   fi
 else
