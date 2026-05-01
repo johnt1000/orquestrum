@@ -5,15 +5,17 @@ import frontmatter as fm
 
 @dataclass
 class AgentConfig:
-    name:        str
-    description: str
-    mode:        str
-    temperature: float
-    emoji:       str
-    bash:        bool
-    write:       bool
-    edit:        bool
-    body:        str
+    name:                str
+    description:         str
+    mode:                str
+    temperature:         float
+    emoji:               str
+    bash:                bool
+    write:               bool
+    edit:                bool
+    body:                str
+    max_tokens:          int | None = None   # P1: output cap per call
+    model_tier_override: str | None = None  # P3: overrides AGENT_TIERS for this agent
 
 
 @dataclass
@@ -30,6 +32,8 @@ class SkillConfig:
 def parse_agent(path: Path) -> AgentConfig:
     post = fm.load(str(path))
     tools = post.get('tools') or {}
+    raw_mt = post.get('max_tokens')
+    raw_ov = post.get('model_tier_override')
     return AgentConfig(
         name=post['name'],
         description=post['description'],
@@ -40,6 +44,8 @@ def parse_agent(path: Path) -> AgentConfig:
         write=bool(tools.get('write', True)),
         edit=bool(tools.get('edit', True)),
         body=post.content,
+        max_tokens=int(raw_mt) if raw_mt is not None else None,
+        model_tier_override=str(raw_ov) if raw_ov is not None else None,
     )
 
 

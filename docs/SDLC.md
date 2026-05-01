@@ -15,15 +15,11 @@ flowchart TD
     end
 
     GL0 --> G
+    NEWSTART([New project]) --> G
 
-    subgraph phase0 [Phase 0 · Foundation — new projects start here]
-        G[glossary-manager]
-    end
-
-    G --> S
-
-    subgraph phase1 [Phase 1 · Discovery]
-        S[spec-manager] --> A[adr-manager]
+    subgraph phase1 [Phase 1 · Discovery — new projects start here]
+        G[glossary-manager] --> S[spec-manager]
+        S --> A[adr-manager]
     end
 
     S --> AR
@@ -39,13 +35,19 @@ flowchart TD
         E[epic-manager] --> T[task-manager]
     end
 
+    T --> SEC
     T --> R
     T --> Q
+
+    subgraph phase35 [Phase 3.5 · Security Gate]
+        SEC[security-manager]
+    end
 
     subgraph phase4 [Phase 4 · Quality]
         R[review-manager] --> Q[qa-manager]
         Q -->|critical failure| L[learning-manager]
         T -->|unexpected difficulty| L
+        SEC -->|cleared| Q
     end
 
     Q -->|Passed| C
@@ -62,7 +64,7 @@ flowchart TD
 
 ### Phase -1 — Onboarding (`docs/00-discovery/` + `docs/01-design/architecture/`)
 
-> Triggered **only for existing projects** without SDD documentation. New projects start directly at Phase 0.
+> Triggered **only for existing projects** without SDD documentation. New projects start directly at Phase 1.
 
 | Skill | Artifact | Trigger |
 |-------|----------|---------|
@@ -71,25 +73,18 @@ flowchart TD
 | [adr-manager](../skills/adr-manager/SKILL.md) | `ADR-XXX-{slug}.md` (Accepted) | For each implicit architectural decision found in the code |
 | [glossary-manager](../skills/glossary-manager/SKILL.md) | `GLOSSARY.md` | To canonize domain terms found in the codebase |
 
-**Rule:** No Phase 0 or later skill may be used without codebase-mapper having produced the as-is architecture. The extracted spec must start as `Draft` and requires human validation before becoming `Active`.
-
----
-
-### Phase 0 — Foundation (`docs/00-discovery/glossary/`)
-
-| Skill | Artifact | Trigger |
-|-------|----------|---------|
-| [glossary-manager](../skills/glossary-manager/SKILL.md) | `GLOSSARY.md` | Project start or when new domain terms need to be canonized |
-
-**Rule:** The glossary must exist before the first SPEC. Every agent must consult the glossary before creating any document to ensure consistent terminology.
+**Rule:** No Phase 1 or later skill may be used without codebase-mapper having produced the as-is architecture. The extracted spec must start as `Draft` and requires human validation before becoming `Active`.
 
 ---
 
 ### Phase 1 — Discovery (`docs/00-discovery/`)
 
+> New projects start here. Glossary is the implicit first step — it must exist before the first SPEC. Every agent must consult the glossary before creating any document to ensure consistent terminology.
+
 | Skill | Artifact | Trigger |
 |-------|----------|---------|
-| [spec-manager](../skills/spec-manager/SKILL.md) | `spec-vX-{slug}.md` | Start of any new feature |
+| [glossary-manager](../skills/glossary-manager/SKILL.md) | `GLOSSARY.md` | First step — project start or when new domain terms need to be canonized |
+| [spec-manager](../skills/spec-manager/SKILL.md) | `spec-vX-{slug}.md` | After glossary — start of any new feature |
 | [adr-manager](../skills/adr-manager/SKILL.md) | `ADR-XXX-{slug}.md` | Relevant technical decision or technology change |
 | [pattern-manager](../skills/pattern-manager/SKILL.md) | `PATTERNS.md` | After first SPEC — catalog patterns and register adoptions |
 
@@ -244,11 +239,13 @@ Always use the `References` section of templates to keep this chain intact.
 | Agent | Phases | Skills governed | File |
 |-------|--------|----------------|------|
 | [Helm — The Architect](../agents/helm.md) | all | — (pure coordinator) | `agents/helm.md` |
-| [Trace — Onboarding Lead](../agents/trace.md) | -1 | codebase-mapper, reverse-spec, adr, glossary | `agents/trace.md` |
-| [Lore — Product Strategist](../agents/lore.md) | 0–1 | glossary, spec, adr | `agents/lore.md` |
-| [Forge — Dev Lead](../agents/forge.md) | 2–3 | architecture, epic, task | `agents/forge.md` |
-| [Ward — Quality Lead](../agents/ward.md) | 4 | review, qa, learning | `agents/ward.md` |
-| [Cast — Ship & Support Lead](../agents/cast.md) | 5 + maintenance | changelog, runbook | `agents/cast.md` |
+| [Trace — Onboarding Lead](../agents/trace.md) | -1 | codebase-mapper, reverse-spec, adr-manager, glossary-manager | `agents/trace.md` |
+| [Lore — Product Strategist](../agents/lore.md) | 1 | glossary-manager, spec-manager, adr-manager | `agents/lore.md` |
+| [Forge — Dev Lead](../agents/forge.md) | 2–3 | pattern-manager, architecture-manager, epic-manager, task-manager | `agents/forge.md` |
+| [Cipher — Security Lead](../agents/cipher.md) | 3.5 | security-manager | `agents/cipher.md` |
+| [Ward — Quality Lead](../agents/ward.md) | 4 | review-manager, qa-manager, learning-manager, learning-aggregator | `agents/ward.md` |
+| [Cast — Ship Lead](../agents/cast.md) | 5 | changelog-manager, runbook-manager, archive-manager | `agents/cast.md` |
+| [Flux — Support Lead](../agents/flux.md) | maintenance | checkpoint-manager (read + triage) | `agents/flux.md` |
 
 ---
 
@@ -256,21 +253,117 @@ Always use the `References` section of templates to keep this chain intact.
 
 | Phase | Skill | Role |
 |-------|-------|------|
-| cross-cutting | checkpoint-manager | Session continuity — CHECKPOINT.md read/write |
+| cross-cutting | checkpoint-manager | Session continuity — CHECKPOINT.md (Flux reads; Cast and Cipher write) |
 | -1 | codebase-mapper | As-is map of existing projects |
 | -1 | reverse-spec | Requirements extraction from existing code |
-| 0 | glossary-manager | Canonical domain vocabulary |
+| 1 | glossary-manager | Canonical domain vocabulary (implicit first step of Discovery) |
 | 1 | spec-manager | Requirements and success criteria |
 | 1 | adr-manager | Architectural decisions |
 | 1 | pattern-manager | Design pattern catalog and traceability |
 | 2 | architecture-manager | System view and diagrams |
 | 3 | epic-manager | Vertical decomposition of SPEC |
 | 3 | task-manager | Execution with traceability |
-| 4 | review-manager | Code quality and security |
+| 3.5 | security-manager | Threat modeling, OWASP validation, SEC report |
+| 4 | review-manager | Code quality and security (with traceability score) |
 | 4 | qa-manager | Functional validation against SPEC |
 | 4 | learning-manager | Failure knowledge capture |
+| 4 | learning-aggregator | Cross-cutting pattern synthesis (triggered at milestone close, ≥3 L-XXX) |
+| 3–4 | e2e-manager | E2E scenario map + regression report — invoked pre-implementation (Flow G) or pre-release (Flow H) |
 | 5 | changelog-manager | Versioned and documented release |
 | 5 | runbook-manager | Operational procedures |
+| 5 | archive-manager | Release consolidation — reduces repository clutter |
+
+---
+
+## Alternative Flows
+
+Beyond the standard Tier 0/1/2 classification, the following named flows address common scenarios that do not fit the main pipeline cleanly. Helm selects the appropriate flow during classification.
+
+### Flow A — Hot-Fix (production incident)
+
+```
+Flux → Cipher (impact analysis) → Forge (task-manager direct) → Ward → Cast
+```
+
+- Artifact level: Echo → Pulse if security surface is touched
+- Skips Lore (no SPEC) and Trace
+- ADR required if observable production behavior changes
+- SLA: must complete in a single session
+
+### Flow B — Spike / Research
+
+```
+Lore (spec-manager, status=Draft) → ADR (status=Proposed) → learning-manager
+```
+
+- Artifact level: Echo (no implementation TASK)
+- Goal: document hypotheses and decisions from a technical investigation
+- Does not advance to Forge until SPEC transitions to `status=Approved`
+- May produce L-XXX learning even without implementation
+
+### Flow C — Tech Debt Cleanup
+
+```
+Forge (task-manager, no epic-manager) → Ward (qa-manager, no review-manager) → Cast
+```
+
+- Artifact level: Echo or Pulse
+- No EPIC (refactoring produces no new functionality)
+- Existing no-elevation-by-file-count rule in TIERS.md applies
+- ADR required if an architectural pattern is changed
+
+### Flow D — Documentation-Only
+
+```
+Lore → (glossary-manager or spec-manager) → Cast (changelog only)
+```
+
+- Artifact level: Echo
+- Skips Forge, Cipher, Ward implementation gates
+- Trigger: doc PRs, glossary updates, SPEC corrections without code changes
+
+### Flow E — Proactive Security Audit
+
+```
+Helm → Cipher → Ward (learning-manager) → Flux (improvement backlog)
+```
+
+- Triggered periodically (not by a feature request)
+- Produces SEC + L-XXX without an implementation TASK
+- Ward creates improvement issues for Flux to prioritize
+
+### Flow G — TDD Strict (test-first enforcement)
+
+```
+Lore (spec-manager, SC-XX in BDD) → Forge (e2e-manager: scenario map) → Forge (task-manager: Red phase first) → Ward (review-manager: TDD cycle audit) → Ward (qa-manager)
+```
+
+- Artifact level: Pulse or Chronicle (depending on tier)
+- Key difference: `e2e-manager` is invoked **before** implementation to produce an E2E scenario map aligned with SPEC Success Criteria
+- Ward's review-manager checks TDD cycle evidence in Task log before approving
+- A SC-XX without a matching failing test at Red phase blocks task completion
+- Use when: the team mandates test-first on Tier 1 (not just Tier 2)
+
+### Flow H — E2E Regression (pre-release or periodic)
+
+```
+Helm → Ward (e2e-manager: regression run) → Ward (qa-manager: E2E results) → Cast or Flux (backlog)
+```
+
+- Artifact level: Echo (no new feature; produces E2E-REPORT)
+- Triggered by: pre-release gate OR periodic schedule (e.g. weekly against staging)
+- Does NOT produce TASK or EPIC — purely validation
+- Outcome: `Passed` → Cast proceeds to release; `Failed` → Flux creates correction tasks
+
+### Flow F — Onboarding Fast-Path (partially documented project)
+
+```
+Trace (codebase-mapper + reverse-spec) → Lore (validate spec-v0 → promote to spec-v1) → Forge
+```
+
+- Allows partially documented projects to enter the pipeline without full re-documentation
+- Trace produces Draft; Lore promotes to Approved with human review
+- Continues from Phase 2 (Design) once SPEC is Approved
 
 ---
 

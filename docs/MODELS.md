@@ -12,11 +12,16 @@ Models are organized in three tiers. Use `--provider <name>` with `convert.py` t
 
 | Tier | `claude` | `copilot` | `glm` | When to use |
 |------|----------|-----------|-------|-------------|
-| **Deep** | `anthropic/claude-opus-4-6` | `github-copilot/claude-opus-4.5` | `zai-coding-plan/glm-5.1` | Requirements elicitation, trade-off analysis, inference from code |
-| **Balanced** | `anthropic/claude-sonnet-4-6` | `github-copilot/claude-sonnet-4.5` | `zai-coding-plan/glm-4.7` | Structured design, code review, validation, decomposition |
+| **Deep** | `anthropic/claude-opus-4-7` | `github-copilot/claude-opus-4.7` | `zai-coding-plan/glm-5.1` | Requirements elicitation, trade-off analysis, inference from code |
+| **Sharp** | `anthropic/claude-sonnet-4-6`¹ | `github-copilot/claude-opus-4.6` | `zai-coding-plan/glm-5-turbo` | Threat modeling, security analysis — structured reasoning with elevated quality |
+| **Balanced** | `anthropic/claude-sonnet-4-6` | `github-copilot/claude-sonnet-4.6` | `zai-coding-plan/glm-4.7` | Structured design, code review, validation, decomposition |
 | **Mechanical** | `anthropic/claude-haiku-4-5-20251001` | `github-copilot/claude-haiku-4.5` | `zai-coding-plan/glm-4.5-air` | Release formatting, term definition, operational doc updates |
 
-Canonical source files reference models without provider prefix (e.g. `claude-opus-4-6`). The `convert.py` script resolves the full model ID at conversion time based on the selected provider.
+¹ No intermediate Claude model available; `sharp` maps to `balanced` for `claude` provider.
+
+Canonical source files reference models without provider prefix (e.g. `claude-opus-4-7`). The `convert.py` script resolves the full model ID at conversion time based on the selected provider.
+
+> **Modelo candidato — roadmap:** `zai-coding-plan/glm-5-turbo` (GLM, entre balanced e deep) não tem tier mapeado na versão atual. Será avaliado como tier `sharp` no roadmap de parâmetros. Ver `docs/MODELS.md` seção roadmap abaixo.
 
 ---
 
@@ -36,13 +41,18 @@ Canonical source files reference models without provider prefix (e.g. `claude-op
 | `adr-manager` | Trade-off analysis and technical decision consequences; requires deep reasoning |
 | `reverse-spec` | Requirements inference from ambiguous code — weak signal, high error risk |
 
+### Sharp — Primary Agents
+
+| Agent | Justification |
+|-------|--------------|
+| `cipher` | Threat modeling and OWASP gap analysis; elevated quality needed to avoid missed attack vectors without paying deep-tier cost |
+
 ### Balanced — Primary Agents
 
 | Agent | Justification |
 |-------|--------------|
 | `lore` | Structured orchestration; critical sub-skills (spec, adr) already use deep |
 | `forge` | Orchestration; translates SPEC into structured plans; design follows patterns and ADRs |
-| `cipher` | Security gate between Forge and Ward; threat modeling requires reasoning but is structured |
 | `ward` | Structured validation against defined criteria; checklists with reasoning |
 | `trace` | Reading + structured categorization of code; critical sub-skills use deep |
 | `flux` | Incident triage and routing; classification against known patterns |

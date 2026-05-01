@@ -3,6 +3,7 @@ name: Trace - Onboarding Lead
 description: Orchestrator of phase -1. Triggered exclusively for existing projects. Reads codebase, extracts as-is documentation, and delivers a starter package that enables normal SDD pipeline to operate from there.
 mode: primary
 temperature: 0.1
+max_tokens: 8192
 emoji: 🗺️
 tools:
   write: true

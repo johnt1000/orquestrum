@@ -63,9 +63,11 @@ class ClaudeCodeAdapter(ToolAdapter):
 
     def _frontmatter(self, agent: AgentConfig, provider: str | None) -> str:
         # Always resolve model — claude-code is always Anthropic; default to 'claude'
-        model = resolve_model(agent.name, provider or 'claude')
+        model = resolve_model(agent.name, provider or 'claude', agent.model_tier_override)
         lines = ['---', f'name: {agent.name}', f'description: {agent.description}',
-                 f'model: {model}']
+                 f'model: {model}', f'temperature: {agent.temperature}']
+        if agent.max_tokens is not None:
+            lines.append(f'maxTokens: {agent.max_tokens}')
         if not agent.bash:
             lines.append('disallowedTools: Bash')
         lines.append('---\n')
@@ -107,8 +109,9 @@ class OpenCodeAdapter(ToolAdapter):
     def _frontmatter(self, agent: AgentConfig, provider: str | None) -> str:
         model_line = ''
         if provider:
-            model = resolve_model(agent.name, provider)
+            model = resolve_model(agent.name, provider, agent.model_tier_override)
             model_line = f'model: {model}\n'
+        max_tokens_line = f'maxTokens: {agent.max_tokens}\n' if agent.max_tokens is not None else ''
         bash_perm = 'allow' if agent.bash else 'deny'
         if agent.name == HELM_NAME:
             task = '    "*": deny\n' + ''.join(f'    "{o}": allow\n' for o in ORCHESTRATOR_NAMES)
@@ -117,6 +120,7 @@ class OpenCodeAdapter(ToolAdapter):
         return (
             f'---\nname: {agent.name}\ndescription: {agent.description}\n'
             f'mode: primary\n{model_line}temperature: {agent.temperature}\n'
+            f'{max_tokens_line}'
             f'emoji: {agent.emoji}\npermission:\n  edit: allow\n'
             f'  bash: {bash_perm}\n  task:\n{task}---\n\n'
         )
@@ -307,6 +311,7 @@ def main() -> None:
         log(f'Provider: {provider}')
         models = PROVIDER_MODELS[provider]
         log(f'  deep:       {models["deep"]}')
+        log(f'  sharp:      {models["sharp"]}')
         log(f'  balanced:   {models["balanced"]}')
         log(f'  mechanical: {models["mechanical"]}')
     else:

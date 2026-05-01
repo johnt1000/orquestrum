@@ -32,18 +32,15 @@ Date: YYYY-MM-DD HH:mm
 
 ## Test Cases
 
-### ✅ Passed
+> For each SC-XX from the active SPEC, record the result and the validation method used.
 
-- {functional test validated}
-- {acceptance criterion X met}
+| SC | Result | validation_method | Notes |
+|----|--------|-------------------|-------|
+| SC-01 | ✅ Passed | static | — |
+| SC-02 | ⚠️ Partial | e2e | {describe limitation} |
+| SC-03 | ❌ Failed | automated | {describe failure} |
 
-### ⚠️ Partial
-
-- {unstable or partial behavior}
-
-### ❌ Failed
-
-- {error found that prevents completion}
+`validation_method` values: `static` (code read) · `e2e` (manual end-to-end) · `automated` (test suite) · `integration` (cross-service)
 
 ---
 
@@ -74,14 +71,23 @@ Date: YYYY-MM-DD HH:mm
 
 ---
 
+## ⚠ Audit Warnings
+
+<!-- Self-audit section — filled by Ward before handoff. If no warnings: "No warnings — artifact passed self-audit." -->
+
+- [ ] {placeholder or warning detected}
+
+---
+
 ## Handoff Checklist
 
 > Complete before signaling completion to Ward / cast.
 
 - [ ] All `{...}` placeholders replaced with real content
-- [ ] Every SC-XX from the active SPEC has a test result (Pass / Fail / Blocked)
+- [ ] Every SC-XX from the active SPEC has a row in the Test Cases table with `validation_method` set
 - [ ] Security validation section completed
 - [ ] Test execution summary filled (total passed, failed, blocked)
 - [ ] Final status is `Passed` or `Partial` (not Draft)
 - [ ] If `Partial` or `Failed`: blocking issues documented with linked Tasks
+- [ ] `## ⚠ Audit Warnings` section completed (even if empty)
 - [ ] Handoff to: **changelog-manager** (Cast) — bring QA status and approved artifact versions

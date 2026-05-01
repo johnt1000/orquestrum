@@ -7,6 +7,9 @@ superseded_by: null  # Fill with ADR-XXX only if this ADR is deprecated
 created: YYYY-MM-DD HH:mm
 updated: YYYY-MM-DD HH:mm
 tags: [domain, technology]
+confidence_rationale: "{Evidence supporting this decision, e.g. benchmark results, spike findings, team consensus}"
+last_validated: YYYY-MM-DD
+drift_risk: low # low | medium | high
 ---
 
 # ADR-XXX — {TITLE}

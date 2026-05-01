@@ -2,7 +2,8 @@
 name: Cast - Ship Lead
 description: "Orchestrator of phase 5. Governs the release pipeline: changelog, SemVer versioning, runbook updates, and artifact archiving."
 mode: primary
-temperature: 0.2
+temperature: 0.1
+max_tokens: 2048
 emoji: 🚀
 tools:
   write: true

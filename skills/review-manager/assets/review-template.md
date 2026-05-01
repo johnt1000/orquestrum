@@ -5,8 +5,11 @@ status: Pending # Approved | Changes Requested | Rejected
 version: 1.0
 reviewer: "{agent/human}"
 complexity: Medium # Low | Medium | High
+traceability_score: "0/0 (0%)"  # X requirements covered / Y total — filled by Ward
 created: YYYY-MM-DD HH:mm
 updated: YYYY-MM-DD HH:mm
+last_validated: YYYY-MM-DD
+drift_risk: low # low | medium | high
 ---
 
 # REVIEW vX — {TITLE}
@@ -73,6 +76,14 @@ Approved | Changes Required | Rejected
 
 ---
 
+## ⚠ Audit Warnings
+
+<!-- Self-audit section — filled by Ward before handoff. If no warnings: "No warnings — artifact passed self-audit." -->
+
+- [ ] {placeholder or warning detected}
+
+---
+
 ## Handoff Checklist
 
 > Complete before signaling completion to Ward / qa-manager.
@@ -82,6 +93,8 @@ Approved | Changes Required | Rejected
 - [ ] All OWASP Top 10 items checked
 - [ ] LGPD compliance noted (if personal data involved)
 - [ ] `Approved Artifacts` section lists exact file paths reviewed
+- [ ] `traceability_score` computed: Req → Task → QA criterion coverage %
 - [ ] Final status is `Approved` or `Changes Requested` (not Draft)
 - [ ] If `Changes Requested`: correction Task ID linked
+- [ ] `## ⚠ Audit Warnings` section completed (even if empty)
 - [ ] Handoff to: **qa-manager** (Ward) — bring Approved Artifacts list and any open findings

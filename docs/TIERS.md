@@ -16,6 +16,74 @@ TIER 2 — Full       → Complete pipeline               (~13 LLM calls)
 
 ---
 
+## Artifact Intensity Levels
+
+**Intensity levels are orthogonal to tiers.** They control how many artifacts are produced within a tier, allowing fine-grained control independent of the code volume changed. The default mapping below can be overridden by Helm when risk signals justify it.
+
+### Level 1 — Echo (minimum traceable)
+
+Objective: decision evidence without documentation overhead.
+
+| Artifact | Required? |
+|----------|-----------|
+| TASK | ✅ |
+| LOG (inline in TASK — no separate file) | ✅ |
+| ADR | Conditional (only if a new decision is made) |
+| QA criteria (pass/fail inline) | ✅ |
+
+When to use: Tier 0, urgent hotfixes, research spikes, doc-only changes.
+LLM calls: 1–2.
+
+### Level 2 — Pulse (structured traceability)
+
+Objective: artifacts required for human peer review.
+
+| Artifact | Required? |
+|----------|-----------|
+| SPEC (new or update of existing) | ✅ |
+| ADR | ✅ |
+| EPIC | ✅ |
+| TASK + LOG | ✅ |
+| SEC | Conditional (when touching auth/personal data) |
+| QA | ✅ |
+| REVIEW | ✅ |
+
+When to use: Tier 1, features within an existing SPEC, security patches.
+LLM calls: 5–7.
+
+### Level 3 — Chronicle (full audit trail)
+
+Objective: artifacts required for compliance, new-dev onboarding, and post-mortems.
+
+| Artifact | Required? |
+|----------|-----------|
+| GLOSSARY | ✅ |
+| SPEC | ✅ |
+| ADR | ✅ |
+| PATTERNS | ✅ |
+| ARCHITECTURE | ✅ |
+| EPIC + TASK + LOG | ✅ |
+| SEC | ✅ |
+| REVIEW + QA | ✅ |
+| LEARNING | Conditional (on failure) |
+| CHANGELOG + RELEASE + RUNBOOK | ✅ |
+| ARCHIVE | ✅ |
+
+When to use: Tier 2, new modules, migrations, critical integrations.
+LLM calls: ~13.
+
+### Default Tier × Level Mapping
+
+| Tier | Default Level | Override Allowed |
+|------|--------------|-----------------|
+| Tier 0 | Echo | → Pulse (if a new decision is detected mid-flight) |
+| Tier 1 | Pulse | → Echo (if Helm confirms low risk) |
+| Tier 2 | Chronicle | No (compliance required) |
+| Hot-Fix | Echo | → Pulse (if security surface touched) |
+| Spike | Echo | — |
+
+---
+
 ## Classification by Activity Type
 
 **Identify the type before applying size criteria.** Some types have override rules that replace the size questions.
@@ -77,6 +145,29 @@ The **first "Yes" answer from top to bottom** determines the minimum tier.
 1. Optional in Tier 1: run REVIEW when the task touches security, authentication, payment, or personal data code.
 2. Informal in Tier 0: no QA document is created — just confirm the task criterion was met.
 3. Accumulates in Tier 1: add to the `[Unreleased]` section of CHANGELOG, without creating a RELEASE document.
+
+---
+
+## Testing Requirements per Tier
+
+The testing bar scales with tier. These requirements are enforced by Ward (qa-manager) during validation.
+
+| Requirement | Tier 0 | Tier 1 | Tier 2 |
+|-------------|:------:|:------:|:------:|
+| Tests exist in Task `Tests` section | — | ✅ | ✅ |
+| Each SC-XX has ≥1 test case (Given/When/Then) | — | ✅ | ✅ |
+| Happy path covered | — | ✅ | ✅ |
+| ≥1 error scenario per SC-XX | — | ✅ | ✅ |
+| TDD cycle (Red → Green → Refactor) | — | Recommended | ✅ mandatory |
+| Unit tests for business logic | — | Recommended | ✅ |
+| Integration or E2E for external dependencies | — | Recommended | ✅ |
+| E2E scenario map (`e2e-manager`) | — | — | ✅ if critical user path |
+| No unjustified `skip`/`xit`/`xtest` | — | ✅ | ✅ |
+| Smoke test (manual confirmation of criterion) | Recommended | — | — |
+
+**Tier 0 note:** No formal test artifact is required, but a smoke confirmation ("criterion met — verified by X") must be recorded in `MICRO-LOG.md`.
+
+**External integration constraint (all tiers):** Any SC-XX touching an external API, webhook, or third-party service requires `integration` or `e2e` validation_method to reach `Passed` status in QA. `static` alone caps the result at `Partial`.
 
 ---
 

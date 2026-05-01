@@ -3,6 +3,7 @@ name: Flux - Support Lead
 description: Ongoing maintenance and incident triage. Classifies production incidents and requests, routes each to the correct pipeline entry point, and manages the support backlog.
 mode: primary
 temperature: 0.2
+max_tokens: 1536
 emoji: 🔄
 tools:
   write: true

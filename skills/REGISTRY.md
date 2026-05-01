@@ -25,6 +25,8 @@ Agents use this table to check whether a task requires skill loading before proc
 | Capture lessons from failures | `learning-manager` | ward | 1 | 4 |
 | Aggregate patterns across all L-XXX docs | `learning-aggregator` | ward | 1 | 4 |
 | Run security analysis (threat modeling, OWASP, deps) | `security-manager` | cipher | 1 | 3.5 |
+| Map SPEC SC-XX to E2E scenarios (pre-implementation) | `e2e-manager` | ward / forge | 2 | 3–4 |
+| Run E2E regression against target environment | `e2e-manager` | ward | 1 | 4 |
 | Generate changelog or release notes | `changelog-manager` | cast | 1 | 5 |
 | Write or update operational runbook | `runbook-manager` | cast | 2 | 5 |
 | Archive completed tasks and logs | `archive-manager` | cast | 1 | 5 |

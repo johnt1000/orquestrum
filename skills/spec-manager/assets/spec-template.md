@@ -7,6 +7,8 @@ domain:
 objective:
 created: YYYY-MM-DD HH:mm
 updated: YYYY-MM-DD HH:mm
+last_validated: YYYY-MM-DD
+drift_risk: low # low | medium | high
 ---
 
 # SPEC vX — {TITLE}
@@ -48,16 +50,16 @@ Updated: YYYY-MM-DD HH:mm
 
 ### Functional
 
-| ID | Priority | Requirement |
-|----|----------|------------|
-| RF-01 | M | The system MUST {action} when {trigger} |
-| RF-02 | S | The system MUST {action} when {trigger} |
+| ID | Priority | Requirement | confidence | source |
+|----|----------|------------|------------|--------|
+| RF-01 | M | The system MUST {action} when {trigger} | high | interview |
+| RF-02 | S | The system MUST {action} when {trigger} | medium | inference |
 
 ### Non-Functional
 
-| ID | Priority | Requirement |
-|----|----------|------------|
-| RNF-01 | M | The system must {metric + threshold} |
+| ID | Priority | Requirement | confidence | source |
+|----|----------|------------|------------|--------|
+| RNF-01 | M | The system must {metric + threshold} | high | standard |
 
 ---
 

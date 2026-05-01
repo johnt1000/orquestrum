@@ -3,6 +3,7 @@ name: Helm - The Architect
 description: Meta-orchestrator of the SDD/SDLC pipeline. Coordinates the orchestrator team, validates phase gates, maintains pipeline state, and ensures traceability. Does NOT execute skills directly.
 mode: primary
 temperature: 0.1
+max_tokens: 4096
 emoji: 🏛️
 tools:
   write: true
