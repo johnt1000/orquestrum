@@ -8,7 +8,7 @@ The goal is proportional to the level of reasoning required: more expensive mode
 
 ## Provider Profiles
 
-Models are organized in three tiers. Use `--provider <name>` with `convert.sh` to generate integrations for a specific provider.
+Models are organized in three tiers. Use `--provider <name>` with `convert.py` to generate integrations for a specific provider.
 
 | Tier | `claude` | `copilot` | `glm` | When to use |
 |------|----------|-----------|-------|-------------|
@@ -16,7 +16,7 @@ Models are organized in three tiers. Use `--provider <name>` with `convert.sh` t
 | **Balanced** | `anthropic/claude-sonnet-4-6` | `github-copilot/claude-sonnet-4.5` | `zai-coding-plan/glm-4.7` | Structured design, code review, validation, decomposition |
 | **Mechanical** | `anthropic/claude-haiku-4-5-20251001` | `github-copilot/claude-haiku-4.5` | `zai-coding-plan/glm-4.5-air` | Release formatting, term definition, operational doc updates |
 
-Canonical source files reference models without provider prefix (e.g. `claude-opus-4-6`). The `convert.sh` script resolves the full model ID at conversion time based on the selected provider.
+Canonical source files reference models without provider prefix (e.g. `claude-opus-4-6`). The `convert.py` script resolves the full model ID at conversion time based on the selected provider.
 
 ---
 
@@ -42,8 +42,10 @@ Canonical source files reference models without provider prefix (e.g. `claude-op
 |-------|--------------|
 | `lore` | Structured orchestration; critical sub-skills (spec, adr) already use deep |
 | `forge` | Orchestration; translates SPEC into structured plans; design follows patterns and ADRs |
+| `cipher` | Security gate between Forge and Ward; threat modeling requires reasoning but is structured |
 | `ward` | Structured validation against defined criteria; checklists with reasoning |
 | `trace` | Reading + structured categorization of code; critical sub-skills use deep |
+| `flux` | Incident triage and routing; classification against known patterns |
 
 ### Balanced — Skills
 
@@ -53,9 +55,11 @@ Canonical source files reference models without provider prefix (e.g. `claude-op
 | `pattern-manager` | Structured catalog and adoption; selection against known pattern list |
 | `epic-manager` | Structured decomposition of SPEC into vertical slices |
 | `task-manager` | Structured execution + test case derivation (TDD) from SC-XX |
+| `security-manager` | Threat modeling + OWASP gap analysis; structured but requires security reasoning |
 | `review-manager` | Security checklist + reasoning about architectural conformance |
 | `qa-manager` | Structured Given/When/Then validation; SC-XX → test mapping |
 | `learning-manager` | Structured root cause analysis (5 Whys method) |
+| `learning-aggregator` | Cross-cutting pattern detection across multiple L-XXX documents |
 | `codebase-mapper` | Reading + structured categorization of stack, components and entry points |
 
 ### Mechanical — Primary Agents
@@ -71,6 +75,7 @@ Canonical source files reference models without provider prefix (e.g. `claude-op
 | `glossary-manager` | Domain term extraction and definition — fixed structure, predictable output |
 | `changelog-manager` | Release formatting (Keep a Changelog + SemVer) — highly mechanical |
 | `runbook-manager` | Operational documentation updates — template-driven, no creativity required |
+| `checkpoint-manager` | CHECKPOINT.md writes — purely structural, fixed format |
 
 ---
 

@@ -3,6 +3,7 @@ integrations/
 
 # macOS
 .DS_Store
+**/.DS_Store
 
 # Editor
 .vscode/
@@ -12,5 +13,15 @@ integrations/
 .env
 .env.*
 
-# claude
+# Claude Code session data
 .claude/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+*.egg-info/
+dist/
+build/
