@@ -7,44 +7,30 @@ isolated to the resolved `model:` field; everything else (frontmatter
 keys, body sections, file count) must match.
 
 Usage:
-    uv run scripts/tests/parity/run.py
-    uv run scripts/tests/parity/run.py --providers claude,glm
-    uv run scripts/tests/parity/run.py --json   # CI-friendly output
+    orquestrum audit parity
+    orquestrum audit parity --providers claude,glm
+    orquestrum audit parity --json   # CI-friendly output
 
 Exit code: 0 if all assertions pass, 1 if any structural divergence.
-
-This is NOT a semantic-quality check (does Cipher produce equivalent
-threat models on all providers?). That requires real LLM calls and is
-out of scope. This is a structural-shape check that catches:
-  - adapter regressions (e.g. forgotten field in one frontmatter)
-  - model-collapse drift (a tier silently changing across providers)
-  - body-content drift (unintended path rewrites differing per provider)
 """
 from __future__ import annotations
 import argparse
 import json
-import shutil
-import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
 import frontmatter as fm
-from lib.models import VALID_PROVIDERS, AGENT_TIERS, tier_collapse
+from orquestrum.lib.models import VALID_PROVIDERS, AGENT_TIERS, tier_collapse
 
 
-ROOT          = Path(__file__).parent.parent.parent.parent
+ROOT          = Path(__file__).parent.parent.parent.parent.parent
 INTEGRATIONS  = ROOT / 'integrations'
 
 
 def run_convert(provider: str, tool: str = 'claude-code') -> Path:
-    """Run convert.py and return the path to the produced agents directory."""
-    cmd = ['uv', 'run', 'scripts/convert.py', '--tool', tool, '--provider', provider]
-    result = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=60)
-    if result.returncode != 0:
-        raise RuntimeError(f'convert failed for {provider}: {result.stderr}')
+    """Run convert and return the path to the produced agents directory."""
+    from orquestrum.core.convert import main as convert_main
+    convert_main(['--tool', tool, '--provider', provider])
     return INTEGRATIONS / tool / '.claude' / 'agents'
 
 
@@ -119,9 +105,7 @@ def assert_tier_collapse_documented(providers: list[str]) -> list[str]:
             collapsed = tier_collapse(provider, tier)
             if collapsed is None:
                 continue
-            # Just assert that the agent's resolved model is the collapsed-tier model.
-            # If the collapse silently maps to something else, this catches it.
-            from lib.models import PROVIDER_MODELS
+            from orquestrum.lib.models import PROVIDER_MODELS
             if PROVIDER_MODELS[provider][tier] != PROVIDER_MODELS[provider][collapsed]:
                 failures.append(
                     f'{agent_name} on provider {provider}: TIER_COLLAPSES says '

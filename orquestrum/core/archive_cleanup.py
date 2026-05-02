@@ -6,7 +6,7 @@ Cast calls this after generating archive summaries (creative work = LLM,
 destructive work = this script).
 
 Usage:
-    uv run scripts/archive_cleanup.py --project /path/to/project [options]
+    orquestrum archive-cleanup --project /path/to/project [options]
 
 Options:
     --project DIR       Target project root (required)
@@ -21,9 +21,7 @@ import re
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
-
-from lib.log import log, ok, warn, err, set_prefix
+from orquestrum.lib.log import log, ok, warn, err, set_prefix
 
 set_prefix('archive-cleanup')
 
@@ -167,9 +165,9 @@ def main() -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             'Examples:\n'
-            '  uv run scripts/archive_cleanup.py --project /path/to/project\n'
-            '  uv run scripts/archive_cleanup.py --project /path/to/project --dry-run\n'
-            '  uv run scripts/archive_cleanup.py --project /path/to/project --archive docs/02-planning/tasks/ARCHIVE-v1.md'
+            '  orquestrum archive-cleanup --project /path/to/project\n'
+            '  orquestrum archive-cleanup --project /path/to/project --dry-run\n'
+            '  orquestrum archive-cleanup --project /path/to/project --archive docs/02-planning/tasks/ARCHIVE-v1.md'
         ),
     )
     parser.add_argument('--project', required=True, metavar='DIR',
@@ -285,7 +283,6 @@ def main() -> None:
     log('Running validation checks...')
     failed = False
 
-    # Check 1: Zero empty files
     docs = project / 'docs'
     empty_count = sum(1 for f in docs.rglob('*.md') if f.stat().st_size == 0) if docs.is_dir() else 0
     if empty_count == 0:
@@ -294,7 +291,6 @@ def main() -> None:
         err(f'Check 1: Found {empty_count} empty files — FAIL')
         failed = True
 
-    # Check 2: No ghost task files
     ghost_count = 0
     for tid in all_task_ids:
         for f in find_task_files(tid, tasks_dir):
@@ -307,7 +303,6 @@ def main() -> None:
         err(f'Check 2: {ghost_count} ghost task file(s) — FAIL')
         failed = True
 
-    # Check 3: Only active SPEC remains
     if spec_dir.is_dir():
         non_active = [f for f in spec_dir.glob('*.md') if f.name != active_spec]
         if not non_active:
@@ -320,7 +315,6 @@ def main() -> None:
     else:
         ok('Check 3: No SPEC directory — SKIP')
 
-    # Check 4: Only active Architecture remains
     if arch_dir.is_dir():
         non_active = [f for f in arch_dir.glob('*.md') if f.name != active_arch]
         if not non_active:
@@ -333,7 +327,6 @@ def main() -> None:
     else:
         ok('Check 4: No Architecture directory — SKIP')
 
-    # Check 5: No ghost/duplicate task files
     dup_count = 0
     if tasks_dir.is_dir():
         for tid in all_task_ids:

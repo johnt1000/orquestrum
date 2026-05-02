@@ -24,17 +24,17 @@ def register(sub: argparse._SubParsersAction) -> None:
 
 
 def _payload(args: argparse.Namespace) -> int | None:
-    from scripts.audit.payload import main as wrapped
+    from orquestrum.core.audit.payload import main as wrapped
     wrapped(args.passthrough or [])
     return 0
 
 
 def _parity(args: argparse.Namespace) -> int | None:
-    from scripts.tests.parity.run import main as wrapped
+    from orquestrum.core.tests.parity.run import main as wrapped
     return wrapped(args.passthrough or []) or 0
 
 
 def _attention(args: argparse.Namespace) -> int | None:
-    from scripts.audit.attention_distribution import main as wrapped
+    from orquestrum.core.audit.attention_distribution import main as wrapped
     wrapped(args.passthrough or [])
     return 0

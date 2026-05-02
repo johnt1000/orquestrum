@@ -17,12 +17,10 @@ Checks:
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
+from orquestrum.lib.log import ok, warn, err
+from orquestrum.lib.frontmatter import parse_agent, parse_skill
 
-from lib.log import ok, warn, err
-from lib.frontmatter import parse_agent, parse_skill
-
-ROOT       = Path(__file__).parent.parent
+ROOT       = Path(__file__).parent.parent.parent
 AGENTS_DIR = ROOT / 'agents'
 SKILLS_DIR = ROOT / 'skills'
 DOCS_DIR   = ROOT / 'docs'

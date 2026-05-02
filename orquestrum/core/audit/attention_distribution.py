@@ -5,12 +5,12 @@ Walks `docs/03-quality/` (or any --root) looking for files with
 `attention_score`, `attention_band`, `attention_factors` in frontmatter.
 Reports band counts, p10/p50/p90, mean, and the most-frequent factors.
 
-Used by ROADMAP R2 to decide whether to tune `scripts/lib/attention.py` weights.
+Used by ROADMAP R2 to decide whether to tune `orquestrum/lib/attention.py` weights.
 
 Usage:
-    uv run scripts/audit/attention_distribution.py
-    uv run scripts/audit/attention_distribution.py --root /path/to/project
-    uv run scripts/audit/attention_distribution.py --output docs/baselines/attention-YYYY-MM.md
+    orquestrum audit attention
+    orquestrum audit attention --root /path/to/project
+    orquestrum audit attention --output docs/baselines/attention-YYYY-MM.md
 """
 from __future__ import annotations
 import argparse
@@ -92,7 +92,6 @@ def render_markdown(items: list[dict], threshold_n: int = 30) -> str:
     factor_counter: Counter = Counter()
     for it in items:
         for factor in it['factors']:
-            # Strip numeric tail, keep just the factor type
             key = str(factor).split(':')[0]
             factor_counter[key] += 1
     if factor_counter:
@@ -134,7 +133,7 @@ def render_markdown(items: list[dict], threshold_n: int = 30) -> str:
         lines.append('')
 
     lines.append('---')
-    lines.append('Re-run: `uv run scripts/audit/attention_distribution.py [--root PATH]`')
+    lines.append('Re-run: `orquestrum audit attention [--root PATH]`')
     return '\n'.join(lines)
 
 

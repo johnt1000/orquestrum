@@ -45,7 +45,7 @@ def auto_detect_mode(root: Path) -> Mode:
     framework_markers = [
         root / 'agents',
         root / 'skills',
-        root / 'scripts' / 'lib',
+        root / 'orquestrum' / 'lib',
         root / 'docs' / 'agent-context',
     ]
     if all(p.exists() for p in framework_markers):
@@ -85,7 +85,7 @@ def resolve(
         # will display empty state and the user can populate it later
     else:
         # Framework mode requires the canonical layout
-        for required in ('agents', 'skills', 'scripts'):
+        for required in ('agents', 'skills', 'orquestrum'):
             if not (root / required).is_dir():
                 raise ValueError(
                     f'Framework mode at {root} but {required}/ is missing. '

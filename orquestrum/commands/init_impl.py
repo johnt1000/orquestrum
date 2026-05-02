@@ -92,7 +92,7 @@ def _run_install(project_root: Path, tool: str, provider: str | None) -> bool:
     integration_dir = canonical / 'integrations' / tool
     if not integration_dir.is_dir():
         print(f'  Generating integration package for {tool} (one-time)...')
-        from scripts.convert import main as convert_main
+        from orquestrum.core.convert import main as convert_main
         import os
         prev_cwd = os.getcwd()
         try:
@@ -105,7 +105,7 @@ def _run_install(project_root: Path, tool: str, provider: str | None) -> bool:
             os.chdir(prev_cwd)
 
     # Now install
-    from scripts.install import main as install_main
+    from orquestrum.core.install import main as install_main
     import os
     prev_cwd = os.getcwd()
     try:

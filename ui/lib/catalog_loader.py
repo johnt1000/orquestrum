@@ -4,17 +4,12 @@ Reusable in both framework mode (the Orquestrum repo) and project mode
 (read installed agents under .claude/agents/ or .opencode/agents/).
 """
 from __future__ import annotations
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-# Reuse the canonical parsers from scripts/lib/
-_ROOT = Path(__file__).resolve().parent.parent.parent
-sys.path.insert(0, str(_ROOT / 'scripts'))
-
 try:
-    from lib.frontmatter import parse_agent, parse_skill, AgentConfig, SkillConfig
-    from lib.models import AGENT_TIERS
+    from orquestrum.lib.frontmatter import parse_agent, parse_skill, AgentConfig, SkillConfig
+    from orquestrum.lib.models import AGENT_TIERS
 except ImportError:
     parse_agent = parse_skill = None
     AGENT_TIERS = {}

@@ -9,6 +9,6 @@ def register(sub: argparse._SubParsersAction) -> None:
 
 
 def _handler(args: argparse.Namespace) -> int | None:
-    from scripts.lint import main as wrapped
+    from orquestrum.core.lint import main as wrapped
     wrapped()
     return 0

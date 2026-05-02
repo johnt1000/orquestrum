@@ -35,7 +35,7 @@ def find_canonical_root(start: Path | None = None) -> Path | None:
     Return the canonical root, or None.
     """
     cur = (start or Path.cwd()).expanduser().resolve()
-    markers = ('agents', 'skills', 'scripts/lib', 'docs/agent-context')
+    markers = ('agents', 'skills', 'orquestrum/lib', 'docs/agent-context')
     for parent in [cur, *cur.parents]:
         if all((parent / m).exists() for m in markers):
             return parent
@@ -48,7 +48,7 @@ def canonical_root_from_package() -> Path | None:
     or None when installed from a wheel where source is unavailable.
     """
     pkg_root = Path(__file__).resolve().parent.parent.parent  # orquestrum/lib/paths.py → repo root
-    markers = ('agents', 'skills', 'scripts/lib', 'docs/agent-context')
+    markers = ('agents', 'skills', 'orquestrum/lib', 'docs/agent-context')
     if all((pkg_root / m).exists() for m in markers):
         return pkg_root
     return None

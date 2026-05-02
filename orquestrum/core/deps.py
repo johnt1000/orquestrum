@@ -4,15 +4,15 @@
 All upstream repositories are pinned by commit SHA in `pinned_refs.toml` to
 prevent silent upstream drift / supply-chain compromise. Rotation is explicit:
 
-    uv run scripts/deps.py --update-pins        # rewrite SHAs to current HEADs
-    git diff pinned_refs.toml                   # review
+    orquestrum deps --update-pins        # rewrite SHAs to current HEADs
+    git diff pinned_refs.toml            # review
     git commit -m "chore(deps): rotate pinned SHAs"
 
 Usage:
-    uv run scripts/deps.py --target ~/.config/opencode
-    uv run scripts/deps.py --target ~/.config/opencode --only agency
-    uv run scripts/deps.py --target ~/.config/opencode --only skills
-    uv run scripts/deps.py --update-pins
+    orquestrum deps --target ~/.config/opencode
+    orquestrum deps --target ~/.config/opencode --only agency
+    orquestrum deps --target ~/.config/opencode --only skills
+    orquestrum deps --update-pins
 
     Supported dependencies:
       agency   - agency-agents (msitarzewski/agency-agents)
@@ -28,13 +28,11 @@ import tempfile
 import tomllib
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
-
-from lib.log import log, ok, warn, err, set_prefix
+from orquestrum.lib.log import log, ok, warn, err, set_prefix
 
 set_prefix('deps')
 
-ROOT      = Path(__file__).parent.parent
+ROOT      = Path(__file__).parent.parent.parent
 PINS_FILE = ROOT / 'pinned_refs.toml'
 
 AGENCY_CATEGORIES = [
@@ -207,8 +205,6 @@ def update_pins() -> None:
     for name, head_sha in new_shas.items():
         old_sha = pins[name]['sha']
         old_pinned = pins[name]['last_pinned']
-        # Find the [[refs]] block for this name and replace sha + last_pinned within it.
-        # Conservative: replace only exact-match lines. Fail loudly if not found.
         if f'sha         = "{old_sha}"' not in text:
             err(f'Could not locate sha line for {name} (formatting drift?)')
             sys.exit(1)
@@ -233,10 +229,10 @@ def main(argv: list[str] | None = None) -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             'Examples:\n'
-            '  uv run scripts/deps.py --target ~/.config/opencode\n'
-            '  uv run scripts/deps.py --target ~/.config/opencode --only agency\n'
-            '  uv run scripts/deps.py --target ~/.config/opencode --only skills\n'
-            '  uv run scripts/deps.py --update-pins'
+            '  orquestrum deps --target ~/.config/opencode\n'
+            '  orquestrum deps --target ~/.config/opencode --only agency\n'
+            '  orquestrum deps --target ~/.config/opencode --only skills\n'
+            '  orquestrum deps --update-pins'
         ),
     )
     parser.add_argument('--target', metavar='PATH',

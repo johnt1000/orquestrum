@@ -48,6 +48,10 @@ Install via Claude Code settings.json:
         }]
       }
     }
+
+DEPLOYMENT NOTE: This file is copied to .sdd/scripts/hooks/ in target projects.
+The sys.path manipulation below resolves lib/ from the deployed location:
+  .sdd/scripts/hooks/emit_metrics.py → parent = .sdd/scripts/ → has lib/
 """
 from __future__ import annotations
 import datetime as dt
@@ -56,8 +60,8 @@ import sys
 import traceback
 from pathlib import Path
 
-# Resolve scripts/lib/ at runtime — the hook lives at .sdd/scripts/hooks/ in the
-# target project, so scripts/lib/ is a sibling of hooks/.
+# Resolve lib/ at runtime — the hook lives at .sdd/scripts/hooks/ in the
+# target project, so lib/ is a sibling of hooks/.
 _HOOK_DIR  = Path(__file__).resolve().parent
 _LIB_DIR   = _HOOK_DIR.parent / 'lib'
 sys.path.insert(0, str(_HOOK_DIR.parent))
@@ -99,7 +103,11 @@ def _resolve_agent_and_tier(input_json: dict) -> tuple[str, str]:
             from lib.models import AGENT_TIERS
             tier = AGENT_TIERS.get(agent, 'unknown')
         except ImportError:
-            tier = 'unknown'
+            try:
+                from orquestrum.lib.models import AGENT_TIERS
+                tier = AGENT_TIERS.get(agent, 'unknown')
+            except ImportError:
+                tier = 'unknown'
         return agent, tier
     return '(top-level)', 'unknown'
 
@@ -115,8 +123,6 @@ def _emit(input_json: dict) -> None:
     usage = input_json.get('usage') or {}
     in_t  = _safe_int(usage.get('input_tokens'))
     out_t = _safe_int(usage.get('output_tokens'))
-    # Optional cache fields: use cache_read_input_tokens; cache_creation is one-time
-    # write cost which is conceptually different — we report read only here.
     cached = _safe_int(usage.get('cache_read_input_tokens'))
 
     raw_model = input_json.get('model')
@@ -127,7 +133,11 @@ def _emit(input_json: dict) -> None:
         from lib.models import estimate_cost
         cost = round(estimate_cost(model, in_t, out_t), 6)
     except ImportError:
-        pass
+        try:
+            from orquestrum.lib.models import estimate_cost
+            cost = round(estimate_cost(model, in_t, out_t), 6)
+        except ImportError:
+            pass
 
     agent, tier = _resolve_agent_and_tier(input_json)
 

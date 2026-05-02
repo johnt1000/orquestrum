@@ -78,34 +78,29 @@ Eight orchestrators, each owning one or more pipeline phases:
 
 ## Installation
 
-> Requires Python 3.12+ on macOS or Linux. We recommend [`uv`](https://docs.astral.sh/uv/).
+> Requires Python 3.12+ on macOS or Linux.
 
-### Recommended — install the `orquestrum` CLI globally
+### One-liner (recommended)
+
+```bash
+curl -sSL https://raw.githubusercontent.com/johnt1000/orquestrum/main/install.sh | bash
+```
+
+Installs [`uv`](https://docs.astral.sh/uv/) if needed, then installs the `orquestrum` CLI
+with the web console and app window extras. The binary lands at `~/.local/bin/orquestrum`.
+
+Options:
+
+```bash
+bash install.sh --minimal     # CLI only, no web console
+bash install.sh --no-webview  # CLI + web console, skip pywebview
+```
+
+### Manual
 
 ```bash
 uv tool install git+https://github.com/johnt1000/orquestrum
-orquestrum --version
-```
-
-The `orquestrum` binary becomes available everywhere (`~/.local/bin/orquestrum` by default). To enable the web console, install with the `[ui]` extras:
-
-```bash
-uv tool install --with 'orquestrum[ui]' git+https://github.com/johnt1000/orquestrum
-```
-
-### Alternative — pipx
-
-```bash
-pipx install git+https://github.com/johnt1000/orquestrum
-```
-
-### Development — clone + editable
-
-```bash
-git clone https://github.com/johnt1000/orquestrum
-cd orquestrum
-uv tool install --editable .
-uv sync --extra ui     # for the web console
+orquestrum extras install ui webview   # add web console + app window
 ```
 
 ### Future: Homebrew + Linux package repos
@@ -118,6 +113,10 @@ Once the CLI stabilizes (≥ v0.5), distribution will expand to:
 - **Nix flake**
 
 See [`docs/governance/DISTRIBUTION.md`](docs/governance/DISTRIBUTION.md) for the full plan.
+
+---
+
+Contributing? See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 

@@ -2,18 +2,14 @@
 """serve.py — launch the Orquestrum UI console.
 
 Usage:
-    uv run scripts/ui/serve.py                                # auto-detect mode, root=.
-    uv run scripts/ui/serve.py --mode project --root /path
-    uv run scripts/ui/serve.py --mode framework --port 7700
+    python -m orquestrum.core.ui.serve                      # auto-detect mode, root=.
+    python -m orquestrum.core.ui.serve --mode project --root /path
+    python -m orquestrum.core.ui.serve --mode framework --port 7700
 
 Local-only by design: binds 127.0.0.1.
 """
 import argparse
 import sys
-from pathlib import Path
-
-ROOT_REPO = Path(__file__).resolve().parent.parent.parent
-sys.path.insert(0, str(ROOT_REPO))
 
 from ui.config import resolve, DEFAULT_PORT
 

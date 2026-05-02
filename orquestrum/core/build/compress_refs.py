@@ -17,11 +17,11 @@ Output is written next to the input, with `.compact.md` extension. Hand-written
 hand-written one without `--force`.
 
 Usage:
-    uv run scripts/build/compress_refs.py                    # compress all references > threshold
-    uv run scripts/build/compress_refs.py --skill SKILL      # compress one skill only
-    uv run scripts/build/compress_refs.py --threshold-kb 4   # custom threshold
-    uv run scripts/build/compress_refs.py --dry-run          # report only, no writes
-    uv run scripts/build/compress_refs.py --force            # overwrite hand-written .compact.md
+    orquestrum compact                        # compress all references > threshold
+    orquestrum compact --skill SKILL          # compress one skill only
+    orquestrum compact --threshold-kb 4       # custom threshold
+    orquestrum compact --dry-run              # report only, no writes
+    orquestrum compact --force                # overwrite hand-written .compact.md
 """
 from __future__ import annotations
 import argparse
@@ -30,7 +30,7 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-ROOT       = Path(__file__).resolve().parent.parent.parent
+ROOT       = Path(__file__).resolve().parent.parent.parent.parent
 SKILLS_DIR = ROOT / 'skills'
 
 DEFAULT_THRESHOLD_KB = 8
@@ -130,7 +130,6 @@ def _limit_examples(text: str, fired: list[str], max_examples: int = 3) -> str:
     if len(matches) <= max_examples:
         return text
 
-    # Find drop ranges: start of (max+1)th example to start of next non-example header at same level
     keep_count = max_examples
     to_drop_ranges: list[tuple[int, int]] = []
     for i, m in enumerate(matches):
@@ -138,13 +137,11 @@ def _limit_examples(text: str, fired: list[str], max_examples: int = 3) -> str:
             continue
         start = m.start()
         level = len(m.group(1))
-        # Find next header at same or higher level
         rest = text[m.end():]
         next_header = re.search(r'^#{1,' + str(level) + r'}\s+\S', rest, re.MULTILINE)
         end = m.end() + next_header.start() if next_header else len(text)
         to_drop_ranges.append((start, end))
 
-    # Apply drops in reverse order to preserve indices
     new = text
     for start, end in reversed(to_drop_ranges):
         new = new[:start] + new[end:]
@@ -187,7 +184,6 @@ def _trim_long_blockquotes(text: str, fired: list[str], keep_head: int = 3) -> s
 def compress_one(src: Path, dst: Path, *, force: bool = False) -> CompressResult:
     src_bytes = src.stat().st_size
     if dst.exists() and not force:
-        # Detect hand-written: check if it has a sentinel comment from us
         dst_text = dst.read_text(encoding='utf-8')
         if '<!-- compact:auto-generated -->' not in dst_text:
             return CompressResult(

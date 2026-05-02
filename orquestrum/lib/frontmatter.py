@@ -66,7 +66,7 @@ def parse_skill(path: Path) -> SkillConfig:
         chain_next=chain.get('next'),
         depends_on=deps,
         # Normalize to lowercase so YAML bool `false` (→ Python 'False') matches the
-        # 'false' literal used downstream in paths.py / convert.py / audit.
+        # 'false' literal used downstream in rewrite.py / convert.py / audit.
         inject_refs=str(post.get('inject_references', 'false')).lower(),
         inject_fewshot=str(post.get('inject_fewshot', 'false')).lower(),
         body=post.content,

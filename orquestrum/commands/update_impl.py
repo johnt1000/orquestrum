@@ -26,25 +26,55 @@ def _project_tool(project_root: Path) -> tuple[str | None, str | None]:
     return proj.get('tool'), proj.get('provider')
 
 
+def _orquestrum_agent_filenames() -> list[str]:
+    """Return the exact filenames Orquestrum installs for its 8 agents."""
+    from orquestrum.lib.models import AGENT_TIERS
+    from orquestrum.lib.rewrite import name_to_kebab
+    return [f'{name_to_kebab(name)}.md' for name in AGENT_TIERS]
+
+
+def _remove_only_framework_files(directory: Path, filenames: list[str]) -> list[str]:
+    """Delete only the specific files Orquestrum owns. Never removes the directory."""
+    removed: list[str] = []
+    for fname in filenames:
+        f = directory / fname
+        if f.exists():
+            f.unlink()
+            removed.append(str(f.relative_to(directory.parent.parent)))
+    return removed
+
+
 def _cleanup_old_tool(project_root: Path, old_tool: str) -> list[str]:
-    """Remove integration files of a previous tool. Conservative: only removes
-    canonical install paths; leaves user files alone.
+    """Remove only the files that Orquestrum installed for the given tool.
+    Never deletes shared directories (agents/, skills/) — only removes the
+    specific files Orquestrum placed there.
     Returns a list of removed paths for the report.
     """
     removed: list[str] = []
+    agent_files = _orquestrum_agent_filenames()
+
     if old_tool == 'claude-code':
-        for rel in ('.claude/agents', '.sdd'):
-            p = project_root / rel
-            if p.is_dir():
-                shutil.rmtree(p, ignore_errors=True)
-                removed.append(rel)
+        # .claude/agents/ is shared — remove only Orquestrum's agent files
+        agents_dir = project_root / '.claude' / 'agents'
+        if agents_dir.is_dir():
+            removed += _remove_only_framework_files(agents_dir, agent_files)
+        # .sdd/ is exclusively Orquestrum's — safe to remove entirely
+        sdd = project_root / '.sdd'
+        if sdd.is_dir():
+            shutil.rmtree(sdd, ignore_errors=True)
+            removed.append('.sdd')
         # settings.json: remove only OUR hook entries, preserve user keys
         settings = project_root / '.claude' / 'settings.json'
         if settings.exists():
             _scrub_claude_settings_hooks(settings)
             removed.append('.claude/settings.json (orquestrum hooks)')
     elif old_tool == 'opencode':
-        for rel in ('.opencode/agents', '.opencode/skills', '.opencode/docs'):
+        # agents/ and skills/ are shared — remove only Orquestrum's files
+        agents_dir = project_root / '.opencode' / 'agents'
+        if agents_dir.is_dir():
+            removed += _remove_only_framework_files(agents_dir, agent_files)
+        # docs/ is exclusively Orquestrum's — safe to remove entirely
+        for rel in ('.opencode/docs',):
             p = project_root / rel
             if p.is_dir():
                 shutil.rmtree(p, ignore_errors=True)
@@ -65,6 +95,62 @@ def _cleanup_old_tool(project_root: Path, old_tool: str) -> list[str]:
             p.unlink()
             removed.append('.windsurfrules')
     return removed
+
+
+def _detect_install_mode() -> str:
+    """Returns 'source', 'uv-tool', or 'unknown'."""
+    canonical = paths.canonical_root()
+    if canonical and (canonical / '.git').is_dir():
+        return 'source'
+    import shutil
+    exe = shutil.which('orquestrum')
+    if exe:
+        exe_path = Path(exe).resolve()
+        for uv_tools in (
+            Path.home() / '.local' / 'share' / 'uv' / 'tools',
+            Path.home() / 'Library' / 'Application Support' / 'uv' / 'tools',
+        ):
+            try:
+                exe_path.relative_to(uv_tools)
+                return 'uv-tool'
+            except ValueError:
+                pass
+    return 'unknown'
+
+
+def _run_self_upgrade() -> int:
+    import subprocess
+    mode = _detect_install_mode()
+
+    if mode == 'source':
+        canonical = paths.canonical_root()
+        print(f'Source install detected at {canonical}')
+        print('Running: git pull ...')
+        result = subprocess.run(['git', 'pull'], cwd=canonical)
+        if result.returncode != 0:
+            return result.returncode
+        print('\nRegenerating integration packages...')
+        from orquestrum.core.convert import main as convert_main
+        prev = os.getcwd()
+        try:
+            os.chdir(canonical)
+            convert_main(['--all'])
+        finally:
+            os.chdir(prev)
+        print('\nOrquestrum updated.')
+        return 0
+
+    if mode == 'uv-tool':
+        print('uv tool install detected.')
+        print('Running: uv tool upgrade orquestrum ...')
+        result = subprocess.run(['uv', 'tool', 'upgrade', 'orquestrum'])
+        return result.returncode
+
+    print('Could not detect install method automatically. Run one of:')
+    print('  uv tool upgrade orquestrum')
+    print('  pip install --upgrade git+https://github.com/johnt1000/orquestrum')
+    print('Or, if installed --editable, run `git pull` in the source repo.')
+    return 0
 
 
 def _scrub_claude_settings_hooks(settings_path: Path) -> None:
@@ -104,7 +190,7 @@ def _install_tool(project_root: Path, tool: str, provider: str | None) -> bool:
         return False
     integration_dir = canonical / 'integrations' / tool
     if not integration_dir.is_dir():
-        from scripts.convert import main as convert_main
+        from orquestrum.core.convert import main as convert_main
         prev_cwd = os.getcwd()
         try:
             os.chdir(canonical)
@@ -114,7 +200,7 @@ def _install_tool(project_root: Path, tool: str, provider: str | None) -> bool:
             convert_main(args)
         finally:
             os.chdir(prev_cwd)
-    from scripts.install import main as install_main
+    from orquestrum.core.install import main as install_main
     prev_cwd = os.getcwd()
     try:
         os.chdir(canonical)
@@ -193,11 +279,7 @@ def _set_project_tool(project_root: Path, tool: str, provider: str | None) -> No
 def run_update(*, tool: str | None = None, all_: bool = False,
                check: bool = False, self_update: bool = False) -> int:
     if self_update:
-        print('To upgrade the orquestrum CLI itself, run one of:')
-        print('  uv tool upgrade orquestrum')
-        print('  pip install --upgrade git+https://github.com/johnt1000/orquestrum')
-        print('Or, if installed --editable, run `git pull` in the source repo.')
-        return 0
+        return _run_self_upgrade()
 
     if all_:
         projects = registry.load_registry()

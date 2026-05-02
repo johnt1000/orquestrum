@@ -18,8 +18,38 @@ def register(sub: argparse._SubParsersAction) -> None:
     p.add_argument('--host', default='127.0.0.1',
                    help='Bind host (default 127.0.0.1; do NOT bind 0.0.0.0)')
     p.add_argument('--no-browser', action='store_true',
-                   help='Do not auto-open a browser tab')
+                   help='Disable automatic window/browser (server-only mode)')
     p.set_defaults(handler=_handler)
+
+
+def _wait_ready(url: str, timeout: float = 10.0) -> bool:
+    import time
+    import urllib.request
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            urllib.request.urlopen(url + '/health', timeout=0.5)
+            return True
+        except Exception:
+            time.sleep(0.1)
+    return False
+
+
+def _run_server_thread(app, host: str, port: int) -> None:
+    import threading
+    import uvicorn
+    t = threading.Thread(
+        target=uvicorn.run,
+        kwargs=dict(app=app, host=host, port=port, log_level='info'),
+        daemon=True,
+    )
+    t.start()
+
+
+def _open_window(url: str, title: str = 'Orquestrum') -> None:
+    import webview
+    webview.create_window(title, url, width=1280, height=800, min_size=(800, 600))
+    webview.start()
 
 
 def _handler(args: argparse.Namespace) -> int | None:
@@ -30,10 +60,8 @@ def _handler(args: argparse.Namespace) -> int | None:
         from ui.server import create_app
     except ImportError as e:
         print('error: web console requires the [ui] extras. Run:', file=sys.stderr)
-        print('       uv sync --extra ui                   (in editable mode)', file=sys.stderr)
-        print('       uv tool install --with fastapi --with uvicorn[standard] \\', file=sys.stderr)
-        print('         --with jinja2 --with mistune --with python-multipart --with watchfiles \\', file=sys.stderr)
-        print('         --editable /path/to/orquestrum', file=sys.stderr)
+        print('       uv sync --extra ui                              (web console)', file=sys.stderr)
+        print('       uv sync --extra ui --extra webview              (app window mode)', file=sys.stderr)
         print(f'       (missing: {e.name})', file=sys.stderr)
         return 2
 
@@ -53,13 +81,31 @@ def _handler(args: argparse.Namespace) -> int | None:
     print(f'  bind: {url}')
     print()
 
-    if not args.no_browser and os.environ.get('DISPLAY') is not False:
-        # Best-effort browser open; ignore failures (headless, sandboxed, etc.)
+    app = create_app(config)
+
+    if args.no_browser:
+        uvicorn.run(app, host=args.host, port=config.port, log_level='info')
+        return 0
+
+    # App window mode if pywebview is available
+    try:
+        import webview as _webview_check  # noqa: F401
+        has_webview = True
+    except ImportError:
+        has_webview = False
+
+    if has_webview:
+        _run_server_thread(app, args.host, config.port)
+        if not _wait_ready(url):
+            print('warning: server did not respond in 10s; opening window anyway',
+                  file=sys.stderr)
+        _open_window(url)
+    else:
+        # Fallback: system browser tab
         try:
             webbrowser.open(url)
         except Exception:
             pass
+        uvicorn.run(app, host=args.host, port=config.port, log_level='info')
 
-    app = create_app(config)
-    uvicorn.run(app, host=args.host, port=config.port, log_level='info')
     return 0

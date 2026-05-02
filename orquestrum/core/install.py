@@ -2,12 +2,12 @@
 """install.py — copies an integration package into a target project.
 
 Usage:
-    uv run scripts/install.py --tool <tool> --target <path>
-    uv run scripts/install.py --auto --target <path>
+    orquestrum install --tool <tool> --target <path>
+    orquestrum install --auto --target <path>
 
     Tools: claude-code, opencode, cursor, aider, windsurf
 
-    Run scripts/convert.py first to generate integrations/.
+    Run `orquestrum convert` first to generate integrations/.
 """
 import argparse
 import json
@@ -15,14 +15,12 @@ import shutil
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
-
-from lib.log import log, ok, warn, err, set_prefix
-from lib.models import VALID_TOOLS
+from orquestrum.lib.log import log, ok, warn, err, set_prefix
+from orquestrum.lib.models import VALID_TOOLS
 
 set_prefix('install')
 
-ROOT         = Path(__file__).parent.parent
+ROOT         = Path(__file__).parent.parent.parent
 INTEGRATIONS = ROOT / 'integrations'
 
 
@@ -113,7 +111,7 @@ def install_tool(tool: str, target: Path) -> bool:
     src = INTEGRATIONS / tool
     if not src.is_dir():
         err(f'Integration package not found: {src}')
-        err(f'Run first: uv run scripts/convert.py --tool {tool}')
+        err(f'Run first: orquestrum convert --tool {tool}')
         return False
 
     abs_target = target.expanduser().resolve()

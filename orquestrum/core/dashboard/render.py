@@ -2,10 +2,10 @@
 """render.py — render .orquestrum/metrics/events.jsonl into a static dashboard.
 
 Usage:
-    uv run scripts/dashboard/render.py                       # default: .orquestrum/metrics/, writes dashboard.md
-    uv run scripts/dashboard/render.py --metrics-dir PATH    # custom location
-    uv run scripts/dashboard/render.py --html                # also write dashboard.html
-    uv run scripts/dashboard/render.py --tier balanced       # show budget bands for tier
+    orquestrum dashboard                       # default: .orquestrum/metrics/, writes dashboard.md
+    orquestrum dashboard --metrics-dir PATH    # custom location
+    orquestrum dashboard --html                # also write dashboard.html
+    orquestrum dashboard --tier balanced       # show budget bands for tier
 
 Reads:
     {metrics_dir}/events.jsonl
@@ -21,10 +21,8 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from lib.metrics import read_events, aggregate, SessionAggregate
-from lib.budget import SOFT_THRESHOLDS
+from orquestrum.lib.metrics import read_events, aggregate, SessionAggregate
+from orquestrum.lib.budget import SOFT_THRESHOLDS
 
 
 def _bar(value: int, threshold: int, width: int = 40) -> str:
@@ -120,13 +118,12 @@ def render_markdown(sess: SessionAggregate, events: list[dict], tier_for_budget:
 
     lines.append('---')
     lines.append('')
-    lines.append('Re-render: `uv run scripts/dashboard/render.py [--tier TIER] [--html]`')
+    lines.append('Re-render: `orquestrum dashboard [--tier TIER] [--html]`')
     return '\n'.join(lines)
 
 
 def render_html(md_text: str, sess: SessionAggregate) -> str:
     """Single-file HTML wrapping the markdown — no build, no fetch, no server."""
-    # Convert basic markdown tables/headers to HTML inline (no external libs).
     body_lines: list[str] = []
     in_table = False
     in_code  = False

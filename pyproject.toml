@@ -19,6 +19,9 @@ ui = [
     "watchfiles>=0.24",
     "python-multipart>=0.0.20",
 ]
+webview = [
+    "pywebview>=5.0",
+]
 
 [dependency-groups]
 dev = ["pytest>=8.0"]
@@ -28,4 +31,4 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["orquestrum", "scripts", "ui"]
+packages = ["orquestrum", "ui"]
