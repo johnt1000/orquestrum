@@ -31,8 +31,8 @@ convert:  ## Generate integrations/ for all tools (no provider)
 convert-dry:  ## Inventory + cost projection without writing files
 	orquestrum convert --all --dry-run
 
-test:  ## Run the test suite (placeholder until Onda 4)
-	uv run pytest
+test:  ## Run the full test suite (156 tests across lib, core, ui)
+	uv run pytest tests/ -q
 
 web:  ## Launch the local FastAPI console (127.0.0.1:7700)
 	orquestrum web

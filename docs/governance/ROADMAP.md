@@ -518,17 +518,16 @@ Onboarding:
 
 **Estimativa:** 1-2 dias.
 
-### Onda 4 — Robustez (Pendente — sugestão a revisar)
+### Onda 4 — Robustez ✅ Concluída (2026-05-02)
 
-Fora do escopo aprovado em 2026-05-02. Capturado aqui para o próximo ciclo:
+| # | Item | Status | Notas |
+|---|------|--------|-------|
+| 4.1 | Suíte de testes para `lib/` | ✅ | 6 módulos: `test_models`, `test_attention`, `test_budget`, `test_paths`, `test_frontmatter_lib`, `test_metrics` |
+| 4.2 | Suíte de testes para `ui/` | ✅ | `test_edit_validator` (39 casos), `test_jobs` (async), `test_routes` (httpx.AsyncClient) |
+| 4.2b | Teste de integração de lint | ✅ | `tests/core/test_lint.py` — subprocess, verifica exit 0 + contagens |
+| 4.3 | CI no GitHub Actions | ✅ | `.github/workflows/ci.yml` — matrix Python 3.12/3.13 × lint + pytest + convert dry-run |
 
-| # | Item | Notas |
-|---|------|-------|
-| 4.1 | Suíte de testes para CLI (`tests/cli/test_*.py`) | Arg parsing por comando, dispatch correto, erros conhecidos. Usa `argparse` direto, sem runner externo. |
-| 4.2 | Suíte de testes para Web (`tests/ui/test_*.py`) | `httpx.AsyncClient` + `create_app` em modo project e framework. Cobrir: home, dashboard com/sem eventos, edit-flow happy/preflight-fail, 404 HTML/JSON, job lifecycle. |
-| 4.3 | CI no GitHub Actions | Matrix (Python 3.12) × (lint, tests, convert dry-run); bloqueia PR em vermelho. |
-
-**Disparador sugerido (ainda não agendado):** abrir um routine via `/schedule` (uma vez, ~2 semanas após Onda 3) que crie um PR com a suíte mínima + workflow. Decisão de agendar fica com o usuário — registrado aqui para revisitação.
+**156 testes, 0 falhas.** `make test` → `uv run pytest tests/ -q`.
 
 ### Sequenciamento aprovado
 
@@ -559,7 +558,7 @@ Onda 3:
 - `make dev` (ou `just dev`) instala extras + gera integrations + sobe web em uma chamada.
 - `pre-commit run --all-files` passa.
 
-**Esforço total:** ~7-10 dias-dev. **Risco:** Baixo (mudanças localizadas, sem refactor de domínio). **Bloqueia:** nada. **Status:** Pendente — PR 0 entrega esta seção; Ondas 1-3 em PRs subsequentes.
+**Esforço total:** ~7-10 dias-dev. **Risco:** Baixo (mudanças localizadas, sem refactor de domínio). **Bloqueia:** nada. **Status:** Todas as 4 ondas Concluídas em 2026-05-02.
 
 ---
 
