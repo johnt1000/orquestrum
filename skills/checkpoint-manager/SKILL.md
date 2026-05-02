@@ -44,7 +44,7 @@ After completing any meaningful unit of work, write `docs/CHECKPOINT.md` using `
 5. Fill `Pending Work` with any items that were started but not completed.
 6. Remove completed `Pending Work` items from the previous checkpoint.
 7. Record decisions made this session in `Decisions Made This Session`.
-8. **Rebuild the metrics session summary** if `.orquestrum/metrics/events.jsonl` exists: run `scripts/lib/metrics.py:rebuild_session()` (or call via the bash tool). Then read `.orquestrum/metrics/session.json` and populate the `## Metrics Summary` section with: total calls, input/output tokens, cached tokens, estimated cost, top 3 skills by input tokens. If a budget warning fires (`scripts/lib/budget.py:check_session_budget()`), include the formatted warning verbatim.
+8. **Rebuild the metrics session summary** if `.orquestrum/metrics/events.jsonl` exists: run `orquestrum.lib.metrics:rebuild_session()` (or call via the bash tool). Then read `.orquestrum/metrics/session.json` and populate the `## Metrics Summary` section with: total calls, input/output tokens, cached tokens, estimated cost, top 3 skills by input tokens. If a budget warning fires (`orquestrum.lib.budget:check_session_budget()`), include the formatted warning verbatim.
 9. Overwrite the existing file — do not append.
 
 ### MEDIATION.md aggregation

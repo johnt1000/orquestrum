@@ -1,6 +1,6 @@
 """edit_validator.py — preflight validation for frontmatter edits.
 
-Mirrors the rules in scripts/lint.py:check_agent_file but operates on a dict
+Mirrors the rules in orquestrum/core/lint.py:check_agent_file but operates on a dict
 in-memory (no subprocess, no file I/O). Used by /agents/{slug}/edit to gate
 writes BEFORE they touch disk.
 
@@ -130,7 +130,7 @@ VALID_INJECT_VALUES = {'false', 'full', 'compact'}
 
 
 def validate_skill_frontmatter(fm: dict[str, Any], skills_dir_existing: list[str]) -> list[str]:
-    """Mirror scripts/lint.py:check_skill_fields. Empty list = OK.
+    """Mirror orquestrum/core/lint.py:check_skill_fields. Empty list = OK.
 
     skills_dir_existing: list of existing skill slugs (for chain.next + depends_on
     cross-reference validation).

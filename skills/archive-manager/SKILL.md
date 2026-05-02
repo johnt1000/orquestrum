@@ -83,10 +83,10 @@ Run the deterministic cleanup script to delete all files that were consolidated 
 
 ```bash
 # Always run dry-run first to preview what will be deleted
-scripts/archive-cleanup.sh --project . --dry-run
+bundle/archive-cleanup.sh --project . --dry-run
 
 # Review the output carefully, then execute
-scripts/archive-cleanup.sh --project .
+bundle/archive-cleanup.sh --project .
 ```
 
 **What the script deletes:**
