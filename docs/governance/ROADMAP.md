@@ -527,9 +527,17 @@ Onboarding:
 
 **Estimativa:** 1-2 dias.
 
-### Onda 4 (fora do escopo aprovado)
+### Onda 4 — Robustez (Pendente — sugestão a revisar)
 
-Suíte de testes para CLI/Web e CI no GitHub Actions ficam registradas como **Pendente** para futura entrega (não executadas neste R14).
+Fora do escopo aprovado em 2026-05-02. Capturado aqui para o próximo ciclo:
+
+| # | Item | Notas |
+|---|------|-------|
+| 4.1 | Suíte de testes para CLI (`tests/cli/test_*.py`) | Arg parsing por comando, dispatch correto, erros conhecidos. Usa `argparse` direto, sem runner externo. |
+| 4.2 | Suíte de testes para Web (`tests/ui/test_*.py`) | `httpx.AsyncClient` + `create_app` em modo project e framework. Cobrir: home, dashboard com/sem eventos, edit-flow happy/preflight-fail, 404 HTML/JSON, job lifecycle. |
+| 4.3 | CI no GitHub Actions | Matrix (Python 3.12) × (lint, tests, convert dry-run); bloqueia PR em vermelho. |
+
+**Disparador sugerido (ainda não agendado):** abrir um routine via `/schedule` (uma vez, ~2 semanas após Onda 3) que crie um PR com a suíte mínima + workflow. Decisão de agendar fica com o usuário — registrado aqui para revisitação.
 
 ### Sequenciamento aprovado
 
