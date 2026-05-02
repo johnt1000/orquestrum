@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1>Dashboard</h1>
+
+{% if not sess or sess.totals.calls == 0 %}
+<article class="empty-state">
+  <h3>No metrics yet</h3>
+  <p>This project has not emitted any LLM-call events to <code>.orquestrum/metrics/events.jsonl</code>.</p>
+  <p>Once the framework is in use (or the metrics hook is configured — see <a href="/docs/view?p=docs/governance/ROADMAP.md">R3 in ROADMAP</a>),
+     this page will show input/output tokens, cached-token ratio, estimated cost, and per-skill breakdown.</p>
+</article>
+{% else %}
+<section class="totals-grid">
+  <article><strong>{{ "{:,}".format(sess.totals.input_tokens) }}</strong><br><small>input tokens</small></article>
+  <article><strong>{{ "{:,}".format(sess.totals.output_tokens) }}</strong><br><small>output tokens</small></article>
+  <article><strong>{{ "{:,}".format(sess.totals.cached_tokens) }}</strong><br><small>cached tokens</small></article>
+  <article><strong>${{ "%.4f"|format(sess.totals.cost_usd) }}</strong><br><small>est. cost USD</small></article>
+  <article><strong>{{ sess.totals.calls }}</strong><br><small>LLM calls</small></article>
+  <article><strong>{{ sess.totals.skill_calls }}</strong><br><small>skill completions</small></article>
+</section>
+
+{% if budget %}
+<h2>Budget — <code>{{ budget.tier }}</code> tier</h2>
+{% set in_pct = (budget.input_tokens / budget.input_threshold * 100) if budget.input_threshold else 0 %}
+<progress value="{{ budget.input_tokens }}" max="{{ budget.input_threshold }}"></progress>
+<small>input: {{ "{:,}".format(budget.input_tokens) }} / {{ "{:,}".format(budget.input_threshold) }}
+  ({{ "%.0f"|format(in_pct) }}%){% if budget.over_input %} ⚠{% endif %}</small>
+{% if budget.has_warning %}
+<article class="warn">
+  <strong>⚠ Budget warning</strong><br>
+  <pre>{{ budget.format() }}</pre>
+</article>
+{% endif %}
+{% endif %}
+
+{% if by_skill %}
+<h2>Top skills (input tokens)</h2>
+<table role="grid">
+  <thead><tr><th>Skill</th><th>Calls</th><th>Input</th><th>Output</th><th>Cost USD</th></tr></thead>
+  <tbody>
+  {% for name, rec in by_skill %}
+    <tr>
+      <td><code>{{ name }}</code></td>
+      <td>{{ rec.calls }}</td>
+      <td>{{ "{:,}".format(rec.input_tokens|int) }}</td>
+      <td>{{ "{:,}".format(rec.output_tokens|int) }}</td>
+      <td>${{ "%.4f"|format(rec.cost_usd|float) }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endif %}
+{% endblock %}

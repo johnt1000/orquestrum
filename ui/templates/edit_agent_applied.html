@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Applied: {{ slug }}{% endblock %}
+{% block content %}
+<nav><a href="/catalog">← catalog</a> | <a href="/agents/{{ slug }}/edit">edit again</a></nav>
+<h1>✅ Applied — <code>{{ slug }}</code></h1>
+<article style="background:#e8f5e8; border-left: 4px solid #28a745;">
+  <strong>Frontmatter rewritten</strong> — body untouched.
+  <p>File: <code>{{ path }}</code></p>
+  <p><small>Run <code>uv run scripts/lint.py</code> and <code>uv run scripts/convert.py --all</code> to verify and regenerate integrations.</small></p>
+</article>
+{% endblock %}

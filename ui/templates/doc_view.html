@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ rel }}{% endblock %}
+{% block content %}
+<nav><a href="/docs">← all docs</a></nav>
+<h1>{{ badges[audience] }} <code>{{ rel }}</code></h1>
+<article class="doc-rendered">
+  {{ html | safe }}
+</article>
+{% endblock %}

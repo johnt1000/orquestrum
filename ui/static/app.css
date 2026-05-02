@@ -1,0 +1,55 @@
+/* Orquestrum Console — overrides on top of Pico CSS */
+
+header.container > nav { padding: 0.4rem 0; }
+header.container .mode-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.mode-framework { background: #e8f4f8; color: #0c5460; }
+.mode-project   { background: #fff3cd; color: #856404; }
+.root-display { display: block; padding: 0.2rem 0 0.6rem; color: var(--muted-color); }
+
+.totals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.6rem;
+  margin: 1rem 0;
+}
+.totals-grid article {
+  text-align: center;
+  margin: 0;
+  padding: 0.8rem;
+}
+.totals-grid strong { font-size: 1.4rem; }
+
+.search-form { display: flex; gap: 0.5rem; max-width: 600px; margin: 1rem 0; }
+.search-form input { flex: 1; }
+
+.doc-list { padding-left: 1.4rem; }
+.doc-list li { margin: 0.3rem 0; }
+
+.doc-rendered table { border-collapse: collapse; margin: 1rem 0; }
+.doc-rendered table th, .doc-rendered table td {
+  border: 1px solid var(--muted-border-color);
+  padding: 0.4rem 0.8rem;
+}
+.doc-rendered pre code { font-size: 0.85em; }
+
+.empty-state { background: var(--muted-background-color, #f5f5f5); }
+article.warn  { background: #fff3cd; border-left: 4px solid #ffc107; }
+
+.audit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+.audit-grid article { margin: 0; }
+
+pre { white-space: pre-wrap; word-break: break-word; }
+details > summary { cursor: pointer; padding: 0.4rem 0; }

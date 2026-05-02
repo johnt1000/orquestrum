@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Coverage matrix{% endblock %}
+{% block content %}
+<h1>Coverage matrix</h1>
+{% if found %}
+<small>source: <code>{{ path }}</code></small>
+<article class="doc-rendered">{{ html | safe }}</article>
+{% else %}
+<article class="empty-state">
+  <p><code>{{ path }}</code> not found in this root.</p>
+</article>
+{% endif %}
+{% endblock %}

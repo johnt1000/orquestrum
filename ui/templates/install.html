@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Install{% endblock %}
+{% block content %}
+<h1>Install — deploy integration into a project</h1>
+
+{% if project_mode_warning %}
+<article class="warn">
+  <strong>Project mode</strong> — `/install` is only available in <em>framework mode</em>.
+  Restart the console with <code>--mode framework --root /path/to/orquestrum</code>.
+</article>
+{% else %}
+
+{% if error %}
+<article class="warn"><strong>{{ error }}</strong></article>
+{% endif %}
+
+<form method="post" action="/install">
+  <label>Target directory
+    <input type="text" name="target" required
+           value="{{ last.target if last else '/path/to/your/project' }}"
+           placeholder="/path/to/your/project">
+  </label>
+  <small>Absolute path. Must exist. Files will be merged (settings.json non-destructively).</small>
+
+  <div class="grid">
+    <label>Tool
+      <select name="tool">
+        <option value="">— pick one —</option>
+        {% for t in tools %}
+          <option value="{{ t }}" {% if last and last.tool == t %}selected{% endif %}>{{ t }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="checkbox-grid-item">
+      <input type="checkbox" name="auto" value="1" {% if last and last.auto %}checked{% endif %}>
+      <strong>Auto-detect</strong> (ignore Tool field; install everything detected)
+    </label>
+  </div>
+
+  <button type="submit">Run install</button>
+</form>
+
+{% if output is not none %}
+<h2>Output {% if exit_code is defined %}<small>(exit {{ exit_code }})</small>{% endif %}</h2>
+<pre>{{ output }}</pre>
+{% endif %}
+{% endif %}
+{% endblock %}

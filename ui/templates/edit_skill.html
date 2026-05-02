@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Edit skill: {{ slug }}{% endblock %}
+{% block content %}
+<nav><a href="/catalog">← back to catalog</a></nav>
+<h1>Edit skill — <code>{{ slug }}</code></h1>
+<small>source: <code>{{ path }}</code></small>
+
+{% if errors %}
+<article class="warn">
+  <strong>Lint preflight failed — write blocked:</strong>
+  <ul>{% for e in errors %}<li><code>{{ e }}</code></li>{% endfor %}</ul>
+</article>
+{% endif %}
+
+{% if preview and diff and not errors %}
+<article style="background:#e8f5e8; border-left: 4px solid #28a745;">
+  <strong>Preview — review before applying:</strong>
+  <table role="grid">
+    <thead><tr><th>Field</th><th>Old</th><th>New</th></tr></thead>
+    <tbody>
+    {% for key, old_val, new_val in diff %}
+      <tr>
+        <td><code>{{ key }}</code></td>
+        <td><code>{{ old_val }}</code></td>
+        <td><code>{{ new_val }}</code></td>
+      </tr>
+    {% endfor %}
+    {% if not diff %}<tr><td colspan="3"><em>no changes</em></td></tr>{% endif %}
+    </tbody>
+  </table>
+  {% if diff %}
+  <form method="post" action="/skills/{{ slug }}/edit/apply" style="margin-top:1rem;">
+    <input type="hidden" name="name" value="{{ fm.name }}">
+    <input type="hidden" name="description" value="{{ fm.description }}">
+    <input type="hidden" name="inject_references" value="{{ fm.inject_references or 'false' }}">
+    <input type="hidden" name="inject_fewshot" value="{{ fm.inject_fewshot or 'false' }}">
+    {% if fm.emits_confidence %}<input type="hidden" name="emits_confidence" value="1">{% endif %}
+    <input type="hidden" name="depends_on" value="{{ fm.depends_on | join(',') if fm.depends_on else '' }}">
+    <input type="hidden" name="chain_next" value="{{ fm.chain.next if fm.chain else '' }}">
+    <input type="hidden" name="chain_condition" value="{{ fm.chain.condition if fm.chain else '' }}">
+    <button type="submit" class="contrast">Apply changes</button>
+  </form>
+  {% endif %}
+</article>
+{% endif %}
+
+<form method="post" action="/skills/{{ slug }}/edit">
+  <label>Name
+    <input type="text" name="name" value="{{ fm.name }}" required>
+  </label>
+  <label>Description
+    <textarea name="description" rows="3" required>{{ fm.description }}</textarea>
+  </label>
+  <div class="grid">
+    <label>inject_references
+      <select name="inject_references">
+        {% for v in valid_inject %}
+          <option value="{{ v }}" {% if (fm.inject_references or 'false') == v %}selected{% endif %}>{{ v }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>inject_fewshot
+      <select name="inject_fewshot">
+        {% for v in valid_inject %}
+          <option value="{{ v }}" {% if (fm.inject_fewshot or 'false') == v %}selected{% endif %}>{{ v }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  </div>
+  <label>
+    <input type="checkbox" name="emits_confidence" value="1"
+           {% if fm.emits_confidence %}checked{% endif %}>
+    <strong>emits_confidence</strong> — does this skill compute attention scores in artifacts?
+  </label>
+  <label>depends_on (comma-separated skill slugs)
+    <input type="text" name="depends_on"
+           value="{{ fm.depends_on | join(', ') if fm.depends_on else '' }}"
+           placeholder="task-manager, qa-manager">
+    <small>Available: {{ all_slugs | join(', ') }}</small>
+  </label>
+  <fieldset>
+    <legend>Chain (optional — automatic next skill)</legend>
+    <label>chain.next
+      <select name="chain_next">
+        <option value="">— none —</option>
+        {% for s in all_slugs %}
+          <option value="{{ s }}" {% if fm.chain and fm.chain.next == s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>chain.condition
+      <input type="text" name="chain_condition"
+             value="{{ fm.chain.condition if fm.chain else '' }}"
+             placeholder="e.g. review approved, ready for QA">
+    </label>
+  </fieldset>
+  <button type="submit">Validate & preview</button>
+</form>
+{% endblock %}

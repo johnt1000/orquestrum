@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Audit: {{ spec.label }}{% endblock %}
+{% block content %}
+<nav><a href="/audits">← back to audits</a></nav>
+<h1>{{ spec.label }}</h1>
+<p><small>{{ spec.description }}</small></p>
+
+{% if timed_out %}
+<article class="warn"><strong>⚠ Timeout</strong> — script did not complete within 120s.</article>
+{% elif exit_code != 0 %}
+<article class="warn">
+  <strong>Exit code: {{ exit_code }}</strong>
+  {% if stderr %}<pre>{{ stderr }}</pre>{% endif %}
+</article>
+{% endif %}
+
+{% if rendered %}
+<article class="doc-rendered">{{ rendered | safe }}</article>
+{% else %}
+<article class="empty-state">
+  <p>No output captured. Check stderr below.</p>
+  {% if stderr %}<pre>{{ stderr }}</pre>{% endif %}
+</article>
+{% endif %}
+
+<details>
+  <summary>Raw stdout</summary>
+  <pre>{{ output }}</pre>
+</details>
+{% if stderr and exit_code == 0 %}
+<details>
+  <summary>stderr (non-fatal)</summary>
+  <pre>{{ stderr }}</pre>
+</details>
+{% endif %}
+
+<a href="/audits/{{ name }}" role="button">Re-run</a>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Convert{% endblock %}
+{% block content %}
+<h1>Convert — generate integration packages</h1>
+
+{% if project_mode_warning %}
+<article class="warn">
+  <strong>Project mode</strong> — `/convert` is only available in <em>framework mode</em>
+  (running from the Orquestrum repo). Restart the console with
+  <code>--mode framework --root /path/to/orquestrum</code>.
+</article>
+{% else %}
+
+<form method="post" action="/convert">
+  <div class="grid">
+    <label>Tool
+      <select name="tool" required>
+        {% for t in tools %}
+          <option value="{{ t }}" {% if last and last.tool == t %}selected{% endif %}>{{ t }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Provider
+      <select name="provider">
+        {% for p in providers %}
+          <option value="{{ p }}" {% if last and last.provider == p %}selected{% endif %}>{{ p }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  </div>
+  <label>
+    <input type="checkbox" name="dry_run" value="1" {% if last and last.dry_run %}checked{% endif %}>
+    <strong>Dry-run</strong> — print summary (inventory + cost projection), no files written
+  </label>
+  <button type="submit">Run convert</button>
+</form>
+
+{% if output is not none %}
+<h2>Output {% if exit_code is defined %}<small>(exit {{ exit_code }})</small>{% endif %}</h2>
+<pre>{{ output }}</pre>
+{% endif %}
+{% endif %}
+{% endblock %}

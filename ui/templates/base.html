@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Orquestrum{% endblock %} — Console</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
+</head>
+<body>
+  <header class="container">
+    <nav>
+      <ul>
+        <li><strong>🎼 Orquestrum</strong></li>
+        <li><span class="mode-badge mode-{{ mode }}">{{ mode }}</span></li>
+      </ul>
+      <ul>
+        <li><a href="/dashboard">Dashboard</a></li>
+        <li><a href="/docs">Docs</a></li>
+        <li><a href="/catalog">Catalog</a></li>
+        <li><a href="/coverage">Coverage</a></li>
+        <li><a href="/audits">Audits</a></li>
+        <li><a href="/convert">Convert</a></li>
+        <li><a href="/install">Install</a></li>
+        <li><a href="/compact">Compact</a></li>
+      </ul>
+    </nav>
+    <small class="root-display">root: <code>{{ orq_root }}</code></small>
+  </header>
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="container">
+    <small>Orquestrum Console v0.1.0 — read-only — local single-user</small>
+  </footer>
+</body>
+</html>

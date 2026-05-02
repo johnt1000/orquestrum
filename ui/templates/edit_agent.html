@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Edit agent: {{ slug }}{% endblock %}
+{% block content %}
+<nav><a href="/catalog">← back to catalog</a></nav>
+<h1>Edit agent — <code>{{ slug }}</code></h1>
+<small>source: <code>{{ path }}</code></small>
+
+{% if errors %}
+<article class="warn">
+  <strong>Lint preflight failed — write blocked:</strong>
+  <ul>{% for e in errors %}<li><code>{{ e }}</code></li>{% endfor %}</ul>
+</article>
+{% endif %}
+
+{% if preview and diff and not errors %}
+<article style="background:#e8f5e8; border-left: 4px solid #28a745;">
+  <strong>Preview — review before applying:</strong>
+  <table role="grid">
+    <thead><tr><th>Field</th><th>Old</th><th>New</th></tr></thead>
+    <tbody>
+    {% for key, old_val, new_val in diff %}
+      <tr>
+        <td><code>{{ key }}</code></td>
+        <td><code>{{ old_val }}</code></td>
+        <td><code>{{ new_val }}</code></td>
+      </tr>
+    {% endfor %}
+    {% if not diff %}
+      <tr><td colspan="3"><em>no changes</em></td></tr>
+    {% endif %}
+    </tbody>
+  </table>
+  {% if diff %}
+  <form method="post" action="/agents/{{ slug }}/edit/apply" style="margin-top:1rem;">
+    <input type="hidden" name="name" value="{{ fm.name }}">
+    <input type="hidden" name="description" value="{{ fm.description }}">
+    <input type="hidden" name="mode" value="{{ fm.mode }}">
+    <input type="hidden" name="emoji" value="{{ fm.emoji }}">
+    <input type="hidden" name="temperature" value="{{ fm.temperature }}">
+    <input type="hidden" name="max_tokens" value="{{ fm.max_tokens }}">
+    {% for key in ['write', 'edit', 'bash', 'question'] %}
+      {% if fm.tools and fm.tools[key] %}<input type="hidden" name="tools_{{ key }}" value="1">{% endif %}
+    {% endfor %}
+    <button type="submit" class="contrast">Apply changes</button>
+  </form>
+  {% endif %}
+</article>
+{% endif %}
+
+<form method="post" action="/agents/{{ slug }}/edit">
+  <label>Name
+    <input type="text" name="name" value="{{ fm.name }}" required>
+  </label>
+  <label>Description
+    <textarea name="description" rows="3" required>{{ fm.description }}</textarea>
+  </label>
+  <div class="grid">
+    <label>Mode
+      <select name="mode">
+        {% for m in ['primary', 'agent', 'subagent'] %}
+          <option value="{{ m }}" {% if fm.mode == m %}selected{% endif %}>{{ m }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Emoji
+      <input type="text" name="emoji" value="{{ fm.emoji }}" required maxlength="8">
+    </label>
+  </div>
+  <div class="grid">
+    <label>Temperature
+      <input type="number" name="temperature" value="{{ fm.temperature }}"
+             min="0" max="2" step="0.05" required>
+    </label>
+    <label>max_tokens (output cap)
+      <input type="number" name="max_tokens" value="{{ fm.max_tokens }}"
+             min="1" max="16384" required>
+    </label>
+  </div>
+  <fieldset>
+    <legend>Tools allowed</legend>
+    {% for key in ['write', 'edit', 'bash', 'question'] %}
+      <label>
+        <input type="checkbox" name="tools_{{ key }}" value="1"
+               {% if fm.tools and fm.tools[key] %}checked{% endif %}>
+        <code>{{ key }}</code>
+      </label>
+    {% endfor %}
+  </fieldset>
+  <button type="submit">Validate & preview</button>
+</form>
+{% endblock %}

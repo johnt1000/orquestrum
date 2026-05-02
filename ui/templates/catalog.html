@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Catalog{% endblock %}
+{% block content %}
+<h1>Catalog</h1>
+
+<h2>Agents <small>({{ agents|length }})</small></h2>
+<small>source: <code>{{ agents_dir }}</code></small>
+{% if agents %}
+<table role="grid">
+  <thead><tr><th>Name</th><th>Tier</th><th>max_tokens</th><th>temp</th><th>bash</th><th></th></tr></thead>
+  <tbody>
+  {% for a in agents %}
+    <tr>
+      <td><strong>{{ a.name }}</strong><br><small>{{ a.description[:120] }}…</small></td>
+      <td><code>{{ a.tier }}</code></td>
+      <td>{{ a.max_tokens or '—' }}</td>
+      <td>{{ a.temperature }}</td>
+      <td>{{ '✅' if a.bash else '—' }}</td>
+      <td>{% if mode == 'framework' %}<a href="/agents/{{ a.slug }}/edit">edit</a>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<article class="empty-state"><p>No agents found in <code>{{ agents_dir }}</code>.</p></article>
+{% endif %}
+
+<h2>Skills <small>({{ skills|length }})</small></h2>
+<small>source: <code>{{ skills_dir }}</code></small>
+{% if skills %}
+<table role="grid">
+  <thead><tr><th>Slug</th><th>inject_refs</th><th>chain</th><th>depends_on</th><th>emits_confidence</th><th></th></tr></thead>
+  <tbody>
+  {% for s in skills %}
+    <tr>
+      <td><strong>{{ s.slug }}</strong><br><small>{{ s.description[:120] }}…</small></td>
+      <td><code>{{ s.inject_refs }}</code></td>
+      <td>{{ s.chain_next or '—' }}</td>
+      <td>
+        {% for d in s.depends_on %}<code>{{ d }}</code> {% endfor %}
+        {% if not s.depends_on %}—{% endif %}
+      </td>
+      <td>{{ '✅' if s.emits_confidence else '—' }}</td>
+      <td>{% if mode == 'framework' %}<a href="/skills/{{ s.slug }}/edit">edit</a>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<article class="empty-state"><p>No skills found in <code>{{ skills_dir }}</code>.</p></article>
+{% endif %}
+{% endblock %}

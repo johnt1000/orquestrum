@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Documentation{% endblock %}
+{% block content %}
+<h1>Documentation</h1>
+
+<form action="/docs/search" method="get" role="search" class="search-form">
+  <input type="search" name="q" placeholder="Search docs (uses ripgrep when available)…" autofocus>
+  <button type="submit">Search</button>
+</form>
+
+{% for audience, label in [('agent-context', '🧠 Agent-context — read by LLMs at runtime'),
+                           ('governance',    '👤 Governance — for humans (cost, observability, planning)'),
+                           ('baselines',     '📊 Baselines — auto-generated audits'),
+                           ('other',         '📄 Other — root-level (CLAUDE.md, README.md)')] %}
+  {% if by_audience[audience] %}
+  <details open>
+    <summary><h3 style="display:inline">{{ label }}</h3></summary>
+    <ul class="doc-list">
+    {% for d in by_audience[audience] %}
+      <li>
+        <a href="/docs/view?p={{ d.rel }}">
+          <strong>{{ d.title }}</strong>
+        </a>
+        <small> — <code>{{ d.rel }}</code> ({{ d.size_b }} B)</small>
+      </li>
+    {% endfor %}
+    </ul>
+  </details>
+  {% endif %}
+{% endfor %}
+{% endblock %}

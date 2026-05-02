@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Compact references{% endblock %}
+{% block content %}
+<h1>Compact — generate <code>.compact.md</code> companions</h1>
+<p>Deterministic compression of skill references. Drops examples beyond 3, trims fenced blocks &gt; 40 lines, removes <code>&lt;!-- compact:drop --&gt;</code> regions. <strong>No LLM is called.</strong></p>
+
+{% if project_mode_warning %}
+<article class="warn">
+  <strong>Project mode</strong> — `/compact` is only available in <em>framework mode</em>.
+</article>
+{% else %}
+
+<form method="post" action="/compact">
+  <fieldset>
+    <legend>Scope</legend>
+    <label>
+      <input type="radio" name="scope" value="all" {% if not last or last.scope == 'all' %}checked{% endif %}>
+      All skills (compress every reference ≥ threshold)
+    </label>
+    <label>
+      <input type="radio" name="scope" value="one" {% if last and last.scope == 'one' %}checked{% endif %}>
+      Just one skill:
+      <select name="skill">
+        <option value="">— pick —</option>
+        {% for s in skills %}
+          <option value="{{ s }}" {% if last and last.skill == s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  </fieldset>
+  <div class="grid">
+    <label>Threshold (KB)
+      <input type="number" name="threshold_kb" value="{{ last.threshold_kb if last else 8 }}" min="1" max="100">
+    </label>
+    <label class="checkbox-grid-item">
+      <input type="checkbox" name="dry_run" value="1" {% if last and last.dry_run %}checked{% endif %}>
+      <strong>Dry-run</strong> (no writes)
+    </label>
+    <label class="checkbox-grid-item">
+      <input type="checkbox" name="force" value="1" {% if last and last.force %}checked{% endif %}>
+      <strong>Force</strong> (overwrite hand-written compact files)
+    </label>
+  </div>
+  <button type="submit">Run compress_refs</button>
+</form>
+
+{% if output is not none %}
+<h2>Output {% if exit_code is defined %}<small>(exit {{ exit_code }})</small>{% endif %}</h2>
+<pre>{{ output }}</pre>
+{% endif %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Search: {{ q }}{% endblock %}
+{% block content %}
+<nav><a href="/docs">← back to docs</a></nav>
+<h1>Search results</h1>
+<form action="/docs/search" method="get" role="search" class="search-form">
+  <input type="search" name="q" value="{{ q }}" autofocus>
+  <button type="submit">Search</button>
+</form>
+{% if not q %}
+  <p><em>Type a query above.</em></p>
+{% elif not hits %}
+  <p>No matches for <code>{{ q }}</code>.</p>
+{% else %}
+  <p><strong>{{ hits|length }}</strong> match{{ 'es' if hits|length != 1 else '' }} for <code>{{ q }}</code>:</p>
+  <table role="grid">
+    <thead><tr><th>File</th><th>Line</th><th>Content</th></tr></thead>
+    <tbody>
+    {% for h in hits %}
+      <tr>
+        <td><a href="/docs/view?p={{ h.rel }}"><code>{{ h.rel }}</code></a></td>
+        <td>{{ h.line_no }}</td>
+        <td><code>{{ h.line_truncated }}</code></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+{% endif %}
+{% endblock %}
