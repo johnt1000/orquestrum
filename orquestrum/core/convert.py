@@ -28,14 +28,38 @@ from orquestrum.lib.rewrite import rewrite_paths, name_to_kebab, skill_reference
 
 set_prefix('convert')
 
-ROOT         = Path(__file__).parent.parent.parent
-INTEGRATIONS = ROOT / 'integrations'
-AGENTS_DIR   = ROOT / 'agents'
-SKILLS_DIR   = ROOT / 'skills'
-DOCS_DIR     = ROOT / 'docs'
-CORE_DIR     = ROOT / 'orquestrum' / 'core'
-LIB_DIR      = ROOT / 'orquestrum' / 'lib'
-BUNDLE_DIR   = ROOT / 'bundle'
+# These are resolved once at the start of main() via _init_paths().
+# They remain None only when the module is imported without calling main
+# (e.g. from tests or init_impl) — callers that need the actual paths
+# must go through main().
+ROOT:         Path | None = None
+INTEGRATIONS: Path | None = None
+AGENTS_DIR:   Path | None = None
+SKILLS_DIR:   Path | None = None
+DOCS_DIR:     Path | None = None
+CORE_DIR:     Path | None = None
+LIB_DIR:      Path | None = None
+BUNDLE_DIR:   Path | None = None
+
+
+def _init_paths() -> None:
+    """Resolve canonical source paths. Called once at the top of main()."""
+    global ROOT, INTEGRATIONS, AGENTS_DIR, SKILLS_DIR, DOCS_DIR, CORE_DIR, LIB_DIR, BUNDLE_DIR
+    from orquestrum.lib.paths import canonical_root
+    root = canonical_root()
+    if root is None:
+        err('Cannot locate the Orquestrum canonical source (agents/, skills/, docs/).')
+        err('Run `orquestrum convert` from inside the Orquestrum repository:')
+        err('  cd /path/to/ia-fluency && orquestrum convert --tool ...')
+        sys.exit(2)
+    ROOT         = root
+    INTEGRATIONS = ROOT / 'integrations'
+    AGENTS_DIR   = ROOT / 'agents'
+    SKILLS_DIR   = ROOT / 'skills'
+    DOCS_DIR     = ROOT / 'docs'
+    CORE_DIR     = ROOT / 'orquestrum' / 'core'
+    LIB_DIR      = ROOT / 'orquestrum' / 'lib'
+    BUNDLE_DIR   = ROOT / 'bundle'
 
 # Settings.json template for Claude Code with metrics hook installed
 _CLAUDE_SETTINGS_TEMPLATE = '''{
@@ -468,6 +492,7 @@ def dry_run_report(tools: list[str], provider: str | None) -> None:
 # ─── CLI ──────────────────────────────────────────────────────────────────────
 
 def main(argv: list[str] | None = None) -> None:
+    _init_paths()
     parser = argparse.ArgumentParser(
         prog='orquestrum convert',
         description='Generate integration packages from canonical source.',
