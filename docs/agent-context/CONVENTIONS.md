@@ -174,7 +174,7 @@ Default (no markers): treated as **volatile** — no cache benefit but also no r
 | `opencode` | Markers stripped (no cache support today). |
 | `cursor`, `aider`, `windsurf` | Markers stripped; static RAG already shrinks per-session payload. |
 
-The single source of truth for adapter cache support is `_segment_for_cache()` in `scripts/lib/convert.py`. When a tool gains native cache support, only that adapter changes — canonical sources remain untouched.
+The single source of truth for adapter cache support is `_segment_for_cache()` in `orquestrum/core/convert.py`. When a tool gains native cache support, only that adapter changes — canonical sources remain untouched.
 
 ---
 
@@ -200,7 +200,7 @@ The aggregator artifact `MEDIATION.md` (emitted by `checkpoint-manager` per sess
 
 ### Inputs and weights
 
-The formula lives in `scripts/lib/attention.py`. Skills MUST NOT reimplement or override the weights. Inputs:
+The formula lives in `orquestrum/lib/attention.py`. Skills MUST NOT reimplement or override the weights. Inputs:
 
 | Input | Source | Deduction (max) |
 |-------|--------|----------------:|

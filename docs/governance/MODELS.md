@@ -25,7 +25,7 @@ Canonical source files reference models without provider prefix (e.g. `claude-op
 
 ### Provider Parity Caveats
 
-Not every provider offers four distinct models. When a tier is unavailable, it **silently collapses** to the next-lower tier with the same canonical model ID. This is the single source of truth — every collapse below is matched by an entry in `TIER_COLLAPSES` (`scripts/lib/models.py`) and surfaces as a warning in `convert.py` build output when `--provider` is set.
+Not every provider offers four distinct models. When a tier is unavailable, it **silently collapses** to the next-lower tier with the same canonical model ID. This is the single source of truth — every collapse below is matched by an entry in `TIER_COLLAPSES` (`orquestrum/lib/models.py`) and surfaces as a warning in `orquestrum convert` build output when `--provider` is set.
 
 | Provider | Tier requested | Falls back to | Affected agents | Why |
 |----------|----------------|---------------|-----------------|-----|
@@ -130,4 +130,4 @@ Every orchestrator declares a `max_tokens` ceiling in its frontmatter. The cap b
 
 ### Lint enforcement
 
-`scripts/lint.py` requires `max_tokens` on every agent. Missing field is a hard error.
+`orquestrum lint` (logic in `orquestrum/core/lint.py`) requires `max_tokens` on every agent. Missing field is a hard error.

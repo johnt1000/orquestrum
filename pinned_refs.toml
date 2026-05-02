@@ -1,15 +1,15 @@
-# Pinned commit SHAs for external dependencies installed by scripts/deps.py.
+# Pinned commit SHAs for external dependencies installed by `orquestrum deps`.
 #
 # Why: cloning the upstream default branch lets a malicious or accidental
 # upstream commit land silently in every install. Pinning makes the supply
 # chain auditable — every install consumes the SHA listed here.
 #
 # Rotation:
-#   uv run scripts/deps.py --update-pins   # fetches latest HEAD per repo, rewrites this file
+#   orquestrum deps --update-pins          # fetches latest HEAD per repo, rewrites this file
 #   git diff pinned_refs.toml              # review SHA changes
 #   git commit -m "chore(deps): rotate pinned SHAs (YYYY-MM-DD)"
 #
-# Policy: see docs/SUPPLY_CHAIN.md.
+# Policy: see docs/governance/SUPPLY_CHAIN.md.
 
 [[refs]]
 name        = "agency"

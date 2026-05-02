@@ -37,7 +37,7 @@ Alternatives that work today:
 
 - `pipx install git+https://github.com/johnt1000/orquestrum`
 - `uv tool install --editable /path/to/clone` (development; `git pull` updates the source)
-- Manual `git clone` + `uv run scripts/foo.py` (legacy; backwards-compat preserved)
+- Manual `git clone` + `make dev` (developer install; binary stays linked to the clone)
 
 We do **not** publish to PyPI yet. Once the CLI surface stabilizes (target: v0.5), PyPI becomes the canonical channel for `pip install orquestrum`.
 

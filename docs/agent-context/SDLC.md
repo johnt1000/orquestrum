@@ -220,7 +220,7 @@ Every artifact produced by a skill includes a `## Handoff Checklist` section. He
 
 ### Few-Shot Reference Injection
 
-Reference files in `skills/*/references/` that contain `<!-- inject:start -->` / `<!-- inject:end -->` markers are automatically included in Cursor, Aider, and Windsurf builds by `scripts/convert.py`. This ensures few-shot examples reach agents that cannot read files at runtime.
+Reference files in `skills/*/references/` that contain `<!-- inject:start -->` / `<!-- inject:end -->` markers are automatically included in Cursor, Aider, and Windsurf builds by `orquestrum convert` (logic in `orquestrum/core/convert.py`). This ensures few-shot examples reach agents that cannot read files at runtime.
 
 ---
 

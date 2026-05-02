@@ -30,7 +30,7 @@ For chained skills (e.g. `glossary → spec → adr → architecture`), the dash
 
 ### Per build (CI)
 
-`scripts/convert.py` and `scripts/lint.py` should complete in single-digit seconds. CI publishes a build-time histogram. A regression > 50% triggers an investigation.
+`orquestrum convert` and `orquestrum lint` should complete in single-digit seconds. CI publishes a build-time histogram. A regression > 50% triggers an investigation.
 
 ---
 

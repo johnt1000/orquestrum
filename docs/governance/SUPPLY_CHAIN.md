@@ -1,6 +1,6 @@
 # Supply Chain Policy
 
-External agent/skill dependencies installed by `scripts/deps.py` are pinned by **commit SHA**, not branch name. This document explains why and how to rotate the pins safely.
+External agent/skill dependencies installed by `orquestrum deps` are pinned by **commit SHA**, not branch name. This document explains why and how to rotate the pins safely.
 
 ---
 
@@ -17,7 +17,7 @@ The single source of truth is `pinned_refs.toml` at the repo root.
 
 ## Why pin by SHA
 
-The previous `scripts/deps.py` cloned the **default branch** of each upstream. That meant:
+An earlier version of `orquestrum deps` cloned the **default branch** of each upstream. That meant:
 
 1. **Silent drift.** A new upstream commit landed in every fresh install with no review.
 2. **Reproducibility hole.** Two installs done a week apart could end up with different agents and skills, with no audit trail.
@@ -40,7 +40,7 @@ Rotation is **explicit and reviewed**. The framework never auto-updates pins.
 
 ```bash
 # 1. Refresh SHAs in pinned_refs.toml to current upstream HEAD
-uv run scripts/deps.py --update-pins
+orquestrum deps --update-pins
 
 # 2. Review what changed (look at upstream commit logs for context)
 git diff pinned_refs.toml
@@ -48,7 +48,7 @@ gh repo view msitarzewski/agency-agents --json defaultBranchRef
 # or visit: https://github.com/<repo>/compare/<old-sha>...<new-sha>
 
 # 3. Smoke test: install into a scratch target and validate
-uv run scripts/deps.py --target /tmp/orq-deps-smoke
+orquestrum deps --target /tmp/orq-deps-smoke
 
 # 4. Commit with the rotation date
 git add pinned_refs.toml
@@ -81,10 +81,10 @@ If anything looks off, **do not rotate**. Open an issue upstream first.
 | `last_pinned` | yes | ISO-8601 date (`YYYY-MM-DD`) of last rotation |
 | `notes` | no | Operator notes about what this dependency provides |
 
-Adding a new dependency: append a `[[refs]]` block, then update `scripts/deps.py` to consume it.
+Adding a new dependency: append a `[[refs]]` block, then update `orquestrum/core/deps.py` to consume it.
 
 ---
 
 ## What is NOT pinned
 
-Orquestrum's own canonical source (this repo) is not "pinned" — its versioning is git itself. When you run `convert.py` and `install.py`, you get the bytes of the working tree. If reproducibility matters for an Orquestrum release, tag the commit and reference the tag.
+Orquestrum's own canonical source (this repo) is not "pinned" — its versioning is git itself. When you run `orquestrum convert` and `orquestrum install`, you get the bytes of the working tree. If reproducibility matters for an Orquestrum release, tag the commit and reference the tag.

@@ -62,24 +62,15 @@ Pedir uma feature pequena via Claude Code (ex: *"adicione endpoint /health que r
 
 ## R2 — Iterar pesos da fórmula de attention (3 meses, mensal)
 
-**Objetivo:** calibrar `scripts/lib/attention.py` com base em distribuição real, não intuição. Pesos atuais (`25/20/10/15/5/+5`) são v1.0 — esperar 30+ amostras antes de tocar.
+**Objetivo:** calibrar `orquestrum/lib/attention.py` com base em distribuição real, não intuição. Pesos atuais (`25/20/10/15/5/+5`) são v1.0 — esperar 30+ amostras antes de tocar.
 
 ### Coleta de baseline
 Após R1, rodar Orquestrum em projetos reais. Cada `MEDIATION.md` registra scores. Após N ≥ 30 (ideal N ≥ 100) artefatos, agregar:
 
-```python
-# scripts/audit/attention_distribution.py (a criar)
-import frontmatter, statistics, collections
-from pathlib import Path
-scores, bands = [], collections.Counter()
-for f in Path('docs/03-quality').rglob('*.md'):
-    fm = frontmatter.load(str(f))
-    if 'attention_score' in fm:
-        scores.append(fm['attention_score'])
-        bands[fm.get('attention_band')] += 1
-print(f'N={len(scores)}, mean={statistics.mean(scores):.1f}, '
-      f'p10={sorted(scores)[len(scores)//10]}, '
-      f'p90={sorted(scores)[len(scores)*9//10]}, bands={dict(bands)}')
+```bash
+# Existing script (entregue em R12 B-1) — agrega scores + bandas + percentis
+orquestrum audit attention
+# (logic em orquestrum/core/audit/attention_distribution.py)
 ```
 
 ### Diagnóstico × Ação
@@ -232,7 +223,7 @@ Se score < 70% → bloqueia + lista o que falta.
 schema_version: 1
 ```
 
-`scripts/lib/frontmatter.py` ganha migration helpers `v1 → v2`.
+`orquestrum/lib/frontmatter.py` ganha migration helpers `v1 → v2`.
 
 **Esforço:** 1 dia. **Risco:** Baixo. **Bloqueia:** nada. Disparado por: primeira mudança breaking de schema. **Status:** Pendente.
 
@@ -273,7 +264,7 @@ Quando retomar (após o usuário ter rodado o framework em projeto real seguindo
 
 1. **Se houver feedback operacional concreto** (bugs encontrados, atrito de UX, surpresas no comportamento) → priorizar fix antes de novo escopo. O feedback quente perde valor rápido.
 
-2. **Se N ≥ 30 artefatos com `attention_score` em `docs/03-quality/`** → executar **R2 — primeira iteração de calibração de pesos**. Rodar `uv run scripts/audit/attention_distribution.py` (ou via UI `/audits/attention-distribution`), ler o "Calibration signal", ajustar UM peso em `scripts/lib/attention.py`, documentar a versão da fórmula em commit + nota em `docs/agent-context/CONVENTIONS.md` § Human Attention Mediation. Depois aguardar mais 2-4 semanas antes do próximo ajuste.
+2. **Se N ≥ 30 artefatos com `attention_score` em `docs/03-quality/`** → executar **R2 — primeira iteração de calibração de pesos**. Rodar `orquestrum audit attention` (ou via UI `/audits/attention-distribution`), ler o "Calibration signal", ajustar UM peso em `orquestrum/lib/attention.py`, documentar a versão da fórmula em commit + nota em `docs/agent-context/CONVENTIONS.md` § Human Attention Mediation. Depois aguardar mais 2-4 semanas antes do próximo ajuste.
 
 3. **Se nada acima e infra estável** → executar **R13 — UI Live Monitoring** (~1 sprint). Plano completo no § R13 logo abaixo. As 3 páginas (`/live/session`, `/live/routing`, `/live/attention`) podem ser implementadas em ordem; `/live/session` é a mais alta-leverage (mostra o hook funcionando).
 

@@ -16,7 +16,7 @@ Budgets are **soft warnings**, not hard caps — sessions above threshold contin
 
 Warnings include the dominant cost driver: which skill, which artifact category, which adapter.
 
-The thresholds are stored in `scripts/lib/budget.py` as a single dict and can be tuned without rebuilding integrations.
+The thresholds are stored in `orquestrum/lib/budget.py` as a single dict and can be tuned without rebuilding integrations.
 
 ---
 
@@ -49,7 +49,7 @@ Hard caps are read by `budget.py` if present; absent values fall back to `None` 
 
 ## Cost estimation
 
-`scripts/lib/models.py:estimate_cost(model, in_tokens, out_tokens)` returns a USD estimate from the `MODEL_PRICING` table. Wired into the metrics emission pipeline (Phase 3); previously dormant.
+`orquestrum/lib/models.py:estimate_cost(model, in_tokens, out_tokens)` returns a USD estimate from the `MODEL_PRICING` table. Wired into the metrics emission pipeline (Phase 3); previously dormant.
 
 Pricing is reference-grade (Anthropic public pricing 2025) and may be stale — operators with negotiated rates should override `MODEL_PRICING` in a private config. For the GLM provider, prices are from Z.ai's coding plan tier; copilot prices follow Anthropic's underlying model.
 
@@ -69,7 +69,7 @@ Pricing is reference-grade (Anthropic public pricing 2025) and may be stale — 
 Thresholds were chosen conservatively. Tune them based on real usage:
 
 1. Run sessions normally for ~2 weeks with metrics enabled.
-2. Aggregate via `scripts/dashboard/render.py` and look at the p90/p99 input-token distribution per tier.
-3. Adjust thresholds in `scripts/lib/budget.py` so that warnings fire on the top ~10% of sessions, not the median.
+2. Aggregate via `orquestrum dashboard` and look at the p90/p99 input-token distribution per tier.
+3. Adjust thresholds in `orquestrum/lib/budget.py` so that warnings fire on the top ~10% of sessions, not the median.
 
 If warnings never fire, the threshold is too lax. If they fire on every session, it's too tight.

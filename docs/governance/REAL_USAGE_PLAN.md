@@ -15,12 +15,13 @@ Before starting any real session, verify the project is set up:
 ```bash
 # 1. Confirm install is current
 cd <orquestrum-repo>
-uv run scripts/lint.py                          # must pass
-uv run scripts/tests/parity/run.py              # must pass
-uv run scripts/convert.py --all                 # regenerate integrations
+orquestrum lint                                 # must pass
+orquestrum audit parity                         # must pass
+orquestrum convert --all                        # regenerate integrations
+orquestrum doctor                               # final environment sanity check
 
 # 2. Install into the target project (idempotent — safe to re-run)
-uv run scripts/install.py --tool claude-code --target /path/to/your/project
+orquestrum install --tool claude-code --target /path/to/your/project
 
 # 3. Verify hook is active in the target
 ls /path/to/your/project/.sdd/scripts/hooks/emit_metrics.py
@@ -28,8 +29,7 @@ cat /path/to/your/project/.claude/settings.json | python3 -m json.tool
 # Expect: hooks.Stop and hooks.SubagentStop both present, command `uv run .sdd/scripts/hooks/emit_metrics.py`
 
 # 4. Open the UI in project mode (separate terminal)
-cd <orquestrum-repo>
-uv run scripts/ui/serve.py --mode project --root /path/to/your/project
+orquestrum web --target /path/to/your/project --mode project
 # → http://127.0.0.1:7700/dashboard
 ```
 
@@ -69,9 +69,9 @@ Leave the UI running in a browser tab. You will refresh `/dashboard` between ses
 | If you see... | Likely cause | Action |
 |---------------|--------------|--------|
 | Empty `events.jsonl` after a real session | Hook didn't fire | Check `cat /tmp/orq-ui-r1.log` (UI runs subprocess; errors land in stderr); confirm `.claude/settings.json` has hooks; manually run `uv run .sdd/scripts/hooks/emit_metrics.py` with a fake JSON |
-| `cost_usd: 0` on every event | Model not in MODEL_PRICING | Update `scripts/lib/models.py` MODEL_PRICING table |
-| Tier collapse warning unexpected | Provider mapping changed | Check `TIER_COLLAPSES` in `scripts/lib/models.py`; cross-check `docs/governance/MODELS.md` |
-| Hook stops working after Claude Code update | Hook contract drifted | Re-check claude-code-guide; update `scripts/hooks/emit_metrics.py` with new fields |
+| `cost_usd: 0` on every event | Model not in MODEL_PRICING | Update `orquestrum/lib/models.py` MODEL_PRICING table |
+| Tier collapse warning unexpected | Provider mapping changed | Check `TIER_COLLAPSES` in `orquestrum/lib/models.py`; cross-check `docs/governance/MODELS.md` |
+| Hook stops working after Claude Code update | Hook contract drifted | Re-check claude-code-guide; update `orquestrum/core/hooks/emit_metrics.py` with new fields |
 
 ---
 

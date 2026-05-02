@@ -6,7 +6,7 @@ How Orquestrum auto-emits metrics from Claude Code sessions via the `Stop` and `
 
 ## Why hooks
 
-Without a hook, `.orquestrum/metrics/events.jsonl` only gets populated when a skill or operator explicitly calls `scripts/lib/metrics.py:append_event()`. In practice that means the file is **empty** in real sessions — and the dashboard, attention calibration, and budget warnings all degrade to empty state.
+Without a hook, `.orquestrum/metrics/events.jsonl` only gets populated when a skill or operator explicitly calls `orquestrum.lib.metrics:append_event()`. In practice that means the file is **empty** in real sessions — and the dashboard, attention calibration, and budget warnings all degrade to empty state.
 
 The hook closes the gap: every time a Claude Code turn ends (`Stop`) or a subagent finishes (`SubagentStop`), the hook reads the event JSON from stdin, extracts token usage and the model used, computes the USD cost via `models.estimate_cost()`, and appends one line to `events.jsonl` — automatically, with zero per-skill discipline required.
 
@@ -14,15 +14,15 @@ The hook closes the gap: every time a Claude Code turn ends (`Stop`) or a subage
 
 ## What gets installed
 
-When you run `uv run scripts/install.py --tool claude-code --target <project>`:
+When you run `orquestrum install --tool claude-code --target <project>`:
 
 | Path in target | What |
 |----------------|------|
 | `.claude/settings.json` | hooks declaration (merged into existing settings, never overwritten) |
-| `.sdd/scripts/hooks/emit_metrics.py` | the hook handler |
-| `.sdd/scripts/lib/` | required for the hook (uses `models.estimate_cost`) |
+| `.sdd/scripts/hooks/emit_metrics.py` | the hook handler (copied from `orquestrum/core/hooks/`) |
+| `.sdd/scripts/lib/` | required for the hook (uses `models.estimate_cost`; copied from `orquestrum/lib/`) |
 
-The handler is executable (`chmod +x`) and runs via `uv run .sdd/scripts/hooks/emit_metrics.py`.
+The handler is executable (`chmod +x`) and runs via `uv run .sdd/scripts/hooks/emit_metrics.py`. The deployed `.sdd/scripts/` path is intentionally stable so target projects don't need to know about Orquestrum's internal package layout.
 
 ---
 
@@ -38,7 +38,7 @@ The handler is executable (`chmod +x`) and runs via `uv run .sdd/scripts/hooks/e
 | Target has `settings.json` with same command already | Skipped (idempotent re-install) |
 | Target's `settings.json` is malformed JSON | Warning printed; file left untouched; user must merge manually |
 
-You can re-run `install.py` safely — duplicates are detected by exact command match.
+You can re-run `orquestrum install` safely — duplicates are detected by exact command match.
 
 ---
 
@@ -120,13 +120,13 @@ You should see one event per turn. To re-render the dashboard:
 
 ```bash
 cd /path/to/project
-uv run /path/to/orquestrum/scripts/dashboard/render.py --metrics-dir .orquestrum/metrics --tier balanced
+orquestrum dashboard --metrics-dir .orquestrum/metrics --tier balanced
 ```
 
 Or, with the UI:
 
 ```bash
-uv run /path/to/orquestrum/scripts/ui/serve.py --mode project --root /path/to/project
+orquestrum web --target /path/to/project --mode project
 # → http://127.0.0.1:7700/dashboard
 ```
 
@@ -134,7 +134,7 @@ uv run /path/to/orquestrum/scripts/ui/serve.py --mode project --root /path/to/pr
 
 ## Disabling the hook
 
-Edit `.claude/settings.json` and remove the entries with `command: uv run .sdd/scripts/hooks/emit_metrics.py`. The next `install.py` will re-add them — to suppress permanently, add a sentinel comment or skip running install for that target.
+Edit `.claude/settings.json` and remove the entries with `command: uv run .sdd/scripts/hooks/emit_metrics.py`. The next `orquestrum install` will re-add them — to suppress permanently, add a sentinel comment or skip running install for that target.
 
 You can also disable hooks globally per-session via Claude Code's settings UI / CLI flags without editing the file.
 

@@ -12,10 +12,10 @@ Companion to `docs/governance/COST.md` (budget thresholds) and `docs/governance/
 .orquestrum/metrics/
 ├── events.jsonl    # append-only event log; one line per LLM call or skill completion
 ├── session.json    # rolled-up session summary; rewritten atomically
-└── dashboard.md    # rendered on demand by scripts/dashboard/render.py (optional)
+└── dashboard.md    # rendered on demand by `orquestrum dashboard` (optional)
 ```
 
-`.orquestrum/metrics/` is per-project, gitignored by default. It is **not** propagated by `convert.py` — the runtime emits it inside the user's project.
+`.orquestrum/metrics/` is per-project, gitignored by default. It is **not** propagated by `orquestrum convert` — the runtime emits it inside the user's project.
 
 ---
 
@@ -45,7 +45,7 @@ Emit immediately after the LLM call returns and you have the token counts:
 }
 ```
 
-`cost_usd` is computed via `scripts/lib/models.py:estimate_cost(model, in, out)`. `cached_tokens` represents tokens served from prompt cache (Anthropic returns this in usage); use 0 when the adapter doesn't expose it.
+`cost_usd` is computed via `orquestrum/lib/models.py:estimate_cost(model, in, out)`. `cached_tokens` represents tokens served from prompt cache (Anthropic returns this in usage); use 0 when the adapter doesn't expose it.
 
 ### Per-skill-completion event
 
@@ -79,7 +79,7 @@ Emit when a skill finishes (success or failure):
 
 ## Aggregation
 
-The library `scripts/lib/metrics.py` provides:
+The library `orquestrum/lib/metrics.py` provides:
 
 | Function | Purpose |
 |---|---|
@@ -92,7 +92,7 @@ The library `scripts/lib/metrics.py` provides:
 `checkpoint-manager` calls `rebuild_session()` at the start and end of every checkpoint. Mid-session, the operator can rebuild on demand:
 
 ```bash
-uv run python -c "from scripts.lib.metrics import rebuild_session; from pathlib import Path; \
+uv run python -c "from orquestrum.lib.metrics import rebuild_session; from pathlib import Path; \
   s = rebuild_session(Path('.orquestrum/metrics'), tier='balanced'); \
   print('cost so far: $', s.totals['cost_usd'])"
 ```
@@ -101,7 +101,7 @@ uv run python -c "from scripts.lib.metrics import rebuild_session; from pathlib 
 
 ## Dashboard
 
-`scripts/dashboard/render.py` reads `.orquestrum/metrics/events.jsonl` and produces:
+`orquestrum dashboard` (logic in `orquestrum/core/dashboard/render.py`) reads `.orquestrum/metrics/events.jsonl` and produces:
 
 - `.orquestrum/metrics/dashboard.md` — terminal-friendly view; always written
 - `.orquestrum/metrics/dashboard.html` — single-file vanilla HTML/JS chart (optional; `--html` flag)
@@ -116,7 +116,7 @@ Both event lines and `session.json` carry no explicit `schema_version` field tod
 
 When a breaking schema change is needed:
 
-1. Bump the version in `scripts/lib/metrics.py:SCHEMA_VERSION` (introduce as needed).
+1. Bump the version in `orquestrum/lib/metrics.py:SCHEMA_VERSION` (introduce as needed).
 2. Add migration in `aggregate()` that handles both old and new shapes.
 3. Document the change here.
 

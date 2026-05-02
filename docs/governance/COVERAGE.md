@@ -54,4 +54,4 @@ When a new scenario emerges:
 1. Add the row.
 2. Decide: extend a skill, add a new skill, or expand an orchestrator? In that order.
 3. If you add an orchestrator, document the rationale in this doc and in `docs/governance/MODELS.md` (tier assignment).
-4. Re-run `scripts/lint.py` and the parity tests (`scripts/tests/parity/`).
+4. Re-run `orquestrum lint` and the parity tests (`orquestrum audit parity`).
