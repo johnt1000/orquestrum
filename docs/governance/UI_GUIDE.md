@@ -93,7 +93,7 @@ and the inline JS handler for `data-confirm` / `data-spinner`.
 | `/skills/{slug}/edit` | framework | Same 3-step flow with skill-specific fields |
 | `/jobs/{id}` | both | Live progress for an async job; HTMX polls every 1s until terminal |
 | `/jobs/{id}/partial` | both | HTMX swap target — drops `hx-trigger` when the job is done |
-| `/healthz` | both | JSON status for scripting / readiness checks |
+| `/health` | both | JSON status for scripting / readiness checks |
 
 ---
 

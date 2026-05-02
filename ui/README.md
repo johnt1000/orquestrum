@@ -33,7 +33,7 @@ ui/
 ├── server.py              ← create_app() factory + / and 404 handlers
 ├── config.py              ← UIConfig dataclass, mode resolution, ORQ_ROOT validation
 ├── routes/                ← one APIRouter per feature (≈ 1 file per URL prefix)
-│   ├── health.py          GET /healthz                    (read-only)
+│   ├── health.py          GET /health                    (read-only)
 │   ├── dashboard.py       GET /dashboard                  (read-only)
 │   ├── docs.py            GET /docs, /docs/search, /docs/view
 │   ├── catalog.py         GET /catalog                    (read-only)

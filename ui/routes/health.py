@@ -3,8 +3,8 @@ from fastapi import APIRouter, Request
 router = APIRouter()
 
 
-@router.get('/healthz')
-async def healthz(request: Request) -> dict:
+@router.get('/health')
+async def health(request: Request) -> dict:
     cfg = request.app.state.config
     return {
         'status':       'ok',

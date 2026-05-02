@@ -330,7 +330,7 @@ Mensal automatizado:
 - Reúso de scripts/lib/: zero duplicação
 
 ### Validação E2E
-- `/healthz` 200, retorna mode/root/metrics_dir/port
+- `/health` 200, retorna mode/root/metrics_dir/port
 - `/dashboard`, `/docs`, `/catalog`, `/coverage`, `/docs/search?q=...`, `/docs/view?p=...` todas HTTP 200
 - Catalog detecta os 8 agents canônicos
 - Doc browser classifica corretamente por audiência (🧠 agent-context, 👤 governance, 📊 baselines)

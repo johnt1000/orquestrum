@@ -48,18 +48,18 @@ def clear_jobs():
     jobs_module._jobs.clear()
 
 
-# ─── /healthz ────────────────────────────────────────────────────────────────
+# ─── /health ─────────────────────────────────────────────────────────────────
 
 class TestHealthRoute:
-    async def test_healthz_returns_200(self, client: httpx.AsyncClient):
-        r = await client.get('/healthz')
+    async def test_health_returns_200(self, client: httpx.AsyncClient):
+        r = await client.get('/health')
         assert r.status_code == 200
 
-    async def test_healthz_returns_ok_status(self, client: httpx.AsyncClient):
-        assert r.json()['status'] == 'ok' if (r := await client.get('/healthz')) else True
+    async def test_health_returns_ok_status(self, client: httpx.AsyncClient):
+        assert r.json()['status'] == 'ok' if (r := await client.get('/health')) else True
 
-    async def test_healthz_includes_mode(self, client: httpx.AsyncClient):
-        r = await client.get('/healthz')
+    async def test_health_includes_mode(self, client: httpx.AsyncClient):
+        r = await client.get('/health')
         assert r.json()['mode'] == 'project'
 
 
