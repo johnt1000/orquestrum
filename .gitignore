@@ -24,8 +24,15 @@ __pycache__/
 .venv/
 *.egg-info/
 dist/
-# `build/` — only ignore at repo root, not scripts/build/ (which is canonical source)
 /build/
+
+# Test & coverage artefacts
+.coverage
+.coverage.*
+coverage.json
+coverage.xml
+htmlcov/
+.pytest_cache/
 
 # Per-project Orquestrum runtime
 .orquestrum/metrics/
