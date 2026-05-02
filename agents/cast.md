@@ -78,8 +78,8 @@ After release is confirmed:
 1. Execute `archive-manager` to consolidate completed tasks/logs into summary files
 2. Run the cleanup script to physically delete archived files:
    ```
-   scripts/archive-cleanup.sh --project . --dry-run    # preview
-   scripts/archive-cleanup.sh --project .               # execute
+   bundle/archive-cleanup.sh --project . --dry-run    # preview
+   bundle/archive-cleanup.sh --project .               # execute
    ```
 3. **Never run archive before the release is confirmed and pushed**
 

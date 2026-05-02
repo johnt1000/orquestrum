@@ -45,7 +45,7 @@ The postmortem is **blameless**: it focuses on systems, processes, and gaps. Nam
 
 ## Attention Score Emission
 
-Compute via `scripts/lib/attention.py:compute()` with:
+Compute via `orquestrum/lib/attention.py:compute()` with:
 - `confidence` — 1.0 if root cause is verified by reproduction; 0.6 if reasoned from logs; 0.3 if speculative
 - `inference_depth` — 0 if every timeline entry has direct evidence; 1+ if any reconstructed
 - `context_completeness` — fraction of (timeline, root cause, contributing factors, corrective actions, prevention) filled

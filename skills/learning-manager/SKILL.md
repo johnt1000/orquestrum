@@ -87,7 +87,7 @@ Mandatory sections (see `docs/agent-context/CONVENTIONS.md` for shared rules):
 
 ## Attention Score Emission
 
-Compute `attention_score` via `scripts/lib/attention.py:compute()` before writing L-XXX. Inputs:
+Compute `attention_score` via `orquestrum/lib/attention.py:compute()` before writing L-XXX. Inputs:
 
 - `confidence` — taken directly from existing `confidence: High|Medium|Low` field via `parse_confidence()`
 - `inference_depth` — 0 if root cause is verifiable from logs/code; 1 if reconstructed from incident report; 2 if reasoned from secondary signals

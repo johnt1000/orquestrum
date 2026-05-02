@@ -46,7 +46,7 @@ You validate performance for a feature or release. Performance is a **quality di
 
 ## Attention Score Emission
 
-Compute via `scripts/lib/attention.py:compute()`:
+Compute via `orquestrum/lib/attention.py:compute()`:
 - `confidence` — 1.0 if benchmark statistically significant (p < 0.05 across N runs); 0.6 if single run; 0.3 if methodology gaps
 - `inference_depth` — 0 if measured directly; 1 if estimated from related metrics; 2 if extrapolated
 - `context_completeness` — fraction of (targets, methodology, results, comparison, classification) filled

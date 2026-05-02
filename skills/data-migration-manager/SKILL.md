@@ -49,7 +49,7 @@ You plan a data migration. Migrations are the highest-risk operation in any syst
 
 ## Attention Score Emission
 
-Compute via `scripts/lib/attention.py:compute()`:
+Compute via `orquestrum/lib/attention.py:compute()`:
 - `confidence` — 1.0 if dry-run completed on prod-clone with row-count parity; 0.6 if dry-run on synthetic data; 0.3 if no dry-run
 - `inference_depth` — 0 if every step is a tested DDL; 1+ if any step is theoretical
 - `context_completeness` — fraction of (classification, reversibility, forward, backward, test data, cutover, rollback compat, PII note) filled

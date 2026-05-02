@@ -98,7 +98,7 @@ Mandatory sections (see `docs/agent-context/CONVENTIONS.md` for shared rules):
 
 ## Attention Score Emission
 
-Compute `attention_score` deterministically via `scripts/lib/attention.py:compute()` before writing the artifact. Inputs:
+Compute `attention_score` deterministically via `orquestrum/lib/attention.py:compute()` before writing the artifact. Inputs:
 
 - `confidence` — 1.0 if status `Passed` with all SC validated; 0.6 if `Partial`; 0.3 if `Failed`
 - `inference_depth` — 0 if every SC has a `validation_method: e2e|automated|integration`; 1 if some are `static`; 2 if any SC validation was skipped or marked TBD

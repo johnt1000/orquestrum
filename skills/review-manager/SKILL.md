@@ -93,7 +93,7 @@ Mandatory sections (see `docs/agent-context/CONVENTIONS.md` for shared rules):
 
 ## Attention Score Emission
 
-Before writing the artifact, compute its `attention_score` deterministically using `scripts/lib/attention.py:compute()`. Inputs the skill must collect:
+Before writing the artifact, compute its `attention_score` deterministically using `orquestrum/lib/attention.py:compute()`. Inputs the skill must collect:
 
 - `confidence` — derive from finding distribution: 1.0 if all findings `Low+cosmetic`; 0.6 if any `Medium`/`High` non-behavioral; 0.3 if any `behavioral` or `Critical` open
 - `inference_depth` — 0 if review is verbatim against SPEC, 1 if summarized, 2+ if SPEC missing details

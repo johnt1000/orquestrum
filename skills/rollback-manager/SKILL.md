@@ -46,7 +46,7 @@ A rollback artifact is mandatory for any release that:
 
 ## Attention Score Emission
 
-Compute via `scripts/lib/attention.py:compute()`:
+Compute via `orquestrum/lib/attention.py:compute()`:
 - `confidence` — 1.0 if Reversible; 0.6 if Conditionally; 0.3 if Irreversible
 - `inference_depth` — 0 if procedure was tested in staging; 1 if procedure is theoretical
 - `context_completeness` — fraction of (pre-conditions, steps, verification, trigger, data implications) filled

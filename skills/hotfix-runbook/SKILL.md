@@ -53,7 +53,7 @@ Read the existing `docs/04-release/RUNBOOK.md` to see how the affected component
 
 ## Attention Score Emission
 
-Compute via `scripts/lib/attention.py:compute()` with these inputs:
+Compute via `orquestrum/lib/attention.py:compute()` with these inputs:
 - `confidence` — 0.6 default (hotfix bypasses full review); 0.3 if rollback-tested
 - `inference_depth` — 0 (the bug is observed, not inferred)
 - `context_completeness` — fraction of (impact, fix, test, release plan, rollback trigger) sections filled

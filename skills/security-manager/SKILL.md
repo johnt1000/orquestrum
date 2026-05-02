@@ -96,7 +96,7 @@ Use `./assets/security-report-template.md`. Determine the next SEC ID by checkin
 
 ## Attention Score Emission
 
-Compute `attention_score` via `scripts/lib/attention.py:compute()` before writing SEC-{task-ref}. Inputs derived from finding distribution:
+Compute `attention_score` via `orquestrum/lib/attention.py:compute()` before writing SEC-{task-ref}. Inputs derived from finding distribution:
 
 - `confidence` — 1.0 if status `Clear`; 0.6 if `Findings` with no Critical/High; 0.3 if any Critical/High
 - `inference_depth` — 0 if all OWASP A04/A06/A08/A09/A10 areas explicitly checked; 1 if any area was inferred from absence of evidence
