@@ -53,3 +53,58 @@ article.warn  { background: #fff3cd; border-left: 4px solid #ffc107; }
 
 pre { white-space: pre-wrap; word-break: break-word; }
 details > summary { cursor: pointer; padding: 0.4rem 0; }
+
+/* Brand link in header — undo Pico's underline so it reads as a logo */
+header.container a.brand,
+header.container a.brand:hover { text-decoration: none; color: inherit; }
+
+/* Active nav link (set via aria-current="page" in base.html) */
+header.container nav a[aria-current="page"] {
+  font-weight: 600;
+  border-bottom: 2px solid var(--primary, #1095c1);
+  padding-bottom: 0.1rem;
+}
+
+/* Home page hero + cards */
+.hero {
+  padding: 1.4rem 1.6rem;
+  margin-bottom: 1.5rem;
+  border-radius: 8px;
+  background: var(--muted-background-color, #f5f5f5);
+}
+.hero h1 { margin: 0 0 0.4rem; }
+.hero p { margin: 0.4rem 0 0; color: var(--muted-color); }
+
+.home-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.8rem;
+  margin: 1rem 0;
+}
+.home-cards a.card {
+  display: block;
+  padding: 1rem 1.2rem;
+  border-radius: 6px;
+  border: 1px solid var(--muted-border-color);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 120ms, transform 120ms;
+}
+.home-cards a.card:hover {
+  border-color: var(--primary, #1095c1);
+  transform: translateY(-1px);
+}
+.home-cards a.card strong { display: block; margin-bottom: 0.2rem; }
+.home-cards a.card small { color: var(--muted-color); }
+
+/* HTMX-driven submit spinner (item 1.11) */
+.htmx-indicator { display: none; margin-left: 0.6rem; vertical-align: middle; }
+.htmx-request .htmx-indicator { display: inline-block; }
+.htmx-request.htmx-indicator { display: inline-block; }
+.spinner-inline {
+  display: inline-block; width: 1em; height: 1em;
+  border: 2px solid currentColor; border-right-color: transparent;
+  border-radius: 50%; animation: spin 700ms linear infinite;
+  vertical-align: -0.15em;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

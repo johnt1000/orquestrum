@@ -31,7 +31,8 @@
     </tbody>
   </table>
   {% if diff %}
-  <form method="post" action="/agents/{{ slug }}/edit/apply" style="margin-top:1rem;">
+  <form method="post" action="/agents/{{ slug }}/edit/apply" style="margin-top:1rem;"
+        data-confirm="Apply these changes to {{ slug }}.md on disk?" data-spinner>
     <input type="hidden" name="name" value="{{ fm.name }}">
     <input type="hidden" name="description" value="{{ fm.description }}">
     <input type="hidden" name="mode" value="{{ fm.mode }}">
@@ -47,7 +48,7 @@
 </article>
 {% endif %}
 
-<form method="post" action="/agents/{{ slug }}/edit">
+<form method="post" action="/agents/{{ slug }}/edit" data-spinner>
   <label>Name
     <input type="text" name="name" value="{{ fm.name }}" required>
   </label>

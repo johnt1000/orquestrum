@@ -7,8 +7,13 @@
 <article class="empty-state">
   <h3>No metrics yet</h3>
   <p>This project has not emitted any LLM-call events to <code>.orquestrum/metrics/events.jsonl</code>.</p>
-  <p>Once the framework is in use (or the metrics hook is configured — see <a href="/docs/view?p=docs/governance/ROADMAP.md">R3 in ROADMAP</a>),
-     this page will show input/output tokens, cached-token ratio, estimated cost, and per-skill breakdown.</p>
+  <p>To start collecting:</p>
+  <ol>
+    <li>Confirm the metrics hook is installed (see <a href="/docs/view?p=docs/governance/HOOKS.md">HOOKS</a>) — it auto-runs on every <code>Stop</code> and <code>SubagentStop</code>.</li>
+    <li>Use one of the orchestrators (Helm, Forge, Lore, Ward…) inside this project; each turn appends one event.</li>
+    <li>Reload this page — it will show input/output tokens, cached-token ratio, estimated cost, and per-skill breakdown.</li>
+  </ol>
+  <p><small>Operational guide: <a href="/docs/view?p=docs/governance/REAL_USAGE_PLAN.md">REAL_USAGE_PLAN.md</a>.</small></p>
 </article>
 {% else %}
 <section class="totals-grid">

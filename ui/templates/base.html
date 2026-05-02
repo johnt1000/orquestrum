@@ -12,18 +12,19 @@
   <header class="container">
     <nav>
       <ul>
-        <li><strong>🎼 Orquestrum</strong></li>
+        <li><a href="/" class="brand"><strong>🎼 Orquestrum</strong></a></li>
         <li><span class="mode-badge mode-{{ mode }}">{{ mode }}</span></li>
       </ul>
+      {% set p = request.url.path if request else '' %}
       <ul>
-        <li><a href="/dashboard">Dashboard</a></li>
-        <li><a href="/docs">Docs</a></li>
-        <li><a href="/catalog">Catalog</a></li>
-        <li><a href="/coverage">Coverage</a></li>
-        <li><a href="/audits">Audits</a></li>
-        <li><a href="/convert">Convert</a></li>
-        <li><a href="/install">Install</a></li>
-        <li><a href="/compact">Compact</a></li>
+        <li><a href="/dashboard" {% if p.startswith('/dashboard') %}aria-current="page"{% endif %}>Dashboard</a></li>
+        <li><a href="/docs" {% if p.startswith('/docs') %}aria-current="page"{% endif %}>Docs</a></li>
+        <li><a href="/catalog" {% if p.startswith('/catalog') or p.startswith('/agents') or p.startswith('/skills') %}aria-current="page"{% endif %}>Catalog</a></li>
+        <li><a href="/coverage" {% if p.startswith('/coverage') %}aria-current="page"{% endif %}>Coverage</a></li>
+        <li><a href="/audits" {% if p.startswith('/audits') %}aria-current="page"{% endif %}>Audits</a></li>
+        <li><a href="/convert" {% if p.startswith('/convert') %}aria-current="page"{% endif %}>Convert</a></li>
+        <li><a href="/install" {% if p.startswith('/install') %}aria-current="page"{% endif %}>Install</a></li>
+        <li><a href="/compact" {% if p.startswith('/compact') %}aria-current="page"{% endif %}>Compact</a></li>
       </ul>
     </nav>
     <small class="root-display">root: <code>{{ orq_root }}</code></small>
@@ -32,7 +33,30 @@
     {% block content %}{% endblock %}
   </main>
   <footer class="container">
-    <small>Orquestrum Console v0.1.0 — read-only — local single-user</small>
+    <small>Orquestrum Console v0.1.0 — Wave B (read/write) — local single-user, 127.0.0.1 only</small>
   </footer>
+  <script>
+    // Onda 1 / 1.10 + 1.11 — opt-in confirm + submit spinner.
+    //
+    // Forms add `data-confirm="Some message?"` to require user confirmation.
+    // Forms add `data-spinner` (no value) to disable submit button + show
+    // an inline spinner while the request is in flight. Conventional POST
+    // (page reloads on response), so we don't need to clean up after.
+    document.addEventListener('submit', function (e) {
+      var form = e.target;
+      if (!(form instanceof HTMLFormElement)) return;
+      var msg = form.getAttribute('data-confirm');
+      if (msg && !window.confirm(msg)) { e.preventDefault(); return; }
+      if (form.hasAttribute('data-spinner')) {
+        var btn = form.querySelector('button[type=submit], input[type=submit]');
+        if (btn) {
+          btn.disabled = true;
+          btn.setAttribute('aria-busy', 'true');
+          var label = btn.textContent || 'Submit';
+          btn.innerHTML = '<span class="spinner-inline"></span> ' + label + '…';
+        }
+      }
+    }, true);
+  </script>
 </body>
 </html>

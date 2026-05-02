@@ -10,7 +10,8 @@
 </article>
 {% else %}
 
-<form method="post" action="/compact">
+<form method="post" action="/compact" data-spinner
+      onsubmit="if(!this.dry_run.checked && !window.confirm('Run compact — will overwrite *.compact.md files. Continue?')) return false;">
   <fieldset>
     <legend>Scope</legend>
     <label>

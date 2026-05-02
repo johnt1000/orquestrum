@@ -14,7 +14,8 @@
 <article class="warn"><strong>{{ error }}</strong></article>
 {% endif %}
 
-<form method="post" action="/install">
+<form method="post" action="/install"
+      data-confirm="Run install — will write files into the target directory. Continue?" data-spinner>
   <label>Target directory
     <input type="text" name="target" required
            value="{{ last.target if last else '/path/to/your/project' }}"

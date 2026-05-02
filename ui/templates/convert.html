@@ -11,7 +11,8 @@
 </article>
 {% else %}
 
-<form method="post" action="/convert">
+<form method="post" action="/convert" data-spinner
+      onsubmit="if(!this.dry_run.checked && !window.confirm('Run convert — will overwrite files in integrations/. Continue?')) return false;">
   <div class="grid">
     <label>Tool
       <select name="tool" required>

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+
+<section class="hero">
+  <h1>🎼 Orquestrum Console</h1>
+  <p>
+    {% if mode == 'framework' %}
+      You are in <strong>framework mode</strong> — editing the canonical source.
+      Changes here regenerate integrations for every supported tool (Claude Code, OpenCode, Cursor, Aider, Windsurf).
+    {% else %}
+      You are in <strong>project mode</strong> — observing one installed project.
+      Read-only metrics and docs; framework-only actions (Convert, Install, Compact, agent/skill edits) are disabled here.
+    {% endif %}
+  </p>
+  <p><small>root: <code>{{ orq_root }}</code></small></p>
+</section>
+
+<section class="home-cards">
+  {% if mode == 'project' %}
+    <a class="card" href="/dashboard"><strong>📊 Dashboard</strong>
+      <small>token usage, cost, budget, top skills</small></a>
+    <a class="card" href="/docs"><strong>📚 Docs</strong>
+      <small>browse SDLC, governance, baselines</small></a>
+    <a class="card" href="/catalog"><strong>📇 Catalog</strong>
+      <small>installed agents and skills</small></a>
+    <a class="card" href="/coverage"><strong>✅ Coverage</strong>
+      <small>matrix from COVERAGE.md</small></a>
+    <a class="card" href="/audits"><strong>🔍 Audits</strong>
+      <small>payload, parity, attention distribution</small></a>
+  {% else %}
+    <a class="card" href="/catalog"><strong>📇 Catalog</strong>
+      <small>{{ stats.agents }} agents · {{ stats.skills }} skills</small></a>
+    <a class="card" href="/docs"><strong>📚 Docs</strong>
+      <small>SDLC · governance · baselines</small></a>
+    <a class="card" href="/audits"><strong>🔍 Audits</strong>
+      <small>payload · parity · attention</small></a>
+    <a class="card" href="/convert"><strong>⚙️ Convert</strong>
+      <small>generate integrations from canonical source</small></a>
+    <a class="card" href="/install"><strong>📦 Install</strong>
+      <small>deploy an integration into a target project</small></a>
+    <a class="card" href="/compact"><strong>🗜️ Compact</strong>
+      <small>compress oversized skill references</small></a>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Quick stats</h2>
+  <table role="grid">
+    <tbody>
+      <tr><th>Mode</th><td><code>{{ mode }}</code></td></tr>
+      <tr><th>Root</th><td><code>{{ orq_root }}</code></td></tr>
+      <tr><th>Agents</th><td>{{ stats.agents }}</td></tr>
+      <tr><th>Skills</th><td>{{ stats.skills }}</td></tr>
+      {% if stats.last_event %}<tr><th>Last metric event</th><td><code>{{ stats.last_event }}</code></td></tr>{% endif %}
+      {% if stats.event_count %}<tr><th>Events recorded</th><td>{{ stats.event_count }}</td></tr>{% endif %}
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>Need a starting point?</h2>
+  <ul>
+    <li>New here? Open <a href="/docs/view?p=docs/agent-context/SDLC.md">SDLC</a> for the pipeline overview.</li>
+    {% if mode == 'framework' %}
+      <li>Modify an agent's frontmatter via <a href="/catalog">Catalog → Edit</a>; preview + diff before write.</li>
+      <li>Need to generate integrations after editing? <a href="/convert">Convert</a> with <code>--dry-run</code> first.</li>
+    {% else %}
+      <li>Empty dashboard? See <a href="/docs/view?p=docs/governance/REAL_USAGE_PLAN.md">REAL_USAGE_PLAN</a> to start a real session.</li>
+    {% endif %}
+  </ul>
+</section>
+
+{% endblock %}

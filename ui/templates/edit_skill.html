@@ -29,7 +29,8 @@
     </tbody>
   </table>
   {% if diff %}
-  <form method="post" action="/skills/{{ slug }}/edit/apply" style="margin-top:1rem;">
+  <form method="post" action="/skills/{{ slug }}/edit/apply" style="margin-top:1rem;"
+        data-confirm="Apply these changes to skills/{{ slug }}/SKILL.md on disk?" data-spinner>
     <input type="hidden" name="name" value="{{ fm.name }}">
     <input type="hidden" name="description" value="{{ fm.description }}">
     <input type="hidden" name="inject_references" value="{{ fm.inject_references or 'false' }}">
@@ -44,7 +45,7 @@
 </article>
 {% endif %}
 
-<form method="post" action="/skills/{{ slug }}/edit">
+<form method="post" action="/skills/{{ slug }}/edit" data-spinner>
   <label>Name
     <input type="text" name="name" value="{{ fm.name }}" required>
   </label>

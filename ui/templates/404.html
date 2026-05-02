@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Not found{% endblock %}
+{% block content %}
+<article>
+  <h1>404 — Not found</h1>
+  <p>The page <code>{{ path }}</code> does not exist.</p>
+  <p>Try one of:</p>
+  <ul>
+    <li><a href="/">Home</a></li>
+    <li><a href="/dashboard">Dashboard</a></li>
+    <li><a href="/catalog">Catalog</a></li>
+    <li><a href="/docs">Docs</a></li>
+  </ul>
+</article>
+{% endblock %}
