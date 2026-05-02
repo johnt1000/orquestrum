@@ -66,6 +66,7 @@ class TestHomeStats:
             metrics_dir=tmp_path / '.orquestrum' / 'metrics',
             targets_path=None,
             port=7700,
+            linked_project_root=tmp_path,
         )
         d = tmp_path / '.claude' / 'agents'
         d.mkdir(parents=True)

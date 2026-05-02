@@ -4,7 +4,7 @@ Reusable in both framework mode (the Orquestrum repo) and project mode
 (read installed agents under .claude/agents/ or .opencode/agents/).
 """
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 try:
@@ -25,6 +25,15 @@ class AgentRow:
     temperature: float
     bash:        bool
     body_path:   Path
+    sources:     tuple[str, ...] = ()   # ('local',), ('global',), or ('local','global')
+
+    @property
+    def location_label(self) -> str:
+        if 'local' in self.sources and 'global' in self.sources:
+            return 'local+global'
+        if 'local' in self.sources:
+            return 'local'
+        return 'global'
 
 
 @dataclass(frozen=True)
@@ -38,6 +47,15 @@ class SkillRow:
     depends_on:       list[str]
     emits_confidence: bool
     body_path:        Path
+    sources:          tuple[str, ...] = ()
+
+    @property
+    def location_label(self) -> str:
+        if 'local' in self.sources and 'global' in self.sources:
+            return 'local+global'
+        if 'local' in self.sources:
+            return 'local'
+        return 'global'
 
 
 def _slug_from_name(name: str) -> str:
@@ -105,3 +123,66 @@ def list_skills(skills_dir: Path) -> list[SkillRow]:
             body_path=f,
         ))
     return out
+
+
+def merged_agents(
+    local_dirs: list[Path],
+    global_dir: Path | None,
+    *,
+    local_tag: str = 'local',
+    global_tag: str = 'global',
+) -> list[AgentRow]:
+    """Merge agents from multiple local dirs + one global dir, deduping by slug.
+
+    Each row gets a `sources` tuple indicating where it was found.
+    When the same slug appears in both local and global, the local row's data
+    is kept (it's the installed version) and both tags are recorded.
+    """
+    local_by_slug: dict[str, AgentRow] = {}
+    for d in local_dirs:
+        for row in list_agents(d):
+            local_by_slug[row.slug] = row
+
+    global_by_slug: dict[str, AgentRow] = {}
+    if global_dir is not None:
+        for row in list_agents(global_dir):
+            global_by_slug[row.slug] = row
+
+    result: list[AgentRow] = []
+    for slug in sorted(set(local_by_slug) | set(global_by_slug)):
+        if slug in local_by_slug and slug in global_by_slug:
+            result.append(replace(local_by_slug[slug], sources=(local_tag, global_tag)))
+        elif slug in local_by_slug:
+            result.append(replace(local_by_slug[slug], sources=(local_tag,)))
+        else:
+            result.append(replace(global_by_slug[slug], sources=(global_tag,)))
+    return result
+
+
+def merged_skills(
+    local_dirs: list[Path],
+    global_dir: Path | None,
+    *,
+    local_tag: str = 'local',
+    global_tag: str = 'global',
+) -> list[SkillRow]:
+    """Merge skills from multiple local dirs + one global dir, deduping by slug."""
+    local_by_slug: dict[str, SkillRow] = {}
+    for d in local_dirs:
+        for row in list_skills(d):
+            local_by_slug[row.slug] = row
+
+    global_by_slug: dict[str, SkillRow] = {}
+    if global_dir is not None:
+        for row in list_skills(global_dir):
+            global_by_slug[row.slug] = row
+
+    result: list[SkillRow] = []
+    for slug in sorted(set(local_by_slug) | set(global_by_slug)):
+        if slug in local_by_slug and slug in global_by_slug:
+            result.append(replace(local_by_slug[slug], sources=(local_tag, global_tag)))
+        elif slug in local_by_slug:
+            result.append(replace(local_by_slug[slug], sources=(local_tag,)))
+        else:
+            result.append(replace(global_by_slug[slug], sources=(global_tag,)))
+    return result

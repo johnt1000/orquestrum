@@ -3,9 +3,39 @@
 {% block content %}
 <h1>Dashboard</h1>
 
-{% if not sess or sess.totals.calls == 0 %}
+{% if not is_linked %}
+<article class="empty-state">
+  <h3>No Orquestrum project found here</h3>
+  <p>The console was opened from <code>{{ orq_root }}</code>, which has no <code>.orquestrum/</code> directory.</p>
+  <p>To start tracking metrics in a project:</p>
+  <ol>
+    <li>Navigate to your project directory and run <code>orquestrum init --tool claude-code</code>.</li>
+    <li>Reopen the console from that directory: <code>cd /your/project &amp;&amp; orquestrum web</code>.</li>
+  </ol>
+  {% if registry_projects %}
+  <h4>Registered projects</h4>
+  <table role="grid">
+    <thead><tr><th>Name</th><th>Path</th><th>Tool</th><th>Last sync</th></tr></thead>
+    <tbody>
+    {% for p in registry_projects %}
+      <tr>
+        <td><strong>{{ p.name }}</strong></td>
+        <td><code>{{ p.path }}</code></td>
+        <td>{{ p.get('tool') or '—' }}</td>
+        <td>{{ p.get('last_sync') or '—' }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p><small>No projects registered yet. Run <code>orquestrum init</code> in a project to register it.</small></p>
+  {% endif %}
+</article>
+
+{% elif not sess or sess.totals.calls == 0 %}
 <article class="empty-state">
   <h3>No metrics yet</h3>
+  <p>Project: <code>{{ linked_project_root }}</code></p>
   <p>This project has not emitted any LLM-call events to <code>.orquestrum/metrics/events.jsonl</code>.</p>
   <p>To start collecting:</p>
   <ol>
@@ -15,7 +45,10 @@
   </ol>
   <p><small>Operational guide: <a href="/docs/view?p=docs/governance/REAL_USAGE_PLAN.md">REAL_USAGE_PLAN.md</a>.</small></p>
 </article>
+
 {% else %}
+<p><small>Project: <code>{{ linked_project_root }}</code></small></p>
+
 <section class="totals-grid">
   <article><strong>{{ "{:,}".format(sess.totals.input_tokens) }}</strong><br><small>input tokens</small></article>
   <article><strong>{{ "{:,}".format(sess.totals.output_tokens) }}</strong><br><small>output tokens</small></article>

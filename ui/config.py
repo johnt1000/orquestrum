@@ -23,11 +23,13 @@ DEFAULT_PORT = 7700
 
 @dataclass(frozen=True)
 class UIConfig:
-    mode:           Mode
-    root:           Path
-    metrics_dir:    Path | None    # only set in project mode
-    targets_path:   Path | None    # only set in framework mode
-    port:           int
+    mode:                 Mode
+    root:                 Path
+    metrics_dir:          Path | None    # only set in project mode
+    targets_path:         Path | None    # only set in framework mode
+    port:                 int
+    linked_project_root:  Path | None = None  # nearest ancestor with .orquestrum/
+    framework_root:       Path | None = None  # canonical Orquestrum source
 
     @property
     def is_framework(self) -> bool:
@@ -36,6 +38,11 @@ class UIConfig:
     @property
     def is_project(self) -> bool:
         return self.mode == 'project'
+
+    @property
+    def is_linked(self) -> bool:
+        """True when root (or an ancestor) has a .orquestrum/ directory."""
+        return self.linked_project_root is not None
 
 
 def auto_detect_mode(root: Path) -> Mode:
@@ -76,13 +83,17 @@ def resolve(
     else:
         raise ValueError(f'Invalid ORQ_MODE: {raw_mode!r} (expected: framework | project)')
 
-    metrics_dir:  Path | None = None
-    targets_path: Path | None = None
+    metrics_dir:          Path | None = None
+    targets_path:         Path | None = None
+    linked_project_root:  Path | None = None
+    framework_root_path:  Path | None = None
 
     if mode == 'project':
-        metrics_dir = root / '.orquestrum' / 'metrics'
-        # accept project mode even if .orquestrum/ does not exist yet — the UI
-        # will display empty state and the user can populate it later
+        from orquestrum.lib.paths import find_project_root, canonical_root
+        linked_project_root = find_project_root(root)
+        framework_root_path = canonical_root()
+        # metrics live in the linked project, or fall back to root (may not exist yet)
+        metrics_dir = (linked_project_root or root) / '.orquestrum' / 'metrics'
     else:
         # Framework mode requires the canonical layout
         for required in ('agents', 'skills', 'orquestrum'):
@@ -92,6 +103,7 @@ def resolve(
                     f'Use --mode project or run from the Orquestrum repo root.'
                 )
         targets_path = Path('~/.orquestrum/targets.json').expanduser()
+        framework_root_path = root  # root IS the canonical framework in framework mode
 
     port = port_arg or int(os.environ.get('ORQ_PORT', DEFAULT_PORT))
 
@@ -101,4 +113,6 @@ def resolve(
         metrics_dir=metrics_dir,
         targets_path=targets_path,
         port=port,
+        linked_project_root=linked_project_root,
+        framework_root=framework_root_path,
     )

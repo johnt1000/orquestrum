@@ -162,3 +162,8 @@ header.container nav a[aria-current="page"] {
   vertical-align: -0.15em;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Location badges (catalog local/global markers) */
+mark.loc-local  { background: #d4edda; color: #155724; border-radius: 4px; padding: 1px 6px; font-size: 0.8em; }
+mark.loc-global { background: #cce5ff; color: #004085; border-radius: 4px; padding: 1px 6px; font-size: 0.8em; }
+mark.loc-both   { background: #e2d9f3; color: #3d1a78; border-radius: 4px; padding: 1px 6px; font-size: 0.8em; }

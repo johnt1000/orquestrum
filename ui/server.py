@@ -20,20 +20,26 @@ STATIC_DIR    = _HERE / 'static'
 
 def _home_stats(config: UIConfig) -> dict:
     """Return small dict with agent/skill counts and metric summary for the home page."""
-    stats: dict = {'agents': 0, 'skills': 0, 'event_count': 0, 'last_event': None}
+    stats: dict = {
+        'agents': 0, 'skills': 0, 'event_count': 0, 'last_event': None,
+        'linked_project_root': str(config.linked_project_root) if config.linked_project_root else None,
+    }
     try:
         if config.is_framework:
             stats['agents'] = sum(1 for _ in (config.root / 'agents').glob('*.md'))
             stats['skills'] = sum(1 for _ in (config.root / 'skills').glob('*/SKILL.md'))
-        else:
+        elif config.linked_project_root:
             for sub in ('.claude/agents', '.opencode/agents'):
-                d = config.root / sub
+                d = config.linked_project_root / sub
                 if d.is_dir():
                     stats['agents'] += sum(1 for _ in d.glob('*.md'))
-            for sub in ('.claude/skills', '.opencode/skills'):
-                d = config.root / sub
+            for sub in ('.sdd/skills', '.opencode/skills'):
+                d = config.linked_project_root / sub
                 if d.is_dir():
                     stats['skills'] += sum(1 for _ in d.glob('*/SKILL.md'))
+        elif config.framework_root:
+            stats['agents'] = sum(1 for _ in (config.framework_root / 'agents').glob('*.md'))
+            stats['skills'] = sum(1 for _ in (config.framework_root / 'skills').glob('*/SKILL.md'))
         if config.metrics_dir is not None:
             events_file = config.metrics_dir / 'events.jsonl'
             if events_file.exists():

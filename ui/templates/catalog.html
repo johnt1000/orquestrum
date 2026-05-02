@@ -3,37 +3,54 @@
 {% block content %}
 <h1>Catalog</h1>
 
+{% if has_local and has_global %}
+<p><small>
+  <mark class="loc-local">🏠 local</mark> installed in this project &nbsp;·&nbsp;
+  <mark class="loc-global">🌐 global</mark> available in canonical framework &nbsp;·&nbsp;
+  <mark class="loc-both">🏠+🌐</mark> installed and in framework
+</small></p>
+{% endif %}
+
 <h2>Agents <small>({{ agents|length }})</small></h2>
-<small>source: <code>{{ agents_dir }}</code></small>
 {% if agents %}
 <table role="grid">
-  <thead><tr><th>Name</th><th>Tier</th><th>max_tokens</th><th>temp</th><th>bash</th><th></th></tr></thead>
+  <thead><tr><th>Name</th><th>Tier</th><th>max_tokens</th><th>temp</th><th>bash</th><th>Location</th><th></th></tr></thead>
   <tbody>
   {% for a in agents %}
     <tr>
-      <td><strong>{{ a.name }}</strong><br><small>{{ a.description[:120] }}…</small></td>
+      <td><strong>{{ a.name }}</strong><br><small>{{ a.description[:120] }}{% if a.description|length > 120 %}…{% endif %}</small></td>
       <td><code>{{ a.tier }}</code></td>
       <td>{{ a.max_tokens or '—' }}</td>
       <td>{{ a.temperature }}</td>
       <td>{{ '✅' if a.bash else '—' }}</td>
+      <td>
+        {% if a.location_label == 'local+global' %}<mark class="loc-both">🏠+🌐</mark>
+        {% elif a.location_label == 'local' %}<mark class="loc-local">🏠 local</mark>
+        {% else %}<mark class="loc-global">🌐 global</mark>{% endif %}
+      </td>
       <td>{% if mode == 'framework' %}<a href="/agents/{{ a.slug }}/edit">edit</a>{% endif %}</td>
     </tr>
   {% endfor %}
   </tbody>
 </table>
 {% else %}
-<article class="empty-state"><p>No agents found in <code>{{ agents_dir }}</code>.</p></article>
+<article class="empty-state">
+  <p>No agents found.</p>
+  {% if not has_local and not has_global %}
+  <p>Run <code>orquestrum install --tool &lt;tool&gt; --target .</code> to install agents in this project,
+     or open the console from the Orquestrum framework directory for the full catalog.</p>
+  {% endif %}
+</article>
 {% endif %}
 
 <h2>Skills <small>({{ skills|length }})</small></h2>
-<small>source: <code>{{ skills_dir }}</code></small>
 {% if skills %}
 <table role="grid">
-  <thead><tr><th>Slug</th><th>inject_refs</th><th>chain</th><th>depends_on</th><th>emits_confidence</th><th></th></tr></thead>
+  <thead><tr><th>Slug</th><th>inject_refs</th><th>chain</th><th>depends_on</th><th>emits_confidence</th><th>Location</th><th></th></tr></thead>
   <tbody>
   {% for s in skills %}
     <tr>
-      <td><strong>{{ s.slug }}</strong><br><small>{{ s.description[:120] }}…</small></td>
+      <td><strong>{{ s.slug }}</strong><br><small>{{ s.description[:120] }}{% if s.description|length > 120 %}…{% endif %}</small></td>
       <td><code>{{ s.inject_refs }}</code></td>
       <td>{{ s.chain_next or '—' }}</td>
       <td>
@@ -41,12 +58,17 @@
         {% if not s.depends_on %}—{% endif %}
       </td>
       <td>{{ '✅' if s.emits_confidence else '—' }}</td>
+      <td>
+        {% if s.location_label == 'local+global' %}<mark class="loc-both">🏠+🌐</mark>
+        {% elif s.location_label == 'local' %}<mark class="loc-local">🏠 local</mark>
+        {% else %}<mark class="loc-global">🌐 global</mark>{% endif %}
+      </td>
       <td>{% if mode == 'framework' %}<a href="/skills/{{ s.slug }}/edit">edit</a>{% endif %}</td>
     </tr>
   {% endfor %}
   </tbody>
 </table>
 {% else %}
-<article class="empty-state"><p>No skills found in <code>{{ skills_dir }}</code>.</p></article>
+<article class="empty-state"><p>No skills found.</p></article>
 {% endif %}
 {% endblock %}

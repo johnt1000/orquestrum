@@ -8,9 +8,12 @@
     {% if mode == 'framework' %}
       You are in <strong>framework mode</strong> — editing the canonical source.
       Changes here regenerate integrations for every supported tool (Claude Code, OpenCode, Cursor, Aider, Windsurf).
+    {% elif stats.linked_project_root %}
+      You are in <strong>project mode</strong> — observing <code>{{ stats.linked_project_root }}</code>.
+      Metrics, catalog, and docs reflect this project.
     {% else %}
-      You are in <strong>project mode</strong> — observing one installed project.
-      Read-only metrics and docs; framework-only actions (Convert, Install, Compact, agent/skill edits) are disabled here.
+      You are in <strong>project mode</strong> — but no Orquestrum project was found at or above <code>{{ orq_root }}</code>.
+      The catalog shows resources from the global framework. Run <code>orquestrum init</code> here to start tracking a project.
     {% endif %}
   </p>
   <p><small>root: <code>{{ orq_root }}</code></small></p>
