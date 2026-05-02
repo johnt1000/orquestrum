@@ -1,10 +1,15 @@
 """orquestrum.cli — main entry point for the `orquestrum` executable.
 
 Top-level argparse with subcommands. Each subcommand lives in
-orquestrum/commands/X.py and dispatches to the canonical scripts in scripts/.
+orquestrum/commands/X.py:
+  - native commands implement their handler directly (init, update, web,
+    repos, lint, doctor, uninstall, extras, version)
+  - wrapper commands forward args.passthrough to a `main()` function
+    under orquestrum/core/X.py (convert, install, deps, dashboard,
+    compact, audit/{payload,parity,attention})
 
-The CLI is a thin wrapper. `uv run scripts/foo.py` continues to work
-unchanged for users who prefer the legacy form.
+For programmatic invocation of the wrapped logic, prefer
+`python -m orquestrum.core.<module>` over importing the wrapper.
 """
 from __future__ import annotations
 import argparse

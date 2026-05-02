@@ -1,10 +1,11 @@
-"""live_metrics.py — read .orquestrum/metrics/ via scripts/lib/metrics.py.
+"""live_metrics.py — read .orquestrum/metrics/ via orquestrum.lib.metrics.
 
 Thin wrapper that resolves the metrics dir and exposes the aggregated
 session for templates. Returns an empty SessionAggregate when the dir
 does not exist (project not yet emitting metrics).
 
-The hook (scripts/hooks/emit_metrics.py) only appends to events.jsonl —
+The hook (orquestrum/core/hooks/emit_metrics.py, deployed to
+.sdd/scripts/hooks/ in target projects) only appends to events.jsonl —
 it does NOT update session.json (keeping the hook lightweight). The UI
 rebuilds session.json on every dashboard render so budget queries always
 see fresh data.
