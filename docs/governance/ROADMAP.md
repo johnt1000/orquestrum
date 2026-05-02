@@ -514,14 +514,16 @@ Onboarding:
 
 **Validação E2E:** `/audits/payload` POST → 303 → `/jobs/{id}` polled, `job-done` em ~3s; edit `/agents/.../edit` com `max_tokens=99999` mostra `aria-invalid="true"` no input + "must be a positive int ≤ 16384, got 99999" inline; `convert --all` imprime `[1/5]` … `[5/5]`.
 
-### Onda 3 — Onboarding de contribuidor
+### Onda 3 — Onboarding de contribuidor (CONCLUÍDA 2026-05-02)
 
-| # | Item | Arquivo |
-|---|------|---------|
-| 3.1 | Expandir `CONTRIBUTING.md` com seções "Adding a CLI command" e "Adding a web route" | `CONTRIBUTING.md` |
-| 3.2 | Criar `ui/README.md` (stack, estrutura, dev mode, link para CONTRIBUTING) | `ui/README.md` (novo) |
-| 3.3 | `Makefile` ou `justfile` raiz com alvos `dev`, `lint`, `convert`, `test`, `web`, `doctor` | `Makefile`/`justfile` (novo) |
-| 3.4 | `.pre-commit-config.yaml` opt-in (lint + frontmatter check + ruff) | `.pre-commit-config.yaml` (novo) |
+| # | Item | Status |
+|---|------|--------|
+| 3.1 | Expandir `CONTRIBUTING.md` com seções "Adding a CLI command" e "Adding a web route" | ✅ inclui exemplos completos (skeleton + arquivo de referência), distinção wrapper × native, conventions de flag e UX |
+| 3.2 | Criar `ui/README.md` | ✅ stack, layout, modos, fluxo de request, opt-in attributes, anti-padrões |
+| 3.3 | `Makefile` raiz | ✅ alvos `help` (default), `dev`, `sync`, `lint`, `convert`, `convert-dry`, `test`, `web`, `doctor`, `audit`, `clean` |
+| 3.4 | `.pre-commit-config.yaml` opt-in | ✅ pre-commit-hooks (whitespace, EOF, merge, yaml, toml, large-files) + local hook `orquestrum lint` em `agents/`, `skills/`, `docs/` |
+
+**Como instalar localmente:** `make dev` → `pre-commit install` (opcional). `make help` lista todos os alvos com descrição colorida.
 
 **Estimativa:** 1-2 dias.
 
@@ -579,6 +581,7 @@ Onda 3:
 | (doc) | docs/governance/REAL_USAGE_PLAN.md | 2026-05-02 | (working tree) |
 | R14 (Onda 1) | UX & Onboarding — quick wins CLI + Web | 2026-05-02 | (working tree) |
 | R14 (Onda 2) | UX & Onboarding — async jobs, side-by-side diff, inline form errors, CLI progress | 2026-05-02 | (working tree) |
+| R14 (Onda 3) | UX & Onboarding — CONTRIBUTING expansion, ui/README, Makefile, pre-commit | 2026-05-02 | (working tree) |
 
 ---
 
