@@ -523,12 +523,15 @@ def main(argv: list[str] | None = None) -> None:
 
     print()
 
-    for tool in tools:
+    total = len(tools)
+    for idx, tool in enumerate(tools, 1):
+        if total > 1:
+            print(f'\033[1m[{idx}/{total}] {tool}\033[0m')
         ADAPTERS[tool].convert(provider)
         print()
 
     if args.all:
-        ok('All integrations generated in integrations/')
+        ok(f'All {total} integrations generated in integrations/')
 
 
 if __name__ == '__main__':

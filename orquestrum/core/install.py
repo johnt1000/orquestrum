@@ -197,7 +197,10 @@ def main(argv: list[str] | None = None) -> None:
             sys.exit(1)
         log(f'Detected tools: {", ".join(tools)}')
         print()
-        for tool in tools:
+        total = len(tools)
+        for idx, tool in enumerate(tools, 1):
+            if total > 1:
+                print(f'\033[1m[{idx}/{total}] {tool}\033[0m')
             if not install_tool(tool, target):
                 sys.exit(1)
     else:
