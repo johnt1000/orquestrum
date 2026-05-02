@@ -24,4 +24,11 @@ __pycache__/
 .venv/
 *.egg-info/
 dist/
-build/
+# `build/` — only ignore at repo root, not scripts/build/ (which is canonical source)
+/build/
+
+# Per-project Orquestrum runtime
+.orquestrum/metrics/
+
+# Claude Code session-local hook output
+.sdd/scripts/hooks/__pycache__/
