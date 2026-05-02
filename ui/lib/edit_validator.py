@@ -69,6 +69,36 @@ def validate_agent_frontmatter(fm: dict[str, Any]) -> list[str]:
     return errors
 
 
+def errors_by_field(errors: list[str]) -> dict[str, list[str]]:
+    """Group human-readable error strings by their leading field token.
+
+    Errors emitted by validate_*_frontmatter follow either of two shapes:
+        '<field>: <message>'                 → grouped under <field>
+        'missing required field: \\'<field>\\'' → grouped under <field>
+        anything else                        → grouped under '_global'
+
+    Used by the edit templates to render aria-invalid + inline messages
+    next to the affected input.
+    """
+    grouped: dict[str, list[str]] = {}
+    for err in errors:
+        field = '_global'
+        msg = err
+        if err.startswith('missing required field: '):
+            after = err[len('missing required field: '):].strip()
+            if after.startswith("'") and "'" in after[1:]:
+                field = after.split("'")[1]
+                msg = 'required field is missing'
+        elif ':' in err:
+            head, _, tail = err.partition(':')
+            head = head.strip()
+            if head and ' ' not in head and head != '_global':
+                field = head
+                msg = tail.strip()
+        grouped.setdefault(field, []).append(msg)
+    return grouped
+
+
 def diff_frontmatter(old: dict[str, Any], new: dict[str, Any]) -> list[tuple[str, Any, Any]]:
     """Return list of (key, old_value, new_value) for changed top-level keys.
     Special-cases tools.* and chain.* changes.

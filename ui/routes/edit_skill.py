@@ -10,7 +10,6 @@ Same three-step flow, same atomic write, same in-process lint preflight.
 """
 from __future__ import annotations
 import os
-import sys
 import tempfile
 from pathlib import Path
 
@@ -19,10 +18,7 @@ from fastapi.responses import HTMLResponse
 
 from ui.lib import edit_validator
 
-_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-sys.path.insert(0, str(_REPO_ROOT / 'scripts'))
-
-import frontmatter as fm  # noqa: E402
+import frontmatter as fm
 
 router = APIRouter(prefix='/skills')
 
@@ -57,11 +53,12 @@ async def show(request: Request, slug: str) -> HTMLResponse:
             'slug':         slug,
             'path':         str(path.relative_to(cfg.root)),
             'fm':           dict(post.metadata),
-            'errors':       [],
-            'preview':      None,
-            'diff':         None,
-            'all_slugs':    _existing_slugs(cfg),
-            'valid_inject': sorted(edit_validator.VALID_INJECT_VALUES),
+            'errors':          [],
+            'errors_by_field': {},
+            'preview':         None,
+            'diff':            None,
+            'all_slugs':       _existing_slugs(cfg),
+            'valid_inject':    sorted(edit_validator.VALID_INJECT_VALUES),
         },
     )
 
@@ -117,14 +114,15 @@ async def preview(request: Request, slug: str) -> HTMLResponse:
     return templates.TemplateResponse(
         request, 'edit_skill.html',
         {
-            'slug':         slug,
-            'path':         str(path.relative_to(cfg.root)),
-            'fm':           new_fm,
-            'errors':       errors,
-            'preview':      True,
-            'diff':         diff,
-            'all_slugs':    all_slugs,
-            'valid_inject': sorted(edit_validator.VALID_INJECT_VALUES),
+            'slug':            slug,
+            'path':            str(path.relative_to(cfg.root)),
+            'fm':              new_fm,
+            'errors':          errors,
+            'errors_by_field': edit_validator.errors_by_field(errors),
+            'preview':         True,
+            'diff':            diff,
+            'all_slugs':       all_slugs,
+            'valid_inject':    sorted(edit_validator.VALID_INJECT_VALUES),
         },
     )
 
@@ -145,14 +143,15 @@ async def apply(request: Request, slug: str) -> HTMLResponse:
         return templates.TemplateResponse(
             request, 'edit_skill.html',
             {
-                'slug':         slug,
-                'path':         str(path.relative_to(cfg.root)),
-                'fm':           new_fm,
-                'errors':       errors,
-                'preview':      True,
-                'diff':         edit_validator.diff_frontmatter(dict(post.metadata), new_fm),
-                'all_slugs':    all_slugs,
-                'valid_inject': sorted(edit_validator.VALID_INJECT_VALUES),
+                'slug':            slug,
+                'path':            str(path.relative_to(cfg.root)),
+                'fm':              new_fm,
+                'errors':          errors,
+                'errors_by_field': edit_validator.errors_by_field(errors),
+                'preview':         True,
+                'diff':            edit_validator.diff_frontmatter(dict(post.metadata), new_fm),
+                'all_slugs':       all_slugs,
+                'valid_inject':    sorted(edit_validator.VALID_INJECT_VALUES),
             },
         )
 

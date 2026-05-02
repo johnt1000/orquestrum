@@ -5,29 +5,47 @@
 <h1>Edit skill — <code>{{ slug }}</code></h1>
 <small>source: <code>{{ path }}</code></small>
 
+{% set ebf = errors_by_field or {} %}
+
+{% macro field_errors(name) -%}
+  {%- if ebf.get(name) -%}
+    {%- for msg in ebf[name] %}<small role="alert" class="field-error">{{ msg }}</small>{% endfor -%}
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro field_invalid(name) -%}
+  {%- if ebf.get(name) %} aria-invalid="true"{% endif -%}
+{%- endmacro %}
+
 {% if errors %}
 <article class="warn">
-  <strong>Lint preflight failed — write blocked:</strong>
-  <ul>{% for e in errors %}<li><code>{{ e }}</code></li>{% endfor %}</ul>
+  <strong>Lint preflight failed — write blocked.</strong>
+  Each affected field is highlighted below.
+  {% if ebf.get('_global') %}
+    <ul>{% for msg in ebf['_global'] %}<li><code>{{ msg }}</code></li>{% endfor %}</ul>
+  {% endif %}
 </article>
 {% endif %}
 
 {% if preview and diff and not errors %}
-<article style="background:#e8f5e8; border-left: 4px solid #28a745;">
+<article class="diff-card">
   <strong>Preview — review before applying:</strong>
-  <table role="grid">
-    <thead><tr><th>Field</th><th>Old</th><th>New</th></tr></thead>
-    <tbody>
-    {% for key, old_val, new_val in diff %}
-      <tr>
-        <td><code>{{ key }}</code></td>
-        <td><code>{{ old_val }}</code></td>
-        <td><code>{{ new_val }}</code></td>
-      </tr>
-    {% endfor %}
-    {% if not diff %}<tr><td colspan="3"><em>no changes</em></td></tr>{% endif %}
-    </tbody>
-  </table>
+  {% if diff %}
+    <dl class="diff-list">
+      {% for key, old_val, new_val in diff %}
+        <dt><code>{{ key }}</code></dt>
+        <dd>
+          <div class="diff-pair">
+            <div class="diff-old"><span class="diff-label">old</span><code>{{ old_val }}</code></div>
+            <div class="diff-new"><span class="diff-label">new</span><code>{{ new_val }}</code></div>
+          </div>
+        </dd>
+      {% endfor %}
+    </dl>
+  {% else %}
+    <p><em>no changes</em></p>
+  {% endif %}
+
   {% if diff %}
   <form method="post" action="/skills/{{ slug }}/edit/apply" style="margin-top:1rem;"
         data-confirm="Apply these changes to skills/{{ slug }}/SKILL.md on disk?" data-spinner>
@@ -47,25 +65,29 @@
 
 <form method="post" action="/skills/{{ slug }}/edit" data-spinner>
   <label>Name
-    <input type="text" name="name" value="{{ fm.name }}" required>
+    <input type="text" name="name" value="{{ fm.name }}" required {{ field_invalid('name') }}>
+    {{ field_errors('name') }}
   </label>
   <label>Description
-    <textarea name="description" rows="3" required>{{ fm.description }}</textarea>
+    <textarea name="description" rows="3" required {{ field_invalid('description') }}>{{ fm.description }}</textarea>
+    {{ field_errors('description') }}
   </label>
   <div class="grid">
     <label>inject_references
-      <select name="inject_references">
+      <select name="inject_references" {{ field_invalid('inject_references') }}>
         {% for v in valid_inject %}
           <option value="{{ v }}" {% if (fm.inject_references or 'false') == v %}selected{% endif %}>{{ v }}</option>
         {% endfor %}
       </select>
+      {{ field_errors('inject_references') }}
     </label>
     <label>inject_fewshot
-      <select name="inject_fewshot">
+      <select name="inject_fewshot" {{ field_invalid('inject_fewshot') }}>
         {% for v in valid_inject %}
           <option value="{{ v }}" {% if (fm.inject_fewshot or 'false') == v %}selected{% endif %}>{{ v }}</option>
         {% endfor %}
       </select>
+      {{ field_errors('inject_fewshot') }}
     </label>
   </div>
   <label>
@@ -73,27 +95,32 @@
            {% if fm.emits_confidence %}checked{% endif %}>
     <strong>emits_confidence</strong> — does this skill compute attention scores in artifacts?
   </label>
+  {{ field_errors('emits_confidence') }}
   <label>depends_on (comma-separated skill slugs)
     <input type="text" name="depends_on"
            value="{{ fm.depends_on | join(', ') if fm.depends_on else '' }}"
-           placeholder="task-manager, qa-manager">
+           placeholder="task-manager, qa-manager"
+           {{ field_invalid('depends_on') }}>
     <small>Available: {{ all_slugs | join(', ') }}</small>
+    {{ field_errors('depends_on') }}
   </label>
   <fieldset>
     <legend>Chain (optional — automatic next skill)</legend>
     <label>chain.next
-      <select name="chain_next">
+      <select name="chain_next" {{ field_invalid('chain.next') }}>
         <option value="">— none —</option>
         {% for s in all_slugs %}
           <option value="{{ s }}" {% if fm.chain and fm.chain.next == s %}selected{% endif %}>{{ s }}</option>
         {% endfor %}
       </select>
+      {{ field_errors('chain.next') }}
     </label>
     <label>chain.condition
       <input type="text" name="chain_condition"
              value="{{ fm.chain.condition if fm.chain else '' }}"
              placeholder="e.g. review approved, ready for QA">
     </label>
+    {{ field_errors('chain') }}
   </fieldset>
   <button type="submit">Validate & preview</button>
 </form>

@@ -5,31 +5,47 @@
 <h1>Edit agent — <code>{{ slug }}</code></h1>
 <small>source: <code>{{ path }}</code></small>
 
+{% set ebf = errors_by_field or {} %}
+
+{% macro field_errors(name) -%}
+  {%- if ebf.get(name) -%}
+    {%- for msg in ebf[name] %}<small role="alert" class="field-error">{{ msg }}</small>{% endfor -%}
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro field_invalid(name) -%}
+  {%- if ebf.get(name) %} aria-invalid="true"{% endif -%}
+{%- endmacro %}
+
 {% if errors %}
 <article class="warn">
-  <strong>Lint preflight failed — write blocked:</strong>
-  <ul>{% for e in errors %}<li><code>{{ e }}</code></li>{% endfor %}</ul>
+  <strong>Lint preflight failed — write blocked.</strong>
+  Each affected field is highlighted below.
+  {% if ebf.get('_global') %}
+    <ul>{% for msg in ebf['_global'] %}<li><code>{{ msg }}</code></li>{% endfor %}</ul>
+  {% endif %}
 </article>
 {% endif %}
 
 {% if preview and diff and not errors %}
-<article style="background:#e8f5e8; border-left: 4px solid #28a745;">
+<article class="diff-card">
   <strong>Preview — review before applying:</strong>
-  <table role="grid">
-    <thead><tr><th>Field</th><th>Old</th><th>New</th></tr></thead>
-    <tbody>
-    {% for key, old_val, new_val in diff %}
-      <tr>
-        <td><code>{{ key }}</code></td>
-        <td><code>{{ old_val }}</code></td>
-        <td><code>{{ new_val }}</code></td>
-      </tr>
-    {% endfor %}
-    {% if not diff %}
-      <tr><td colspan="3"><em>no changes</em></td></tr>
-    {% endif %}
-    </tbody>
-  </table>
+  {% if diff %}
+    <dl class="diff-list">
+      {% for key, old_val, new_val in diff %}
+        <dt><code>{{ key }}</code></dt>
+        <dd>
+          <div class="diff-pair">
+            <div class="diff-old"><span class="diff-label">old</span><code>{{ old_val }}</code></div>
+            <div class="diff-new"><span class="diff-label">new</span><code>{{ new_val }}</code></div>
+          </div>
+        </dd>
+      {% endfor %}
+    </dl>
+  {% else %}
+    <p><em>no changes</em></p>
+  {% endif %}
+
   {% if diff %}
   <form method="post" action="/agents/{{ slug }}/edit/apply" style="margin-top:1rem;"
         data-confirm="Apply these changes to {{ slug }}.md on disk?" data-spinner>
@@ -50,31 +66,37 @@
 
 <form method="post" action="/agents/{{ slug }}/edit" data-spinner>
   <label>Name
-    <input type="text" name="name" value="{{ fm.name }}" required>
+    <input type="text" name="name" value="{{ fm.name }}" required {{ field_invalid('name') }}>
+    {{ field_errors('name') }}
   </label>
   <label>Description
-    <textarea name="description" rows="3" required>{{ fm.description }}</textarea>
+    <textarea name="description" rows="3" required {{ field_invalid('description') }}>{{ fm.description }}</textarea>
+    {{ field_errors('description') }}
   </label>
   <div class="grid">
     <label>Mode
-      <select name="mode">
+      <select name="mode" {{ field_invalid('mode') }}>
         {% for m in ['primary', 'agent', 'subagent'] %}
           <option value="{{ m }}" {% if fm.mode == m %}selected{% endif %}>{{ m }}</option>
         {% endfor %}
       </select>
+      {{ field_errors('mode') }}
     </label>
     <label>Emoji
-      <input type="text" name="emoji" value="{{ fm.emoji }}" required maxlength="8">
+      <input type="text" name="emoji" value="{{ fm.emoji }}" required maxlength="8" {{ field_invalid('emoji') }}>
+      {{ field_errors('emoji') }}
     </label>
   </div>
   <div class="grid">
     <label>Temperature
       <input type="number" name="temperature" value="{{ fm.temperature }}"
-             min="0" max="2" step="0.05" required>
+             min="0" max="2" step="0.05" required {{ field_invalid('temperature') }}>
+      {{ field_errors('temperature') }}
     </label>
     <label>max_tokens (output cap)
       <input type="number" name="max_tokens" value="{{ fm.max_tokens }}"
-             min="1" max="16384" required>
+             min="1" max="16384" required {{ field_invalid('max_tokens') }}>
+      {{ field_errors('max_tokens') }}
     </label>
   </div>
   <fieldset>
@@ -85,7 +107,9 @@
                {% if fm.tools and fm.tools[key] %}checked{% endif %}>
         <code>{{ key }}</code>
       </label>
+      {{ field_errors('tools.' ~ key) }}
     {% endfor %}
+    {{ field_errors('tools') }}
   </fieldset>
   <button type="submit">Validate & preview</button>
 </form>

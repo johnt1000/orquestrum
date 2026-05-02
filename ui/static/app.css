@@ -97,6 +97,50 @@ header.container nav a[aria-current="page"] {
 .home-cards a.card strong { display: block; margin-bottom: 0.2rem; }
 .home-cards a.card small { color: var(--muted-color); }
 
+/* Side-by-side diff (Onda 2 / 2.3) */
+.diff-card { background:#e8f5e8; border-left: 4px solid #28a745; }
+.diff-list { margin: 0.6rem 0 0; }
+.diff-list dt { font-weight: 600; margin-top: 0.6rem; }
+.diff-list dd { margin: 0.2rem 0 0.6rem; }
+.diff-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+}
+.diff-pair > div {
+  background: #fff;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  border: 1px solid var(--muted-border-color);
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+.diff-old { border-left: 3px solid #dc3545 !important; }
+.diff-new { border-left: 3px solid #28a745 !important; }
+.diff-pair .diff-label {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--muted-color);
+  margin-bottom: 0.2rem;
+  letter-spacing: 0.05em;
+}
+@media (max-width: 700px) {
+  .diff-pair { grid-template-columns: 1fr; }
+}
+
+/* Inline field validation errors (Onda 2 / 2.4) */
+.field-error {
+  display: block;
+  color: #b02a37;
+  margin-top: 0.2rem;
+  font-weight: 500;
+}
+[aria-invalid="true"] {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 1px #dc3545;
+}
+
 /* Job runner status badges (Onda 2 / 2.1) */
 .job-running { background: #e8f4f8; border-left: 4px solid #1095c1; }
 .job-done    { background: #e8f5e8; border-left: 4px solid #28a745; }
