@@ -502,17 +502,17 @@ Onboarding:
 
 **Validação E2E:** lint verde (8 agents, 25 skills, 29 assets); convert --all --dry-run ok; web subiu na porta 7765, `/` (200, HTML novo), `/dashboard` (200, nav active state OK), `/foo` (404 HTML), `/foo` com `Accept: application/json` (404 JSON).
 
-### Onda 2 — UX estrutural
+### Onda 2 — UX estrutural (CONCLUÍDA 2026-05-02)
 
-| # | Item | Notas |
-|---|------|-------|
-| 2.1 | Async / streaming em `/convert`, `/install`, `/audits/*`, `/compact` | HTMX polling em `job_id` armazenado em `asyncio.Task` + endpoint `/jobs/{id}`. Sem Celery. |
-| 2.2 | Progress bars no CLI (`convert --all`, `deps`, `install`) | TTY-detect; `\r` + stdout, ou `rich` se já presente. |
-| 2.3 | Diff lado a lado nos edit flows | `templates/edit_agent.html`, `edit_skill.html`. Layout duas colunas; `difflib.HtmlDiff` ou CSS pre-wrap. |
-| 2.4 | Form validation inline (`aria-invalid` + `<small role="alert">` por campo) | mesmos templates; deduplicar erros do topo. |
-| 2.5 | Live monitoring | **Delegado a R13** — ver seção dedicada acima. R14 não duplica. |
+| # | Item | Status |
+|---|------|--------|
+| 2.1 | Async / streaming em `/convert`, `/install`, `/audits/*`, `/compact` | ✅ `ui/lib/jobs.py` (asyncio.create_subprocess_exec + OrderedDict registry); `/jobs/{id}` + `/jobs/{id}/partial` com HTMX polling 1s; subprocess paths migrados de `scripts/X.py` para `python -m orquestrum.core.X`. |
+| 2.2 | Progress indicator em `convert --all` e `install --auto` | ✅ `[k/N] tool` em negrito antes de cada adapter; single-tool fica silencioso. |
+| 2.3 | Diff lado a lado nos edit flows | ✅ `<dl>` com painéis side-by-side por chave (vermelho/verde); `white-space: pre-wrap`; collapse para single-column < 700px. |
+| 2.4 | Form validation inline (`aria-invalid` + `<small role="alert">`) | ✅ `errors_by_field()` agrupa por campo; templates renderizam erro adjacente ao input afetado. |
+| 2.5 | Live monitoring | Delegado a **R13** — ver seção dedicada. Não duplicado aqui. |
 
-**Estimativa:** 3-5 dias. **Sub-PRs por item se ficar grande.**
+**Validação E2E:** `/audits/payload` POST → 303 → `/jobs/{id}` polled, `job-done` em ~3s; edit `/agents/.../edit` com `max_tokens=99999` mostra `aria-invalid="true"` no input + "must be a positive int ≤ 16384, got 99999" inline; `convert --all` imprime `[1/5]` … `[5/5]`.
 
 ### Onda 3 — Onboarding de contribuidor
 
@@ -578,6 +578,7 @@ Onda 3:
 | R12 (B-2 final) | UI Wave B completa — skills edit + compact | 2026-05-02 | (working tree) |
 | (doc) | docs/governance/REAL_USAGE_PLAN.md | 2026-05-02 | (working tree) |
 | R14 (Onda 1) | UX & Onboarding — quick wins CLI + Web | 2026-05-02 | (working tree) |
+| R14 (Onda 2) | UX & Onboarding — async jobs, side-by-side diff, inline form errors, CLI progress | 2026-05-02 | (working tree) |
 
 ---
 
