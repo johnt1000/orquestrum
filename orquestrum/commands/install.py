@@ -1,4 +1,4 @@
-"""orquestrum install → wraps scripts/install.py."""
+"""orquestrum install → delegates to orquestrum/core/install.py."""
 from __future__ import annotations
 import argparse
 

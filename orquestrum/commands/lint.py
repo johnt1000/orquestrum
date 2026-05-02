@@ -1,4 +1,4 @@
-"""orquestrum lint → wraps scripts/lint.py."""
+"""orquestrum lint → delegates to orquestrum/core/lint.py."""
 from __future__ import annotations
 import argparse
 

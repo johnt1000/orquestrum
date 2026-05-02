@@ -6,9 +6,9 @@ Two modes:
   - project:   UI runs inside one target project, focused on its .orquestrum/ dir
 
 Mode is resolved (in priority order):
-  1. CLI --mode flag (set by scripts/ui/serve.py)
+  1. CLI --mode flag (set by orquestrum/commands/web.py)
   2. ORQ_MODE env var
-  3. auto-detect: presence of agents/ + skills/ + scripts/ → framework, else project
+  3. auto-detect: presence of agents/ + skills/ + orquestrum/ → framework, else project
 """
 from __future__ import annotations
 import os
@@ -39,7 +39,7 @@ class UIConfig:
 
 
 def auto_detect_mode(root: Path) -> Mode:
-    """If root looks like the Orquestrum repo (has agents/, skills/, scripts/lib/),
+    """If root looks like the Orquestrum repo (has agents/, skills/, orquestrum/lib/),
     treat it as framework mode. Otherwise project mode.
     """
     framework_markers = [

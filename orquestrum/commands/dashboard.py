@@ -1,4 +1,4 @@
-"""orquestrum dashboard → wraps scripts/dashboard/render.py."""
+"""orquestrum dashboard → delegates to orquestrum/core/dashboard/render.py."""
 from __future__ import annotations
 import argparse
 

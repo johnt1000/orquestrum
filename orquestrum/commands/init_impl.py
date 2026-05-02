@@ -80,7 +80,7 @@ def _ensure_metrics_dir(project_root: Path) -> Path:
 
 
 def _run_install(project_root: Path, tool: str, provider: str | None) -> bool:
-    """Invoke scripts/install.py main with the canonical source. Returns True on success."""
+    """Invoke orquestrum.core.install main with the canonical source. Returns True on success."""
     canonical = paths.canonical_root()
     if canonical is None:
         print('warning: canonical Orquestrum source not found — install skipped.', file=sys.stderr)

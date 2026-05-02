@@ -1,4 +1,4 @@
-"""orquestrum compact → wraps scripts/build/compress_refs.py."""
+"""orquestrum compact → delegates to orquestrum/core/build/compress_refs.py."""
 from __future__ import annotations
 import argparse
 

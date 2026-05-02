@@ -31,7 +31,7 @@ def find_project_root(start: Path | None = None) -> Path | None:
 
 def find_canonical_root(start: Path | None = None) -> Path | None:
     """Walk up from `start` (default cwd) looking for the Orquestrum repo —
-    presence of agents/, skills/, scripts/lib/, docs/agent-context/.
+    presence of agents/, skills/, orquestrum/lib/, docs/agent-context/.
     Return the canonical root, or None.
     """
     cur = (start or Path.cwd()).expanduser().resolve()

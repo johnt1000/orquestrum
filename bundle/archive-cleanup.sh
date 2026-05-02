@@ -6,7 +6,7 @@
 # destructive work = this script).
 #
 # Usage:
-#   scripts/archive-cleanup.sh --project /path/to/project [options]
+#   bundle/archive-cleanup.sh --project /path/to/project [options]
 #
 # Options:
 #   --project DIR     Target project root (required)
