@@ -474,7 +474,12 @@ def main(argv: list[str] | None = None) -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             'Tools:     claude-code, opencode, cursor, aider, windsurf\n'
-            'Providers: claude (default for claude-code), copilot, glm'
+            'Providers: claude (default for claude-code), copilot, glm\n'
+            '\n'
+            'Examples:\n'
+            '  orquestrum convert --all\n'
+            '  orquestrum convert --tool opencode --provider claude\n'
+            '  orquestrum convert --all --provider claude --dry-run'
         ),
     )
     group = parser.add_mutually_exclusive_group(required=True)

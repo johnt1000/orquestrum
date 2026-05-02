@@ -225,8 +225,17 @@ def find_candidates(threshold_bytes: int, only_skill: str | None = None) -> list
 
 
 def main(argv: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(prog='orquestrum compact',
-                                     description='Compress oversized skill references deterministically.')
+    parser = argparse.ArgumentParser(
+        prog='orquestrum compact',
+        description='Compress oversized skill references deterministically.',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            'Examples:\n'
+            '  orquestrum compact --dry-run\n'
+            '  orquestrum compact --skill spec-manager\n'
+            '  orquestrum compact --threshold-kb 40 --force'
+        ),
+    )
     parser.add_argument('--threshold-kb', type=int, default=DEFAULT_THRESHOLD_KB,
                         help=f'Minimum size in KB to compress (default {DEFAULT_THRESHOLD_KB})')
     parser.add_argument('--skill', metavar='SLUG', default=None,

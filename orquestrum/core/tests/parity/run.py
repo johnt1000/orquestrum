@@ -115,8 +115,17 @@ def assert_tier_collapse_documented(providers: list[str]) -> list[str]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog='orquestrum audit parity',
-                                     description='Provider parity tests for Orquestrum')
+    parser = argparse.ArgumentParser(
+        prog='orquestrum audit parity',
+        description='Provider parity tests for Orquestrum.',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            'Examples:\n'
+            '  orquestrum audit parity\n'
+            '  orquestrum audit parity --providers claude,copilot\n'
+            '  orquestrum audit parity --json'
+        ),
+    )
     parser.add_argument('--providers', default=','.join(VALID_PROVIDERS),
                         help=f'Comma-separated providers to test (default: {",".join(VALID_PROVIDERS)})')
     parser.add_argument('--json', action='store_true', help='Emit CI-friendly JSON report')

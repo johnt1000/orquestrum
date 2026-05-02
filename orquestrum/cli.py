@@ -27,7 +27,7 @@ def _build_parser() -> argparse.ArgumentParser:
     # Each register_X function defines its subparser and sets `args.handler`.
     from orquestrum.commands import (
         convert, install, lint, deps, audit, dashboard, compact, version,
-        init, web, repos, update, extras, uninstall,
+        init, web, repos, update, extras, uninstall, doctor,
     )
     convert.register(sub)
     install.register(sub)
@@ -42,6 +42,7 @@ def _build_parser() -> argparse.ArgumentParser:
     repos.register(sub)
     extras.register(sub)
     uninstall.register(sub)
+    doctor.register(sub)
     version.register(sub)
 
     return parser

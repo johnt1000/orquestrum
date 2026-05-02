@@ -11,9 +11,19 @@ def register(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser(
         'uninstall',
         help='Remove Orquestrum from a project, or uninstall the CLI itself.',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            'Examples:\n'
+            '  orquestrum uninstall --dry-run        # preview what would be removed\n'
+            '  orquestrum uninstall                  # remove from current project\n'
+            '  orquestrum uninstall --all            # remove from every registered project\n'
+            '  orquestrum uninstall --self           # uninstall the CLI itself'
+        ),
     )
     p.add_argument('-y', '--yes', action='store_true',
                    help='Skip confirmation prompt')
+    p.add_argument('--dry-run', action='store_true', dest='dry_run',
+                   help='Print what would be removed without making changes')
     p.add_argument('--all', action='store_true', dest='all_',
                    help='Remove from all registered projects')
     p.add_argument('--self', action='store_true', dest='self_uninstall',
@@ -23,15 +33,15 @@ def register(sub: argparse._SubParsersAction) -> None:
 
 def _handler(args: argparse.Namespace) -> int:
     if args.self_uninstall:
-        return _uninstall_self(yes=args.yes)
+        return _uninstall_self(yes=args.yes, dry_run=args.dry_run)
     if args.all_:
-        return _uninstall_all(yes=args.yes)
-    return _uninstall_project(Path.cwd(), yes=args.yes)
+        return _uninstall_all(yes=args.yes, dry_run=args.dry_run)
+    return _uninstall_project(Path.cwd(), yes=args.yes, dry_run=args.dry_run)
 
 
 # ── self ─────────────────────────────────────────────────────────────────────
 
-def _uninstall_self(*, yes: bool) -> int:
+def _uninstall_self(*, yes: bool, dry_run: bool = False) -> int:
     from orquestrum.commands.extras import _detect_env
     mode = _detect_env()
 
@@ -43,6 +53,10 @@ def _uninstall_self(*, yes: bool) -> int:
         print('Could not detect install method automatically. Run one of:')
         print('  uv tool uninstall orquestrum')
         print('  pip uninstall orquestrum')
+        return 0
+
+    if dry_run:
+        print(f'(dry-run) Would run: {" ".join(cmd)}')
         return 0
 
     if not yes:
@@ -129,7 +143,7 @@ def _do_remove(project_root: Path, tool: str | None) -> list[str]:
     return removed
 
 
-def _uninstall_one(project_root: Path, *, yes: bool, prefix: str = '') -> bool:
+def _uninstall_one(project_root: Path, *, yes: bool, prefix: str = '', dry_run: bool = False) -> bool:
     from orquestrum.commands.update_impl import _project_tool
 
     if not (project_root / '.orquestrum').is_dir():
@@ -138,6 +152,12 @@ def _uninstall_one(project_root: Path, *, yes: bool, prefix: str = '') -> bool:
 
     tool, _ = _project_tool(project_root)
     items = _describe_removal(project_root, tool)
+
+    if dry_run:
+        print(f'{prefix}(dry-run) Would remove from {project_root}:')
+        for item in items:
+            print(f'{prefix}  - {item}')
+        return True
 
     if not yes:
         print(f'{prefix}Will remove from {project_root}:')
@@ -153,15 +173,15 @@ def _uninstall_one(project_root: Path, *, yes: bool, prefix: str = '') -> bool:
     return True
 
 
-def _uninstall_project(project_root: Path, *, yes: bool) -> int:
+def _uninstall_project(project_root: Path, *, yes: bool, dry_run: bool = False) -> int:
     if not (project_root / '.orquestrum').is_dir():
         print('error: not in an Orquestrum project. Nothing to remove.', file=sys.stderr)
         return 1
-    _uninstall_one(project_root, yes=yes)
+    _uninstall_one(project_root, yes=yes, dry_run=dry_run)
     return 0
 
 
-def _uninstall_all(*, yes: bool) -> int:
+def _uninstall_all(*, yes: bool, dry_run: bool = False) -> int:
     from orquestrum.lib import registry
     projects = registry.load_registry()
     if not projects:
@@ -171,6 +191,17 @@ def _uninstall_all(*, yes: bool) -> int:
     print(f'{len(projects)} project(s) registered:')
     for p in projects:
         print(f'  {p["name"]:<24} {p["path"]}')
+
+    if dry_run:
+        print('\n(dry-run) Would attempt to uninstall from each of the above.')
+        for i, proj in enumerate(projects, 1):
+            path = Path(proj['path'])
+            print(f'\n[{i}/{len(projects)}] {proj["name"]} ({path})')
+            if not path.is_dir():
+                print('  (would skip — path no longer exists)')
+                continue
+            _uninstall_one(path, yes=True, prefix='  ', dry_run=True)
+        return 0
 
     if not yes:
         answer = input('\nRemove Orquestrum from all of them? [y/N] ').strip().lower()

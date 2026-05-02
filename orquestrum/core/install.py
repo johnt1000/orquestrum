@@ -165,6 +165,13 @@ def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         prog='orquestrum install',
         description='Install a generated integration package into a target project.',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            'Examples:\n'
+            '  orquestrum install --tool claude-code --target /path/to/project\n'
+            '  orquestrum install --tool opencode --target ~/.config/opencode\n'
+            '  orquestrum install --auto --target /path/to/project'
+        ),
     )
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--tool', metavar='TOOL',

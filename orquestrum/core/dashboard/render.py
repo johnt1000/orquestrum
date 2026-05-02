@@ -187,8 +187,17 @@ def _html_escape(s: str) -> str:
 
 
 def main(argv: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(prog='orquestrum dashboard',
-                                     description='Render Orquestrum session metrics dashboard.')
+    parser = argparse.ArgumentParser(
+        prog='orquestrum dashboard',
+        description='Render Orquestrum session metrics dashboard.',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            'Examples:\n'
+            '  orquestrum dashboard\n'
+            '  orquestrum dashboard --tier balanced\n'
+            '  orquestrum dashboard --metrics-dir .orquestrum/metrics --html'
+        ),
+    )
     parser.add_argument('--metrics-dir', type=Path, default=Path('.orquestrum/metrics'),
                         help='Directory containing events.jsonl (default: .orquestrum/metrics)')
     parser.add_argument('--tier', default=None,

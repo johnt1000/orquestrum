@@ -203,21 +203,26 @@ def main(argv: list[str] | None = None) -> None:
         argparse.ArgumentParser(prog='orquestrum lint',
                                 description='Validate agent and skill files.').parse_args(argv)
 
+    n_agents = n_skills = n_assets = 0
+
     print()
     print(f'{BLUE}=== Agents ==={NC}')
     for f in sorted(AGENTS_DIR.glob('*.md')):
         check_agent_file(f)
+        n_agents += 1
 
     print()
     print(f'{BLUE}=== Skills ==={NC}')
     for f in sorted(SKILLS_DIR.glob('*/SKILL.md')):
         if check_md_file(f, ['name', 'description']):
             check_skill_fields(f)
+        n_skills += 1
 
     print()
     print(f'{BLUE}=== Skill assets ==={NC}')
     for f in sorted(SKILLS_DIR.glob('*/assets/*.md')):
         check_md_file(f)
+        n_assets += 1
 
     print()
     print(f'{BLUE}=== Skill chain & dependency integrity ==={NC}')
@@ -235,13 +240,14 @@ def main(argv: list[str] | None = None) -> None:
     check_registry()
 
     print()
+    counts = f'{n_agents} agents, {n_skills} skills, {n_assets} assets'
     if errors > 0:
         suffix = f', {warnings} warning(s)' if warnings > 0 else ''
-        print(f'{RED}✗ {errors} error(s){NC}{suffix}')
+        print(f'{RED}✗ {errors} error(s){NC} in {counts}{suffix}')
         sys.exit(1)
     else:
-        suffix = f' ({warnings} warning(s))' if warnings > 0 else ''
-        print(f'{GREEN}✓ All checks passed{NC}{suffix}')
+        suffix = f', {warnings} warning(s)' if warnings > 0 else ''
+        print(f'{GREEN}✓ {counts}, 0 errors{NC}{suffix}')
 
 
 if __name__ == '__main__':

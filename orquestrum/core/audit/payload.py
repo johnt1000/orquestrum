@@ -102,8 +102,17 @@ def render_markdown(rows: list[dict], threshold_bytes: int) -> str:
 
 
 def main(argv: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(prog='orquestrum audit payload',
-                                     description='Audit reference payload size per skill.')
+    parser = argparse.ArgumentParser(
+        prog='orquestrum audit payload',
+        description='Audit reference payload size per skill.',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            'Examples:\n'
+            '  orquestrum audit payload\n'
+            '  orquestrum audit payload --threshold-kb 50\n'
+            '  orquestrum audit payload --output docs/baselines/payload.md'
+        ),
+    )
     parser.add_argument('--threshold-kb', type=int, default=30,
                         help='Threshold in KB above which a skill is flagged for compression (default 30)')
     parser.add_argument('--output', metavar='PATH',
