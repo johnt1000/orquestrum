@@ -13,7 +13,7 @@ chain:
   condition: "codebase mapped, ready for spec extraction"
 ---
 
-> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
+> Shared conventions (context fence, naming, output format) are defined in `docs/agent-context/CONVENTIONS.md`.
 
 # Codebase Mapper Skill
 

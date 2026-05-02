@@ -13,7 +13,7 @@ chain:
   condition: "Regression mode — E2E results feed qa-manager for release gate"
 ---
 
-> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
+> Shared conventions (context fence, naming, output format) are defined in `docs/agent-context/CONVENTIONS.md`.
 
 # E2E Manager Skill
 

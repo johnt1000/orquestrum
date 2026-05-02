@@ -11,7 +11,7 @@ metadata:
   produces: "docs/02-planning/tasks/T{ID}-{slug}.md"
 ---
 
-> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
+> Shared conventions (context fence, naming, output format) are defined in `docs/agent-context/CONVENTIONS.md`.
 
 # Task Manager Skill
 
@@ -37,7 +37,7 @@ Additional references (read ONLY when needed):
 
 ## Output Schema
 
-Mandatory sections (see `docs/CONVENTIONS.md` for shared rules):
+Mandatory sections (see `docs/agent-context/CONVENTIONS.md` for shared rules):
 
 - Objective
 - Acceptance Criteria

@@ -14,7 +14,7 @@ chain:
   condition: "SPEC is new or has changed (ADR needed for decisions)"
 ---
 
-> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
+> Shared conventions (context fence, naming, output format) are defined in `docs/agent-context/CONVENTIONS.md`.
 
 # Spec Manager Skill
 
@@ -40,7 +40,7 @@ Additional references (read ONLY when needed):
 
 ## Output Schema
 
-Mandatory sections (see `docs/CONVENTIONS.md` for shared rules):
+Mandatory sections (see `docs/agent-context/CONVENTIONS.md` for shared rules):
 
 - Context
 - Assumptions table

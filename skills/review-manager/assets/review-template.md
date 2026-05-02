@@ -10,6 +10,10 @@ created: YYYY-MM-DD HH:mm
 updated: YYYY-MM-DD HH:mm
 last_validated: YYYY-MM-DD
 drift_risk: low # low | medium | high
+# Human Attention Mediation — see docs/agent-context/CONVENTIONS.md
+attention_score: 100        # int [0, 100]; lower = more human attention needed
+attention_band:  green      # green | yellow | red
+attention_factors: []       # e.g. [drift_days:42, inference_depth:2]
 ---
 
 # REVIEW vX — {TITLE}

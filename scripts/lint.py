@@ -4,11 +4,15 @@
 Checks:
   - YAML frontmatter present
   - Required fields: name, description
-  - Agents: mode, temperature, emoji, tools.{write,edit,bash,question}
+  - Agents: mode, temperature, max_tokens, emoji, tools.{write,edit,bash,question}
+  - max_tokens must be a positive int ≤ 16384 (output cap; runaway-generation guard)
   - No tool-specific paths in canonical source
   - chain.next points to existing skill
   - depends_on entries exist
+  - inject_references / inject_fewshot ∈ {false, true, compact}
+  - emits_confidence (when present) must be boolean
   - REGISTRY.md consistency
+  - docs/ structure: no .md files at root; only under agent-context/, governance/, baselines/
 """
 import sys
 from pathlib import Path
@@ -21,6 +25,9 @@ from lib.frontmatter import parse_agent, parse_skill
 ROOT       = Path(__file__).parent.parent
 AGENTS_DIR = ROOT / 'agents'
 SKILLS_DIR = ROOT / 'skills'
+DOCS_DIR   = ROOT / 'docs'
+
+DOCS_ALLOWED_SUBDIRS = {'agent-context', 'governance', 'baselines'}
 
 RED    = '\033[0;31m'
 GREEN  = '\033[0;32m'
@@ -80,6 +87,9 @@ def check_md_file(path: Path, required_fields: list[str] | None = None) -> bool:
     return passed
 
 
+MAX_TOKENS_CEILING = 16384
+
+
 def check_agent_file(path: Path) -> None:
     label = str(path.relative_to(ROOT))
 
@@ -93,10 +103,41 @@ def check_agent_file(path: Path) -> None:
         if field not in post:
             fail(f'{label} — missing frontmatter field: \'{field}\'')
 
+    if 'max_tokens' not in post:
+        fail(f'{label} — missing required field \'max_tokens\' (see docs/governance/MODELS.md → Output Cap)')
+    else:
+        mt = post.get('max_tokens')
+        if not isinstance(mt, int) or isinstance(mt, bool) or mt <= 0 or mt > MAX_TOKENS_CEILING:
+            fail(f'{label} — max_tokens must be a positive int ≤ {MAX_TOKENS_CEILING}, got {mt!r}')
+
     tools = post.get('tools') or {}
     for key in ('write', 'edit', 'bash', 'question'):
         if key not in tools:
             fail(f'{label} — missing tools.{key} in frontmatter')
+
+
+VALID_INJECT_VALUES = {'false', 'full', 'compact'}
+
+
+def check_skill_fields(path: Path) -> None:
+    """Validate skill frontmatter fields beyond name/description."""
+    label = str(path.relative_to(ROOT))
+    import frontmatter as fm
+    try:
+        post = fm.load(str(path))
+    except Exception:
+        return  # already reported by check_md_file
+
+    for field in ('inject_references', 'inject_fewshot'):
+        if field in post:
+            normalized = str(post[field]).lower()
+            if normalized not in VALID_INJECT_VALUES:
+                fail(f'{label} — {field} must be one of {sorted(VALID_INJECT_VALUES)}, '
+                     f'got {post[field]!r}')
+
+    if 'emits_confidence' in post:
+        if not isinstance(post['emits_confidence'], bool):
+            fail(f'{label} — emits_confidence must be true|false, got {post["emits_confidence"]!r}')
 
 
 def check_skill_chain(skill_file: Path) -> None:
@@ -117,6 +158,22 @@ def check_skill_chain(skill_file: Path) -> None:
             return
 
     pass_(f'{label} — chain/deps OK')
+
+
+def check_docs_structure() -> None:
+    """Reject .md files at docs/ root. Force categorization under
+    agent-context/, governance/, or baselines/.
+    """
+    if not DOCS_DIR.is_dir():
+        return
+    for entry in sorted(DOCS_DIR.iterdir()):
+        if entry.is_file() and entry.suffix == '.md':
+            fail(f'docs/{entry.name} — forbidden at docs/ root; '
+                 f'place under one of: {sorted(DOCS_ALLOWED_SUBDIRS)}')
+        elif entry.is_dir() and entry.name not in DOCS_ALLOWED_SUBDIRS:
+            warn_(f'docs/{entry.name}/ — unknown subdirectory '
+                  f'(expected: {sorted(DOCS_ALLOWED_SUBDIRS)})')
+    pass_('docs/ structure checked')
 
 
 def check_registry() -> None:
@@ -151,7 +208,8 @@ def main() -> None:
     print()
     print(f'{BLUE}=== Skills ==={NC}')
     for f in sorted(SKILLS_DIR.glob('*/SKILL.md')):
-        check_md_file(f, ['name', 'description'])
+        if check_md_file(f, ['name', 'description']):
+            check_skill_fields(f)
 
     print()
     print(f'{BLUE}=== Skill assets ==={NC}')
@@ -164,6 +222,10 @@ def main() -> None:
         skill_file = skill_dir / 'SKILL.md'
         if skill_file.exists():
             check_skill_chain(skill_file)
+
+    print()
+    print(f'{BLUE}=== docs/ structure ==={NC}')
+    check_docs_structure()
 
     print()
     print(f'{BLUE}=== REGISTRY.md consistency ==={NC}')

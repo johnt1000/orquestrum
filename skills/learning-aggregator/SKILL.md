@@ -10,7 +10,7 @@ metadata:
   produces: "docs/03-quality/learning/LEARNING-SUMMARY-v{N}.md"
 ---
 
-> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
+> Shared conventions (context fence, naming, output format) are defined in `docs/agent-context/CONVENTIONS.md`.
 
 # Learning Aggregator Skill
 

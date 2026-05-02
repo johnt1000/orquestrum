@@ -3,6 +3,7 @@ name: qa-manager
 description: Performs technical and functional validation of completed tasks and features. Ensures SPEC acceptance criteria were met and documents failures or necessary improvements.
 inject_references: compact
 inject_fewshot: compact
+emits_confidence: true
 metadata:
   version: "1.0.0"
   author: "Jônatas Rodrigues"
@@ -14,7 +15,7 @@ chain:
   condition: "QA failed or critical finding (learning needed)"
 ---
 
-> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
+> Shared conventions (context fence, naming, output format) are defined in `docs/agent-context/CONVENTIONS.md`.
 
 # QA Manager Skill
 
@@ -40,7 +41,7 @@ Additional references (read ONLY when needed):
 
 ## Output Schema
 
-Mandatory sections (see `docs/CONVENTIONS.md` for shared rules):
+Mandatory sections (see `docs/agent-context/CONVENTIONS.md` for shared rules):
 
 - Scope
 - Test Results
@@ -94,3 +95,16 @@ Mandatory sections (see `docs/CONVENTIONS.md` for shared rules):
 ## Context Reflection
 
 - Before creating any document, check whether related files exist in `docs/00-discovery/spec/` and `docs/02-planning/tasks/` to ensure consistency between acceptance criteria and implementation.
+
+## Attention Score Emission
+
+Compute `attention_score` deterministically via `scripts/lib/attention.py:compute()` before writing the artifact. Inputs:
+
+- `confidence` — 1.0 if status `Passed` with all SC validated; 0.6 if `Partial`; 0.3 if `Failed`
+- `inference_depth` — 0 if every SC has a `validation_method: e2e|automated|integration`; 1 if some are `static`; 2 if any SC validation was skipped or marked TBD
+- `context_completeness` — `validated_sc / total_sc`
+- `gate_failure_count` — failed SC count
+- `upstream_scores` — REVIEW + Task `attention_score` of artifacts under test
+- `drift_days` — `days_since(last_validated)` of the SPEC
+
+Embed `attention_score`, `attention_band`, `attention_factors` in the QA artifact frontmatter. See `docs/agent-context/CONVENTIONS.md` → Human Attention Mediation.

@@ -97,7 +97,7 @@ Before any decision, read:
 
 1. `docs/CHECKPOINT.md` — session state from previous context (if exists). See `skills/checkpoint-manager/SKILL.md`.
 
-2. `docs/SDLC.md` — read ONLY when:
+2. `docs/agent-context/SDLC.md` — read ONLY when:
    - Tier 2 detected and gate validation is needed, OR
    - `docs/` directory does not exist yet (need the directory structure), OR
    - Ambiguous situation where inline tables are insufficient
@@ -212,7 +212,7 @@ Each orchestrator operates within strict read/write boundaries. Helm enforces th
 
 # PHASE GATES (CONDITIONAL BY TIER)
 
-Gates only apply at the corresponding tier. Consult `docs/TIERS.md` for the complete table.
+Gates only apply at the corresponding tier. Consult `docs/agent-context/TIERS.md` for the complete table.
 
 | Gate | Tier 0 | Tier 1 | Tier 2 |
 |------|:------:|:------:|:------:|

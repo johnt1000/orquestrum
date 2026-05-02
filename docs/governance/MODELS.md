@@ -17,11 +17,23 @@ Models are organized in three tiers. Use `--provider <name>` with `convert.py` t
 | **Balanced** | `anthropic/claude-sonnet-4-6` | `github-copilot/claude-sonnet-4.6` | `zai-coding-plan/glm-4.7` | Structured design, code review, validation, decomposition |
 | **Mechanical** | `anthropic/claude-haiku-4-5-20251001` | `github-copilot/claude-haiku-4.5` | `zai-coding-plan/glm-4.5-air` | Release formatting, term definition, operational doc updates |
 
-¹ No intermediate Claude model available; `sharp` maps to `balanced` for `claude` provider.
+¹ No intermediate Claude model available; `sharp` maps to `balanced` for `claude` provider. **See "Provider Parity Caveats" below.**
 
 Canonical source files reference models without provider prefix (e.g. `claude-opus-4-7`). The `convert.py` script resolves the full model ID at conversion time based on the selected provider.
 
-> **Modelo candidato — roadmap:** `zai-coding-plan/glm-5-turbo` (GLM, entre balanced e deep) não tem tier mapeado na versão atual. Será avaliado como tier `sharp` no roadmap de parâmetros. Ver `docs/MODELS.md` seção roadmap abaixo.
+> **Modelo candidato — roadmap:** `zai-coding-plan/glm-5-turbo` (GLM, entre balanced e deep) não tem tier mapeado na versão atual. Será avaliado como tier `sharp` no roadmap de parâmetros. Ver `docs/governance/MODELS.md` seção roadmap abaixo.
+
+### Provider Parity Caveats
+
+Not every provider offers four distinct models. When a tier is unavailable, it **silently collapses** to the next-lower tier with the same canonical model ID. This is the single source of truth — every collapse below is matched by an entry in `TIER_COLLAPSES` (`scripts/lib/models.py`) and surfaces as a warning in `convert.py` build output when `--provider` is set.
+
+| Provider | Tier requested | Falls back to | Affected agents | Why |
+|----------|----------------|---------------|-----------------|-----|
+| `claude` | `sharp` | `balanced` (`anthropic/claude-sonnet-4-6`) | `cipher` | No intermediate Anthropic model between `sonnet-4-6` and `opus-4-7`. Cipher runs on the same model as balanced agents. |
+
+**Operator implication:** if you generate the `claude` integration and rely on Cipher for security gating, you are NOT getting an elevated-quality model — you are getting `balanced`. To get true sharp-tier quality, use `--provider copilot` (`claude-opus-4.6`) or `--provider glm` (`glm-5-turbo`).
+
+When new collapses are introduced (model retirements, provider gaps), update **both** `TIER_COLLAPSES` and this table. The lint check ensures the warning fires; this section ensures the operator understands why.
 
 ---
 
@@ -96,3 +108,26 @@ Canonical source files reference models without provider prefix (e.g. `claude-op
 | **Tier 0** | task-manager, log | balanced | ~2 balanced calls |
 | **Tier 1** | epic-manager, task-manager, qa-manager | balanced | ~5 balanced calls |
 | **Tier 2** | full pipeline | deep (spec, adr) + balanced (majority) + mechanical (changelog, runbook, glossary) | ~13 calls; deep concentrated in discovery phase |
+
+---
+
+## Output Cap (`max_tokens`)
+
+Every orchestrator declares a `max_tokens` ceiling in its frontmatter. The cap bounds **output size per LLM call** — runaway generation is the #1 source of unintended cost in deep-tier agents. Caps are conservative and deliberately tight; if a phase legitimately needs more output, split the work or chain skills.
+
+| Agent | max_tokens | Rationale |
+|-------|-----------:|-----------|
+| `helm`   | 4096 | Meta-orchestrator emits routing decisions + handoff envelopes; tier-2 sessions can carry several decisions in one response |
+| `lore`   | 2048 | Phase 0–1 orchestrator delegates heavy work to skills (spec/adr/glossary); own output is short routing + summaries |
+| `forge`  | 4096 | Phase 2–3 orchestrator may emit architecture summaries + epic/task envelopes inline before delegating |
+| `cipher` | 3072 | Threat-modeling summaries can list multiple findings with mitigations; tighter than forge because security skills carry the bulk |
+| `ward`   | 2048 | Quality gate emits review/QA decisions + delegations; substantive content lives in review-manager / qa-manager artifacts |
+| `cast`   | 2048 | Release pipeline is mechanical; output is mostly status + version tags |
+| `flux`   | 1536 | Triage/routing — short classifications + handoffs |
+| `trace`  | 8192 | Onboarding may emit initial codebase map summary inline before delegating to reverse-spec |
+
+> Skills do NOT declare `max_tokens` — they inherit the orchestrator cap when called. If a skill's artifact is approaching the cap, that's a signal to split into multiple files (e.g., per-ADR, per-task) rather than raise the cap.
+
+### Lint enforcement
+
+`scripts/lint.py` requires `max_tokens` on every agent. Missing field is a hard error.

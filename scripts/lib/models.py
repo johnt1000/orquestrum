@@ -65,6 +65,13 @@ AGENT_TIERS: dict[str, str] = {
     'Trace - Onboarding Lead':   'balanced',
 }
 
+# Provider/tier combinations that silently fall back to another tier.
+# Single source of truth — convert.py emits explicit warnings for every collapse.
+# Keep this in sync with the "Provider Parity Caveats" section of docs/governance/MODELS.md.
+TIER_COLLAPSES: dict[tuple[str, str], str] = {
+    ('claude', 'sharp'): 'balanced',  # No intermediate Claude model between sonnet-4-6 and opus-4-7
+}
+
 HELM_NAME        = 'Helm - The Architect'
 ORCHESTRATOR_NAMES = [
     'Lore - Product Strategist',
@@ -80,6 +87,26 @@ ORCHESTRATOR_NAMES = [
 def resolve_model(agent_name: str, provider: str, tier_override: str | None = None) -> str:
     tier = tier_override if tier_override else AGENT_TIERS.get(agent_name, 'balanced')
     return PROVIDER_MODELS[provider][tier]
+
+
+def tier_collapse(provider: str, tier: str) -> str | None:
+    """Return the tier this (provider, tier) combination collapses to, or None.
+
+    Example: tier_collapse('claude', 'sharp') == 'balanced'.
+    Used by convert.py to surface silent demotions in build output.
+    """
+    return TIER_COLLAPSES.get((provider, tier))
+
+
+def estimate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
+    """Estimate USD cost of a single LLM call. Returns 0.0 if model not in MODEL_PRICING.
+
+    Wired into runtime metrics emission (Phase 3); pricing table previously dormant.
+    """
+    pricing = MODEL_PRICING.get(model)
+    if not pricing:
+        return 0.0
+    return (input_tokens / 1_000_000) * pricing['input'] + (output_tokens / 1_000_000) * pricing['output']
 
 
 def apply_provider_models(content: str, provider: str | None) -> str:

@@ -3,6 +3,7 @@ name: Lore - Product Strategist
 description: Orchestrator of phases 0 and 1 of SDD pipeline. Governs glossary, specifications, and architectural decisions. Ensures "what to build and why" is defined before any line of code.
 mode: primary
 temperature: 0.3
+max_tokens: 2048
 emoji: 🎯
 tools:
   write: true
@@ -37,7 +38,7 @@ Do NOT execute a skill from memory. Always:
 
 **You MUST delegate work to skills, not do it manually. Do NOT write a SPEC, ADR, or GLOSSARY from scratch without loading the skill first.** The skill templates ensure consistency, traceability, and completeness.
 
-> Shared conventions in `docs/CONVENTIONS.md`.
+> Shared conventions in `docs/agent-context/CONVENTIONS.md`.
 
 ---
 

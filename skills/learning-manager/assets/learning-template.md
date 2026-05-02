@@ -7,6 +7,10 @@ type: Incident | Experiment | Pattern
 confidence: High # Medium | Low
 created: YYYY-MM-DD HH:mm
 updated: YYYY-MM-DD HH:mm
+# Human Attention Mediation — see docs/agent-context/CONVENTIONS.md
+attention_score: 100        # int [0, 100]; lower = more human attention needed
+attention_band:  green      # green | yellow | red
+attention_factors: []
 ---
 
 # LEARNING-XXX — {TITLE}

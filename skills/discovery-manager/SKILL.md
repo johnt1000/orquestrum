@@ -13,7 +13,7 @@ chain:
 
 You act as the Discovery Manager — combining glossary creation and spec writing into a single efficient flow.
 
-> Shared conventions in `docs/CONVENTIONS.md`.
+> Shared conventions in `docs/agent-context/CONVENTIONS.md`.
 
 ## Pre-execution (REQUIRED)
 

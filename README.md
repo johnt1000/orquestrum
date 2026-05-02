@@ -41,7 +41,7 @@ Eight orchestrators, each owning one or more pipeline phases:
 
 ## Skills
 
-19 specialized skills delegated by agents. Skills declare `chain` in their frontmatter for automatic sequencing:
+25 specialized skills delegated by agents. Skills declare `chain` in their frontmatter for automatic sequencing:
 
 | Phase      | Skill                  | Produces                                      | Chains to              |
 | ---------- | ---------------------- | --------------------------------------------- | ---------------------- |
@@ -63,7 +63,12 @@ Eight orchestrators, each owning one or more pipeline phases:
 | 5          | `changelog-manager`    | SemVer changelog + release document           | `runbook-manager`      |
 | 5          | `runbook-manager`      | Operational procedures                        | —                      |
 | 5          | `archive-manager`      | Consolidated task/log summaries               | `runbook-manager`      |
-| Cross      | `checkpoint-manager`   | CHECKPOINT.md — persistent session state      | —                      |
+| 5          | `rollback-manager`     | Deterministic rollback procedure per release  | `runbook-manager`      |
+| 3          | `data-migration-manager` | Schema/data migration plan with reversibility | `security-manager`   |
+| 4          | `performance-manager`  | Performance targets + regression report       | `learning-manager`     |
+| Maint.     | `hotfix-runbook`       | Fast-path artifact for production-critical fixes | `changelog-manager` |
+| Maint.     | `incident-postmortem`  | Blameless postmortem with timeline + RCA      | `learning-manager`     |
+| Cross      | `checkpoint-manager`   | CHECKPOINT.md + MEDIATION.md (attention agg.) | —                      |
 
 ---
 
@@ -130,7 +135,40 @@ uv run scripts/deps.py --target ~/.config/opencode --only skills   # anthropics/
 - **anthropics/skills** — 17 skills including Supabase integration
 - **supabase/agent-skills** — Skipped (already included in anthropics/skills)
 
-> Note: `deps.py` clones to temporary directories and does not pollute the Orquestrum repository.
+> Note: `deps.py` clones to temporary directories and does not pollute the Orquestrum repository. SHAs are pinned in `pinned_refs.toml` — see `docs/governance/SUPPLY_CHAIN.md`.
+
+---
+
+## Operational governance
+
+Beyond the canonical pipeline, Orquestrum ships explicit policies for cost, observability, attention mediation, and coverage. These are the runtime guarantees the framework offers:
+
+| Topic | Doc | What it covers |
+|-------|-----|----------------|
+| Token budgets per tier | [`docs/governance/COST.md`](docs/governance/COST.md) | Soft thresholds, dominant-cost-driver attribution |
+| Metrics emission protocol | [`docs/governance/OBSERVABILITY.md`](docs/governance/OBSERVABILITY.md) | `.orquestrum/metrics/events.jsonl` schema, dashboard, privacy |
+| Cache markers | [`docs/agent-context/CONVENTIONS.md`](docs/agent-context/CONVENTIONS.md) (§ Cache Segmentation) | `<!-- cache:stable -->` convention, adapter behavior |
+| Human attention scoring | [`docs/agent-context/CONVENTIONS.md`](docs/agent-context/CONVENTIONS.md) (§ Human Attention Mediation) | Deterministic 0–100 score, propagation cap, MEDIATION.md |
+| Performance methodology | [`docs/governance/PERFORMANCE.md`](docs/governance/PERFORMANCE.md) | Statistical hygiene, regression classification |
+| Coverage matrix | [`docs/governance/COVERAGE.md`](docs/governance/COVERAGE.md) | Scenario × orchestrator mapping, when to add a 9th |
+| Provider parity caveats | [`docs/governance/MODELS.md`](docs/governance/MODELS.md) (§ Provider Parity Caveats) | Tier collapses (e.g. `claude.sharp → balanced`) |
+| Supply-chain pinning | [`docs/governance/SUPPLY_CHAIN.md`](docs/governance/SUPPLY_CHAIN.md) | `pinned_refs.toml` rotation, dependency review |
+
+### Live tooling
+
+```bash
+# Render the metrics dashboard from the current project's events.jsonl
+uv run scripts/dashboard/render.py --tier balanced --html
+
+# Audit reference payload sizes (Phase 2 compression candidate flag)
+uv run scripts/audit/payload.py --output docs/baselines/payload-audit-YYYY-MM.md
+
+# Verify provider parity (frontmatter shape + tier collapse coverage)
+uv run scripts/tests/parity/run.py
+
+# Refresh upstream SHAs in pinned_refs.toml
+uv run scripts/deps.py --update-pins
+```
 
 **Claude Code** — agents to `.claude/agents/`, docs/skills to `.sdd/` (paths resolved relative to project root)  
 **OpenCode** — 8 flat agent files with `mode: primary` (all visible in Tab picker), docs/skills to `--target`  
@@ -189,7 +227,7 @@ Models are organized in three tiers based on reasoning requirements:
 | **Balanced** | `anthropic/claude-sonnet-4-6` | `github-copilot/claude-sonnet-4.5` | `zai-coding-plan/glm-4.7` | Lore, Forge, Cipher, Ward, Trace, Flux + most skills |
 | **Mechanical** | `anthropic/claude-haiku-4-5-20251001` | `github-copilot/claude-haiku-4.5` | `zai-coding-plan/glm-4.5-air` | Cast, glossary, changelog, runbook |
 
-See `docs/MODELS.md` for the full assignment breakdown.
+See `docs/governance/MODELS.md` for the full assignment breakdown.
 
 When generated **without** `--provider`, the `model` field is omitted from agent frontmatter — the user chooses the model at runtime. When generated **with** `--provider`, the model is locked per the tier assignment.
 
@@ -205,7 +243,7 @@ The `pattern-manager` reference uses a **fragmented structure** — an index fil
 
 ## Path resolution
 
-Canonical source uses bare paths (`docs/SDLC.md`, `skills/.../SKILL.md`). `convert.py` rewrites them per tool:
+Canonical source uses bare paths (`docs/agent-context/SDLC.md`, `skills/.../SKILL.md`). `convert.py` rewrites them per tool:
 
 | Tool        | Docs/skills prefix               | Resolved at                                       |
 | ----------- | -------------------------------- | ------------------------------------------------- |

@@ -2,6 +2,7 @@
 name: learning-manager
 description: Documents lessons learned, error patterns, and technical discoveries. Transforms incidents or experiments into structured knowledge to guide future decisions and prevent bug recurrence.
 inject_references: full
+emits_confidence: true
 metadata:
   version: "1.0.0"
   author: "Jônatas Rodrigues"
@@ -10,7 +11,7 @@ metadata:
   produces: "docs/03-quality/learning/L-XXX-{slug}.md"
 ---
 
-> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
+> Shared conventions (context fence, naming, output format) are defined in `docs/agent-context/CONVENTIONS.md`.
 
 # Learning Manager Skill
 
@@ -32,7 +33,7 @@ Before any action, read: `./references/learning-references.md`
 
 ## Output Schema
 
-Mandatory sections (see `docs/CONVENTIONS.md` for shared rules):
+Mandatory sections (see `docs/agent-context/CONVENTIONS.md` for shared rules):
 
 - Incident Summary
 - Root Cause (5 Whys)
@@ -83,3 +84,17 @@ Mandatory sections (see `docs/CONVENTIONS.md` for shared rules):
 ## Context Reflection
 
 - Before creating any document, check whether related files exist in `docs/02-planning/tasks/` and `docs/00-discovery/adr/` to ensure traceability between learning and technical decisions.
+
+## Attention Score Emission
+
+Compute `attention_score` via `scripts/lib/attention.py:compute()` before writing L-XXX. Inputs:
+
+- `confidence` — taken directly from existing `confidence: High|Medium|Low` field via `parse_confidence()`
+- `inference_depth` — 0 if root cause is verifiable from logs/code; 1 if reconstructed from incident report; 2 if reasoned from secondary signals
+- `context_completeness` — fraction of (incident timeline, root cause, fix, prevention) sections that are filled and non-empty
+- `gate_failure_count` — count of unresolved corrective actions still pending
+- `upstream_scores` — Task and QA `attention_score` of the artifacts that triggered the learning
+
+Embed `attention_score`, `attention_band`, `attention_factors` in the L-XXX frontmatter. See `docs/agent-context/CONVENTIONS.md` → Human Attention Mediation.
+
+> A learning artifact with `attention_band: red` indicates the incident is not yet fully understood. Do not archive it before re-running the formula with updated inputs.

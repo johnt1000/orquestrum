@@ -3,6 +3,7 @@ name: review-manager
 description: Performs technical code review for security and conformance. Evaluates whether the implementation meets architecture standards and whether it introduces risks.
 inject_references: full
 inject_fewshot: compact
+emits_confidence: true
 metadata:
   version: "1.0.0"
   author: "Jônatas Rodrigues"
@@ -14,7 +15,7 @@ chain:
   condition: "review approved, ready for functional validation"
 ---
 
-> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
+> Shared conventions (context fence, naming, output format) are defined in `docs/agent-context/CONVENTIONS.md`.
 
 # Review Manager Skill
 
@@ -40,7 +41,7 @@ Additional references (read ONLY when needed):
 
 ## Output Schema
 
-Mandatory sections (see `docs/CONVENTIONS.md` for shared rules):
+Mandatory sections (see `docs/agent-context/CONVENTIONS.md` for shared rules):
 
 - Summary
 - Findings
@@ -89,3 +90,18 @@ Mandatory sections (see `docs/CONVENTIONS.md` for shared rules):
 ## Context Reflection
 
 - Before creating any document, check whether related files exist in `docs/00-discovery/spec/`, `docs/00-discovery/adr/` and `docs/02-planning/tasks/` to ensure consistency between Spec, Tasks and Decisions.
+
+## Attention Score Emission
+
+Before writing the artifact, compute its `attention_score` deterministically using `scripts/lib/attention.py:compute()`. Inputs the skill must collect:
+
+- `confidence` — derive from finding distribution: 1.0 if all findings `Low+cosmetic`; 0.6 if any `Medium`/`High` non-behavioral; 0.3 if any `behavioral` or `Critical` open
+- `inference_depth` — 0 if review is verbatim against SPEC, 1 if summarized, 2+ if SPEC missing details
+- `context_completeness` — fraction of required artifacts (SPEC, ADRs, code) actually read / total required
+- `gate_failure_count` — count of behavioral findings + Critical findings still open
+- `upstream_scores` — list the `attention_score` of each Task being reviewed (read from `T{ID}.md` frontmatter if present)
+- `drift_days` — `days_since(last_validated)` of the SPEC
+
+Write the resulting `attention_score`, `attention_band`, and `attention_factors` into the artifact's frontmatter. See `docs/agent-context/CONVENTIONS.md` → Human Attention Mediation.
+
+**Do NOT estimate the score by judgment.** Always run the formula. Hand-tweaking defeats the determinism guarantee.

@@ -44,7 +44,23 @@ After completing any meaningful unit of work, write `docs/CHECKPOINT.md` using `
 5. Fill `Pending Work` with any items that were started but not completed.
 6. Remove completed `Pending Work` items from the previous checkpoint.
 7. Record decisions made this session in `Decisions Made This Session`.
-8. Overwrite the existing file — do not append.
+8. **Rebuild the metrics session summary** if `.orquestrum/metrics/events.jsonl` exists: run `scripts/lib/metrics.py:rebuild_session()` (or call via the bash tool). Then read `.orquestrum/metrics/session.json` and populate the `## Metrics Summary` section with: total calls, input/output tokens, cached tokens, estimated cost, top 3 skills by input tokens. If a budget warning fires (`scripts/lib/budget.py:check_session_budget()`), include the formatted warning verbatim.
+9. Overwrite the existing file — do not append.
+
+### MEDIATION.md aggregation
+
+After writing CHECKPOINT.md, scan `docs/03-quality/{review,qa,security,learning}/` for artifacts emitted in the current session and aggregate their `attention_score`, `attention_band`, `attention_factors` frontmatter into a single `docs/MEDIATION.md` table sorted ascending by score (lowest = most attention required first):
+
+| Artifact | Band | Score | Dominant factors |
+|----------|------|------:|------------------|
+| `REVIEW-vX-{slug}` | 🔴 | 32 | drift_days:60, inference_depth:3 |
+| `QA-vX-{slug}`     | 🟡 | 64 | gate_failures:1, context_incomplete:0.30 |
+
+If no artifacts have attention metadata yet (Phase 4 not enabled in this project), skip emission. Do NOT fabricate scores.
+
+The propagation rule (`min(own, max(upstream)+10)`) is applied by the emitting skill, not here. checkpoint-manager only consolidates already-computed values.
+
+See `docs/agent-context/CONVENTIONS.md` → Human Attention Mediation for the formula and the override mechanism.
 
 ### Enrichment by other orchestrators
 
@@ -64,4 +80,5 @@ Use `./assets/checkpoint-template.md` as the base structure. Do not change the s
 - **DO NOT** leave `Pending Work` items that were completed in the previous session — clean them before writing.
 - **DO NOT** write artifact paths that do not exist on disk.
 - **DO NOT** create CHECKPOINT.md if no meaningful work was done in the session.
-- **DO NOT** record model names, token counts, or system configuration in CHECKPOINT.md — it is a project artifact, not a session log.
+- **DO NOT** record raw prompts, full message content, or user-supplied confidential payloads in CHECKPOINT.md — it is a project artifact, not a transcript.
+- **DO** record aggregated metrics (token counts, cached-token ratio, cost estimate, top skills by spend) in `## Metrics Summary`. These are operational signals required by `docs/governance/COST.md` and `docs/governance/OBSERVABILITY.md`. Counts yes; content no.

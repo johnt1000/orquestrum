@@ -1,0 +1,26 @@
+# Pinned commit SHAs for external dependencies installed by scripts/deps.py.
+#
+# Why: cloning the upstream default branch lets a malicious or accidental
+# upstream commit land silently in every install. Pinning makes the supply
+# chain auditable — every install consumes the SHA listed here.
+#
+# Rotation:
+#   uv run scripts/deps.py --update-pins   # fetches latest HEAD per repo, rewrites this file
+#   git diff pinned_refs.toml              # review SHA changes
+#   git commit -m "chore(deps): rotate pinned SHAs (YYYY-MM-DD)"
+#
+# Policy: see docs/SUPPLY_CHAIN.md.
+
+[[refs]]
+name        = "agency"
+repo        = "https://github.com/msitarzewski/agency-agents.git"
+sha         = "783f6a72bfd7f3135700ac273c619d92821b419a"
+last_pinned = "2026-05-01"
+notes       = "184+ specialized agents; convert.sh produces integrations/opencode/agents/."
+
+[[refs]]
+name        = "skills"
+repo        = "https://github.com/anthropics/skills.git"
+sha         = "5128e1865d670f5d6c9cef000e6dfc4e951fb5b9"
+last_pinned = "2026-05-01"
+notes       = "Anthropic skills bundle (includes supabase). All subdirectories under skills/ are copied."

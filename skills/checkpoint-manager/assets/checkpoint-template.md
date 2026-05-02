@@ -55,6 +55,30 @@ orchestrator: "{lore | forge | ward | cast | trace | —}"
 
 ---
 
+## Metrics Summary
+
+> Aggregated session usage. Populated from `.orquestrum/metrics/session.json` (see `docs/governance/OBSERVABILITY.md`). Counts and cost only — no prompt content. Leave blank if metrics emission is not enabled in this project.
+
+| Metric | Value |
+|---|---:|
+| Tier | {deep / balanced / mechanical} |
+| LLM calls | {N} |
+| Input tokens | {N} |
+| Output tokens | {N} |
+| Cached tokens | {N} ({pct}% of input) |
+| Estimated cost (USD) | ${X.XXXX} |
+
+**Top contributors (input tokens):**
+1. `{skill-name}` — {N} tokens
+2. `{skill-name}` — {N} tokens
+3. `{skill-name}` — {N} tokens
+
+**Budget status:** {within threshold | ⚠ over: ...}
+
+> If a soft-threshold warning fires, paste the output of `budget.check_session_budget()` here verbatim.
+
+---
+
 ## Notes for Next Session
 
 > Context that does not fit above but is needed for continuity.

@@ -10,7 +10,7 @@ metadata:
   produces: "docs/04-release/RUNBOOK.md"
 ---
 
-> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
+> Shared conventions (context fence, naming, output format) are defined in `docs/agent-context/CONVENTIONS.md`.
 
 # Runbook Manager Skill
 

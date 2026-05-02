@@ -2,6 +2,7 @@
 name: security-manager
 description: Performs threat modeling, OWASP gap analysis, dependency vulnerability assessment, and API/infrastructure security validation. Complements review-manager — covers A04, A06, A08, A09, A10 and API/infra security.
 inject_references: full
+emits_confidence: true
 metadata:
   version: "1.0.0"
   author: "Jônatas Rodrigues"
@@ -10,7 +11,7 @@ metadata:
   produces: "docs/03-quality/security/SEC-{task-ref}-{slug}.md"
 ---
 
-> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
+> Shared conventions (context fence, naming, output format) are defined in `docs/agent-context/CONVENTIONS.md`.
 
 # Security Manager Skill
 
@@ -92,3 +93,18 @@ Use `./assets/security-report-template.md`. Determine the next SEC ID by checkin
 | High | Known CVE with CVSS ≥ 7.0, missing rate limiting on auth endpoints | Blocks gate |
 | Medium | Outdated dep (no CVE), incomplete security logging | Non-blocking, improvement Task |
 | Low | Informational, documentation gap | Non-blocking, recorded only |
+
+## Attention Score Emission
+
+Compute `attention_score` via `scripts/lib/attention.py:compute()` before writing SEC-{task-ref}. Inputs derived from finding distribution:
+
+- `confidence` — 1.0 if status `Clear`; 0.6 if `Findings` with no Critical/High; 0.3 if any Critical/High
+- `inference_depth` — 0 if all OWASP A04/A06/A08/A09/A10 areas explicitly checked; 1 if any area was inferred from absence of evidence
+- `context_completeness` — fraction of A04/A06/A08/A09/A10 areas with `Checked: ✅`
+- `gate_failure_count` — count of Critical + High findings
+- `upstream_scores` — Task `attention_score` of the task under analysis
+- `drift_days` — `days_since(last_validated)` of related ADRs
+
+Embed `attention_score`, `attention_band`, `attention_factors` in the SEC artifact frontmatter. See `docs/agent-context/CONVENTIONS.md` → Human Attention Mediation.
+
+A red band (score < 50) on a security artifact escalates automatically: Cipher must signal Helm before handoff to Ward.

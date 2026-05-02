@@ -30,6 +30,11 @@ Agents use this table to check whether a task requires skill loading before proc
 | Generate changelog or release notes | `changelog-manager` | cast | 1 | 5 |
 | Write or update operational runbook | `runbook-manager` | cast | 2 | 5 |
 | Archive completed tasks and logs | `archive-manager` | cast | 1 | 5 |
+| Document a rollback procedure for a release | `rollback-manager` | cast | 1 | 5 |
+| Plan a data migration (schema, backfill, store move) | `data-migration-manager` | forge | 2 | 3 |
+| Validate performance targets / capture regression | `performance-manager` | ward | 1 | 4 |
+| Produce a hotfix runbook (production bleeding) | `hotfix-runbook` | flux | 0 | maintenance |
+| Write a blameless incident postmortem | `incident-postmortem` | flux | 1 | maintenance |
 | Update session checkpoint | `checkpoint-manager` | all | 0 | any |
 
 ---

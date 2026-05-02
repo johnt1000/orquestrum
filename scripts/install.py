@@ -10,6 +10,7 @@ Usage:
     Run scripts/convert.py first to generate integrations/.
 """
 import argparse
+import json
 import shutil
 import sys
 from pathlib import Path
@@ -23,6 +24,66 @@ set_prefix('install')
 
 ROOT         = Path(__file__).parent.parent
 INTEGRATIONS = ROOT / 'integrations'
+
+
+def _merge_claude_settings(template_path: Path, target_path: Path) -> None:
+    """Merge our hooks into target settings.json without clobbering user keys.
+
+    Strategy:
+      - If target does not exist → copy template verbatim.
+      - If target exists → load both, deep-merge hooks.{Stop,SubagentStop}
+        as additional entries; never overwrite existing user hooks at the
+        same matcher; refuse if structure incompatible.
+    """
+    if not target_path.exists():
+        shutil.copy(template_path, target_path)
+        ok(f'  settings.json: created at {target_path}')
+        return
+
+    try:
+        template_data = json.loads(template_path.read_text(encoding='utf-8'))
+        target_data   = json.loads(target_path.read_text(encoding='utf-8'))
+    except json.JSONDecodeError as e:
+        warn(f'  settings.json: target is not valid JSON ({e}); leaving untouched.')
+        warn(f'  Manually merge hooks from: {template_path}')
+        return
+
+    target_hooks   = target_data.setdefault('hooks', {})
+    template_hooks = template_data.get('hooks', {})
+
+    added: list[str] = []
+    skipped: list[str] = []
+
+    for event_name, blocks in template_hooks.items():
+        existing = target_hooks.setdefault(event_name, [])
+        if not isinstance(existing, list):
+            warn(f'  settings.json: hooks.{event_name} exists but is not a list; skipping.')
+            continue
+        for block in blocks:
+            block_command = next(
+                (h.get('command') for h in block.get('hooks', []) if h.get('command')),
+                None,
+            )
+            # Skip if any existing entry already runs the same command
+            duplicate = any(
+                h.get('command') == block_command
+                for ex in existing
+                for h in ex.get('hooks', [])
+                if isinstance(h, dict)
+            )
+            if duplicate:
+                skipped.append(f'{event_name}: {block_command}')
+            else:
+                existing.append(block)
+                added.append(f'{event_name}: {block_command}')
+
+    target_path.write_text(json.dumps(target_data, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+    if added:
+        ok(f'  settings.json: added {len(added)} hook(s)')
+        for entry in added:
+            print(f'    + {entry}')
+    if skipped:
+        log(f'  settings.json: {len(skipped)} hook(s) already present; skipped')
 
 
 def detect_tools(target: Path) -> list[str]:
@@ -59,13 +120,31 @@ def install_tool(tool: str, target: Path) -> bool:
     log(f'Installing {tool} → {abs_target}')
     abs_target.mkdir(parents=True, exist_ok=True)
 
-    shutil.copytree(src, abs_target, dirs_exist_ok=True)
+    # Special handling: claude-code settings.json — merge instead of overwrite
+    if tool == 'claude-code':
+        template_settings = src / '.claude' / 'settings.json'
+        target_settings   = abs_target / '.claude' / 'settings.json'
+        target_settings.parent.mkdir(parents=True, exist_ok=True)
+        # Copy everything else first
+        shutil.copytree(src, abs_target, dirs_exist_ok=True,
+                        ignore=shutil.ignore_patterns('settings.json'))
+        # Then merge settings.json
+        if template_settings.exists():
+            _merge_claude_settings(template_settings, target_settings)
+    else:
+        shutil.copytree(src, abs_target, dirs_exist_ok=True)
 
     # Make any bundled shell scripts executable
     scripts_dir = abs_target / 'scripts'
     if scripts_dir.is_dir():
         for sh in scripts_dir.glob('*.sh'):
             sh.chmod(sh.stat().st_mode | 0o111)
+
+    # Hook scripts (claude-code) need execute bit too
+    sdd_hooks = abs_target / '.sdd' / 'scripts' / 'hooks'
+    if sdd_hooks.is_dir():
+        for py in sdd_hooks.glob('*.py'):
+            py.chmod(py.stat().st_mode | 0o111)
 
     # OpenCode: resolve __OPENCODE_ROOT__ placeholder
     if tool == 'opencode':

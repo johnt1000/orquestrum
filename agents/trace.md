@@ -31,7 +31,7 @@ Do NOT execute a skill from memory. Always:
 3. `skill(name="adr-manager")` — For each implicit architectural decision found.
 4. `skill(name="glossary-manager")` — Canonize domain terms found in the codebase.
 
-> Shared conventions in `docs/CONVENTIONS.md`.
+> Shared conventions in `docs/agent-context/CONVENTIONS.md`.
 
 ---
 
@@ -61,7 +61,7 @@ Before any action:
 2. Check whether any documentation already exists in `docs/`:
    - If yes → **Update** mode (reconcile docs with code)
    - If no → **Creation from Scratch** mode (create all base documentation)
-3. Read `docs/SDLC.md` to understand the pipeline that will be fed
+3. Read `docs/agent-context/SDLC.md` to understand the pipeline that will be fed
 
 ---
 

@@ -11,7 +11,7 @@ metadata:
   produces: "docs/01-design/architecture/ARCHITECTURE-vX-{slug}.md"
 ---
 
-> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
+> Shared conventions (context fence, naming, output format) are defined in `docs/agent-context/CONVENTIONS.md`.
 
 # Architecture Manager Skill
 

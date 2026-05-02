@@ -13,10 +13,19 @@ def name_to_kebab(name: str) -> str:
 
 
 _PATH_PATTERNS: list[tuple[str, str]] = [
-    (r'docs/SDLC\.md',              '{docs}/SDLC.md'),
-    (r'docs/TIERS\.md',             '{docs}/TIERS.md'),
-    (r'docs/MODELS\.md',            '{docs}/MODELS.md'),
-    (r'docs/CONVENTIONS\.md',       '{docs}/CONVENTIONS.md'),
+    # Agent-context docs (read by LLMs at runtime — high cache value, low churn)
+    (r'docs/agent-context/SDLC\.md',         '{docs}/agent-context/SDLC.md'),
+    (r'docs/agent-context/TIERS\.md',        '{docs}/agent-context/TIERS.md'),
+    (r'docs/agent-context/CONVENTIONS\.md',  '{docs}/agent-context/CONVENTIONS.md'),
+    # Governance docs (read by humans — operation, cost, planning)
+    (r'docs/governance/MODELS\.md',          '{docs}/governance/MODELS.md'),
+    (r'docs/governance/COST\.md',            '{docs}/governance/COST.md'),
+    (r'docs/governance/OBSERVABILITY\.md',   '{docs}/governance/OBSERVABILITY.md'),
+    (r'docs/governance/COVERAGE\.md',        '{docs}/governance/COVERAGE.md'),
+    (r'docs/governance/PERFORMANCE\.md',     '{docs}/governance/PERFORMANCE.md'),
+    (r'docs/governance/SUPPLY_CHAIN\.md',    '{docs}/governance/SUPPLY_CHAIN.md'),
+    (r'docs/governance/ROADMAP\.md',         '{docs}/governance/ROADMAP.md'),
+    # Skills (unchanged)
     (r'skills/([a-zA-Z_-]+)/SKILL\.md',      '{skills}/\\1/SKILL.md'),
     (r'skills/([a-zA-Z_-]+)/references/',    '{skills}/\\1/references/'),
     (r'skills/([a-zA-Z_-]+)/assets/',        '{skills}/\\1/assets/'),

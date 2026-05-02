@@ -13,7 +13,7 @@ chain:
   condition: "epic created, ready for task decomposition"
 ---
 
-> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
+> Shared conventions (context fence, naming, output format) are defined in `docs/agent-context/CONVENTIONS.md`.
 
 # Epic Manager Skill
 
@@ -35,7 +35,7 @@ Before any action, read: `./references/epic-references.md`
 
 ## Output Schema
 
-Mandatory sections (see `docs/CONVENTIONS.md` for shared rules):
+Mandatory sections (see `docs/agent-context/CONVENTIONS.md` for shared rules):
 
 - Objective
 - Scope

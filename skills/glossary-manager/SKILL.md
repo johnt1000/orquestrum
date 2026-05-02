@@ -13,7 +13,7 @@ chain:
   condition: "glossary is new or was updated (phase 0 complete)"
 ---
 
-> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
+> Shared conventions (context fence, naming, output format) are defined in `docs/agent-context/CONVENTIONS.md`.
 
 # Glossary Manager Skill
 

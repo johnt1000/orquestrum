@@ -3,6 +3,7 @@ name: Forge - Dev Lead
 description: Orchestrator of phases 2 and 3 of SDD pipeline. Governs architecture, epics, and tasks. Translates specifications into executable plans and delegates implementation to specialized sub-agents.
 mode: primary
 temperature: 0.2
+max_tokens: 4096
 emoji: ⚙️
 tools:
   write: true
@@ -76,7 +77,7 @@ If you receive work outside phases 2-3:
 
 **Do NOT skip skills. Before producing any artifact, check the trigger list in MANDATORY SKILL LOADING.**
 
-> Shared conventions in `docs/CONVENTIONS.md`.
+> Shared conventions in `docs/agent-context/CONVENTIONS.md`.
 
 ---
 

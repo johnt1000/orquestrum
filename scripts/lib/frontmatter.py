@@ -24,8 +24,8 @@ class SkillConfig:
     description:   str
     chain_next:    str | None
     depends_on:    list[str]
-    inject_refs:   str        # "false" | "true" | "compact"
-    inject_fewshot:str        # "false" | "true" | "compact"
+    inject_refs:   str        # "false" | "full" | "compact"
+    inject_fewshot:str        # "false" | "full" | "compact"
     body:          str
 
 
@@ -65,7 +65,9 @@ def parse_skill(path: Path) -> SkillConfig:
         description=post['description'],
         chain_next=chain.get('next'),
         depends_on=deps,
-        inject_refs=str(post.get('inject_references', 'false')),
-        inject_fewshot=str(post.get('inject_fewshot', 'false')),
+        # Normalize to lowercase so YAML bool `false` (→ Python 'False') matches the
+        # 'false' literal used downstream in paths.py / convert.py / audit.
+        inject_refs=str(post.get('inject_references', 'false')).lower(),
+        inject_fewshot=str(post.get('inject_fewshot', 'false')).lower(),
         body=post.content,
     )

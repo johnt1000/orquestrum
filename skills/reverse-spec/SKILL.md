@@ -10,7 +10,7 @@ metadata:
   produces: "docs/00-discovery/spec/spec-v0-extracted.md"
 ---
 
-> Shared conventions (context fence, naming, output format) are defined in `docs/CONVENTIONS.md`.
+> Shared conventions (context fence, naming, output format) are defined in `docs/agent-context/CONVENTIONS.md`.
 
 # Reverse Spec Skill
 

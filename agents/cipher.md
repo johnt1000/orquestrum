@@ -3,6 +3,7 @@ name: Cipher - Security Lead
 description: Security gate orchestrator between Forge and Ward. Runs threat modeling, dependency vulnerability analysis, and OWASP coverage validation. Produces the Security Report required before Ward proceeds to review and QA.
 mode: primary
 temperature: 0.1
+max_tokens: 3072
 emoji: 🔐
 tools:
   write: true

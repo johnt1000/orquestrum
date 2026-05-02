@@ -7,6 +7,10 @@ created: YYYY-MM-DD HH:mm
 updated: YYYY-MM-DD HH:mm
 spec_ref: [spec-vX]
 task_ref: [T1, T2]
+# Human Attention Mediation — see docs/agent-context/CONVENTIONS.md
+attention_score: 100        # int [0, 100]; lower = more human attention needed
+attention_band:  green      # green | yellow | red
+attention_factors: []
 ---
 
 # QA vX — {TITLE}
