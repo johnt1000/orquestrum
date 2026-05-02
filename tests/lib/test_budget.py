@@ -6,6 +6,7 @@ from orquestrum.lib.budget import (
     SOFT_THRESHOLDS,
     BudgetReport,
     check_session_budget,
+    is_session_capped,
 )
 
 
@@ -103,3 +104,30 @@ class TestCheckSessionBudget:
         report = check_session_budget(session, 'balanced')
         assert report.top_contributor == 'review-manager'
         assert report.top_contributor_in == 30_000
+
+
+class TestIsSessionCapped:
+    def test_no_hard_caps_returns_false(self, tmp_path: Path):
+        session = tmp_path / 'session.json'
+        _write_session(session, in_tokens=999_999, out_tokens=0)
+        assert is_session_capped(session, 'balanced', hard_caps=None) is False
+
+    def test_missing_file_returns_false(self, tmp_path: Path):
+        session = tmp_path / 'no_session.json'
+        assert is_session_capped(session, 'balanced', hard_caps={'balanced_input_max': 100}) is False
+
+    def test_under_cap_returns_false(self, tmp_path: Path):
+        session = tmp_path / 'session.json'
+        _write_session(session, in_tokens=500, out_tokens=0)
+        assert is_session_capped(session, 'balanced', hard_caps={'balanced_input_max': 1000}) is False
+
+    def test_over_cap_returns_true(self, tmp_path: Path):
+        session = tmp_path / 'session.json'
+        _write_session(session, in_tokens=2000, out_tokens=0)
+        assert is_session_capped(session, 'balanced', hard_caps={'balanced_input_max': 1000}) is True
+
+    def test_cap_for_different_tier_not_applied(self, tmp_path: Path):
+        session = tmp_path / 'session.json'
+        _write_session(session, in_tokens=2000, out_tokens=0)
+        # hard cap only for 'deep', not 'balanced'
+        assert is_session_capped(session, 'balanced', hard_caps={'deep_input_max': 100}) is False

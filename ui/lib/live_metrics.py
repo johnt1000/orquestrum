@@ -11,32 +11,20 @@ rebuilds session.json on every dashboard render so budget queries always
 see fresh data.
 """
 from __future__ import annotations
-import sys
 from pathlib import Path
 
-_ROOT = Path(__file__).resolve().parent.parent.parent
-sys.path.insert(0, str(_ROOT / 'scripts'))
-
-try:
-    from lib.metrics import read_events, aggregate, rebuild_session, SessionAggregate
-    from lib.budget import check_session_budget, BudgetReport, SOFT_THRESHOLDS
-except ImportError:
-    read_events = aggregate = rebuild_session = check_session_budget = None
-    SessionAggregate = BudgetReport = None
-    SOFT_THRESHOLDS = {}
+from orquestrum.lib.metrics import read_events, aggregate, rebuild_session, SessionAggregate
+from orquestrum.lib.budget import check_session_budget, BudgetReport, SOFT_THRESHOLDS
 
 
-def session_for(metrics_dir: Path | None, tier: str | None = None):
+def session_for(metrics_dir: Path | None, tier: str | None = None) -> SessionAggregate:
     """Aggregate events.jsonl. Also rebuilds session.json so budget_for sees fresh data."""
-    if metrics_dir is None or aggregate is None or not metrics_dir.exists():
-        return aggregate([], tier=tier) if aggregate else None
-    if rebuild_session:
-        return rebuild_session(metrics_dir, tier=tier)
-    events = read_events(metrics_dir / 'events.jsonl')
-    return aggregate(events, tier=tier)
+    if metrics_dir is None or not metrics_dir.exists():
+        return aggregate([], tier=tier)
+    return rebuild_session(metrics_dir, tier=tier)
 
 
-def budget_for(metrics_dir: Path | None, tier: str):
-    if metrics_dir is None or check_session_budget is None:
+def budget_for(metrics_dir: Path | None, tier: str) -> BudgetReport | None:
+    if metrics_dir is None:
         return None
     return check_session_budget(metrics_dir / 'session.json', tier)
