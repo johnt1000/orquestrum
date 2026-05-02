@@ -277,6 +277,8 @@ Quando retomar (após o usuário ter rodado o framework em projeto real seguindo
 
 3. **Se nada acima e infra estável** → executar **R13 — UI Live Monitoring** (~1 sprint). Plano completo no § R13 logo abaixo. As 3 páginas (`/live/session`, `/live/routing`, `/live/attention`) podem ser implementadas em ordem; `/live/session` é a mais alta-leverage (mostra o hook funcionando).
 
+3a. **Se a fricção reportada for de UX/onboarding** (não de comportamento do framework) → executar **R14 — UX & Onboarding** (Ondas 1+3 podem rodar em paralelo, ~1-3 dias somadas). Onda 2 só após PRs 1+3 mergeados.
+
 4. **Se houver sinal específico** (custo alto, cache baixo, etc.) consultar a tabela "When to escalate to roadmap items" em `docs/governance/REAL_USAGE_PLAN.md` para mapear sinal → item R5/R6/R7/R8/R9.
 
 **Princípio:** dados antes de pesos, feedback antes de feature, signal antes de scope.
@@ -296,6 +298,9 @@ Quando retomar (após o usuário ter rodado o framework em projeto real seguindo
 | 5-7 (jun/26) | R12 — UI Wave B (action) | — (paralelo) |
 | 8 (jul/26) | R2 — Primeiro ajuste de pesos se necessário | dados |
 | 9+ (ago/26+) | R13 — UI Wave C (live) | R3 ✅ → desbloqueado |
+| paralelo | R14 Onda 1 — quick wins UX (CLI + Web) | — |
+| paralelo | R14 Onda 3 — onboarding (CONTRIBUTING + ui/README + Makefile + pre-commit) | — |
+| após R14-1+R14-3 | R14 Onda 2 — async/streaming + diff lado a lado + form inline errors | — |
 | paralelo | R7 — `schema_version` (oportunístico) | — |
 | 10+ (set/26+) | R5, R6, R8, R9 conforme prioridade | depende |
 
@@ -446,6 +451,117 @@ A UI Wave C **funciona** com dados sintéticos, mas só **mostra valor** após c
 
 ---
 
+## R14 — UX & Onboarding (CLI + Web)
+
+**Objetivo:** reduzir fricção para os dois públicos do framework — usuário final (instala e usa) e novo contribuidor (clona e contribui). O esqueleto técnico está pronto desde 2026-05-02; este item ataca discoverability, feedback visual e documentação de extensão. Auditoria com dois Explore agents identificou ~25 fricções concretas; este R14 consolida as de alta razão impacto/esforço em três ondas.
+
+### Diagnóstico-chave
+
+CLI:
+- `add_help=False` em wrappers (`orquestrum/commands/{convert,install,deps,dashboard,compact,audit}.py`) faz `-h` não imprimir nada útil. Discoverability pela metade.
+- Operações longas (`convert --all`, `deps`, `install`) sem indicador de progresso.
+- `lint` silencioso em sucesso — pré-requisito de `convert` mas sem feedback positivo.
+- Inconsistência de flags `--tool` × `--target` × `--all` × `--check` entre comandos.
+- `uninstall` destrutivo sem `--dry-run`.
+
+Web:
+- `ui/server.py:35` ainda diz "read-only" no footer; o app é read-write desde Wave B.
+- `ui/server.py:52` redireciona `/` direto para dashboard/catalog — sem hero, sem wayfinding, sem explicar modo project/framework.
+- `templates/base.html` sem link Home, sem active state, sem breadcrumb.
+- Subprocess síncronos de até 120s sem spinner ou polling.
+- Sem confirmação em ações de escrita (apply/install/convert/compact).
+- Diff de edit flows em tabela estreita; valores longos quebram.
+- Erros de validação não destacam o campo (sem `aria-invalid`).
+- 404 retorna JSON quando o usuário navega HTML (`ui/server.py:60`).
+
+Onboarding:
+- `CONTRIBUTING.md` cobre setup/daily/tests mas não explica como adicionar comando CLI nem rota web.
+- Sem README em `ui/`.
+- Sem `Makefile`/`justfile` para uniformizar comandos.
+- Sem `pre-commit` config.
+- Sem `orquestrum doctor` para validar ambiente.
+
+### Onda 1 — Quick wins UX (CLI + Web) (CONCLUÍDA 2026-05-02)
+
+| # | Item | Status |
+|---|------|--------|
+| 1.1 | `--help` próprio nos wrappers | ✅ já funcionava via passthrough (verificado) |
+| 1.2 | Epilog `Example:` em todos os subcomandos | ✅ adicionado em 7 cores + uninstall |
+| 1.3 | `lint` imprime contagem em sucesso (`✓ N agents, M skills, K assets, 0 errors`) | ✅ |
+| 1.4 | `uninstall --dry-run` | ✅ |
+| 1.5 | `orquestrum doctor` (novo) — runtime / extras / integrations / registry / cwd | ✅ |
+| 1.6 | Padronização de `--target` como flag canônica de path | ✅ já consistente em install/deps/web |
+| 1.7 | Home `/` dedicado com hero + cards + quick stats | ✅ |
+| 1.8 | Nav com link Home + `aria-current="page"` em rota ativa | ✅ |
+| 1.9 | Footer: "Wave B (read/write)" | ✅ |
+| 1.10 | `confirm()` em apply/install/convert/compact (5 templates) | ✅ via `data-confirm` |
+| 1.11 | Spinner inline após submit (sem reload) | ✅ via `data-spinner` (vanilla JS, sem HTMX swap) |
+| 1.12 | Empty state explicativo no dashboard | ✅ |
+| 1.13 | 404 em HTML por padrão; JSON só para `Accept: application/json` | ✅ |
+| (extra) | Migração `scripts/` → `orquestrum/` em `ui/config.py` e `ui/lib/catalog_loader.py` | ✅ bug pré-existente corrigido para destravar Web em framework mode |
+
+**Validação E2E:** lint verde (8 agents, 25 skills, 29 assets); convert --all --dry-run ok; web subiu na porta 7765, `/` (200, HTML novo), `/dashboard` (200, nav active state OK), `/foo` (404 HTML), `/foo` com `Accept: application/json` (404 JSON).
+
+### Onda 2 — UX estrutural
+
+| # | Item | Notas |
+|---|------|-------|
+| 2.1 | Async / streaming em `/convert`, `/install`, `/audits/*`, `/compact` | HTMX polling em `job_id` armazenado em `asyncio.Task` + endpoint `/jobs/{id}`. Sem Celery. |
+| 2.2 | Progress bars no CLI (`convert --all`, `deps`, `install`) | TTY-detect; `\r` + stdout, ou `rich` se já presente. |
+| 2.3 | Diff lado a lado nos edit flows | `templates/edit_agent.html`, `edit_skill.html`. Layout duas colunas; `difflib.HtmlDiff` ou CSS pre-wrap. |
+| 2.4 | Form validation inline (`aria-invalid` + `<small role="alert">` por campo) | mesmos templates; deduplicar erros do topo. |
+| 2.5 | Live monitoring | **Delegado a R13** — ver seção dedicada acima. R14 não duplica. |
+
+**Estimativa:** 3-5 dias. **Sub-PRs por item se ficar grande.**
+
+### Onda 3 — Onboarding de contribuidor
+
+| # | Item | Arquivo |
+|---|------|---------|
+| 3.1 | Expandir `CONTRIBUTING.md` com seções "Adding a CLI command" e "Adding a web route" | `CONTRIBUTING.md` |
+| 3.2 | Criar `ui/README.md` (stack, estrutura, dev mode, link para CONTRIBUTING) | `ui/README.md` (novo) |
+| 3.3 | `Makefile` ou `justfile` raiz com alvos `dev`, `lint`, `convert`, `test`, `web`, `doctor` | `Makefile`/`justfile` (novo) |
+| 3.4 | `.pre-commit-config.yaml` opt-in (lint + frontmatter check + ruff) | `.pre-commit-config.yaml` (novo) |
+
+**Estimativa:** 1-2 dias.
+
+### Onda 4 (fora do escopo aprovado)
+
+Suíte de testes para CLI/Web e CI no GitHub Actions ficam registradas como **Pendente** para futura entrega (não executadas neste R14).
+
+### Sequenciamento aprovado
+
+1. **PR 0:** este texto em ROADMAP (entrega R14 com sub-status Pendente em cada onda).
+2. **PR 1:** Onda 1 completa, branch única.
+3. **PR 2:** Onda 3 em paralelo (não conflita com PR 1).
+4. **PR 3:** Onda 2 só após PR 1+PR 2 mergeados (evita conflitos em `templates/`).
+5. Cada item desmarcado para Concluído quando seu PR mergear.
+
+### Critérios de "feito"
+
+Onda 1:
+- `orquestrum convert -h`, `install -h`, `deps -h`, `audit payload -h` mostram help próprio com `Example:`.
+- `orquestrum lint` em sucesso imprime `✓ N agents, M skills, 0 errors`.
+- `orquestrum doctor` em ambiente limpo lista o que falta com sugestão por linha.
+- `orquestrum web` → `/` mostra hero + nav com active state + footer "Wave B".
+- Apply em `/agents/<slug>/edit` exige `confirm()`.
+- GET `/foo` inexistente renderiza HTML, não JSON.
+
+Onda 2:
+- `/convert --all` retorna `job_id` imediatamente; página atualiza progresso a cada 1-2s sem reload manual.
+- `convert --all` no CLI mostra `[k/N] converting <tool>...`.
+- Diff de edit é legível com strings longas.
+- Erro de validação destaca o campo, não só lista no topo.
+
+Onda 3:
+- Um contribuidor adiciona comando "hello" + rota `/hello` lendo só `CONTRIBUTING.md` + `ui/README.md`.
+- `make dev` (ou `just dev`) instala extras + gera integrations + sobe web em uma chamada.
+- `pre-commit run --all-files` passa.
+
+**Esforço total:** ~7-10 dias-dev. **Risco:** Baixo (mudanças localizadas, sem refactor de domínio). **Bloqueia:** nada. **Status:** Pendente — PR 0 entrega esta seção; Ondas 1-3 em PRs subsequentes.
+
+---
+
 ## Concluídos
 
 | ID | Item | Data | PR/Commit |
@@ -461,6 +577,7 @@ A UI Wave C **funciona** com dados sintéticos, mas só **mostra valor** após c
 | R1  | Smoke test E2E em projeto-cobaia | 2026-05-02 | (working tree) |
 | R12 (B-2 final) | UI Wave B completa — skills edit + compact | 2026-05-02 | (working tree) |
 | (doc) | docs/governance/REAL_USAGE_PLAN.md | 2026-05-02 | (working tree) |
+| R14 (Onda 1) | UX & Onboarding — quick wins CLI + Web | 2026-05-02 | (working tree) |
 
 ---
 
