@@ -69,7 +69,7 @@ def create_app(config: UIConfig) -> FastAPI:
         app.mount('/static', StaticFiles(directory=str(STATIC_DIR)), name='static')
 
     # Routes
-    from ui.routes import health, dashboard, docs, catalog, coverage, audits, convert, install, edit_agent, edit_skill, compact
+    from ui.routes import health, dashboard, docs, catalog, coverage, audits, convert, install, edit_agent, edit_skill, compact, jobs
     app.include_router(health.router)
     app.include_router(dashboard.router)
     app.include_router(docs.router)
@@ -81,6 +81,7 @@ def create_app(config: UIConfig) -> FastAPI:
     app.include_router(edit_agent.router)
     app.include_router(edit_skill.router)
     app.include_router(compact.router)
+    app.include_router(jobs.router)
 
     @app.get('/', response_class=HTMLResponse)
     async def index(request: Request) -> HTMLResponse:

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Job {{ job.id }}{% endblock %}
+{% block content %}
+<nav><a href="{{ back_url or '/' }}">← back</a></nav>
+<h1>{{ job.label }}</h1>
+<small>
+  job id <code>{{ job.id }}</code> ·
+  cwd <code>{{ job.cwd }}</code> ·
+  cmd <code>{{ job.cmd | join(' ') }}</code>
+</small>
+{% include "_job_partial.html" %}
+{% endblock %}

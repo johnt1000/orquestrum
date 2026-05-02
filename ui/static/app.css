@@ -97,6 +97,16 @@ header.container nav a[aria-current="page"] {
 .home-cards a.card strong { display: block; margin-bottom: 0.2rem; }
 .home-cards a.card small { color: var(--muted-color); }
 
+/* Job runner status badges (Onda 2 / 2.1) */
+.job-running { background: #e8f4f8; border-left: 4px solid #1095c1; }
+.job-done    { background: #e8f5e8; border-left: 4px solid #28a745; }
+.job-failed,
+.job-timed_out { background: #fff3cd; border-left: 4px solid #ffc107; }
+.job-running small,
+.job-done small,
+.job-failed small,
+.job-timed_out small { display: block; color: var(--muted-color); }
+
 /* HTMX-driven submit spinner (item 1.11) */
 .htmx-indicator { display: none; margin-left: 0.6rem; vertical-align: middle; }
 .htmx-request .htmx-indicator { display: inline-block; }

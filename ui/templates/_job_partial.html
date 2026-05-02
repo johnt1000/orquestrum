@@ -1,0 +1,42 @@
+{# Renders the live status of a job. While running, polls itself via HTMX
+   every 1s and replaces in place (hx-swap=outerHTML). When terminal, the
+   poll attribute is dropped so the polling stops automatically. #}
+<div id="job-status"
+     {% if job.state == 'running' %}
+       hx-get="/jobs/{{ job.id }}/partial"
+       hx-trigger="every 1s"
+       hx-swap="outerHTML"
+     {% endif %}>
+  {% if job.state == 'running' %}
+    <article aria-busy="true" class="job-running">
+      <strong>Running…</strong>
+      <small>{{ job.label }} — {{ "%.1f"|format(job.duration_s) }}s elapsed</small>
+    </article>
+  {% else %}
+    {% set is_ok = job.state == 'done' %}
+    <article class="job-{{ job.state }}">
+      <strong>
+        {% if is_ok %}✓ Done{% elif job.state == 'failed' %}✗ Failed{% else %}⌛ Timed out{% endif %}
+      </strong>
+      <small>
+        exit {{ job.exit_code if job.exit_code is not none else '—' }} ·
+        {{ "%.1f"|format(job.duration_s) }}s
+      </small>
+    </article>
+    {% if rendered %}
+      <div class="doc-rendered">{{ rendered | safe }}</div>
+      <details>
+        <summary>Raw stdout ({{ job.stdout|length }} chars)</summary>
+        <pre>{{ job.stdout }}</pre>
+      </details>
+    {% else %}
+      {% if job.stdout %}<pre>{{ job.stdout }}</pre>{% endif %}
+    {% endif %}
+    {% if job.stderr %}
+      <details {% if not is_ok %}open{% endif %}>
+        <summary>stderr</summary>
+        <pre>{{ job.stderr }}</pre>
+      </details>
+    {% endif %}
+  {% endif %}
+</div>

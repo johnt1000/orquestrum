@@ -1,20 +1,17 @@
-"""audits.py — read-only routes that run audit scripts and render output.
+"""audits.py — read-only routes that run audit scripts via the async job runner.
 
-Each audit shells out to a script under scripts/audit/ (synchronous;
-operations finish in seconds), captures stdout, renders as markdown.
-
-No state is mutated. Scripts are idempotent and write-only to docs/baselines/
-when explicitly asked via --output flag (we don't pass it from the UI).
+Each audit submits an asyncio Job (orquestrum.core.* invoked as a module)
+and redirects to /jobs/{id}, where HTMX polls until the subprocess
+finishes. Long-running scripts no longer block the request thread.
 """
 from __future__ import annotations
-import subprocess
 import sys
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 
-from ui.lib import doc_loader
+from ui.lib import jobs
 
 router = APIRouter(prefix='/audits')
 
@@ -25,19 +22,25 @@ _AUDITS = {
     'payload': {
         'label':       'Reference Payload Audit',
         'description': 'Sums bytes injected by each skill via inject_references; flags > threshold.',
-        'cmd':         [sys.executable, '-u', 'scripts/audit/payload.py'],
+        'module':      'orquestrum.core.audit.payload',
+        'render_md':   True,
+        'timeout_s':   120,
     },
     'parity': {
         'label':       'Provider Parity Test',
         'description': 'Validates that the same canonical source produces structurally equivalent '
                        'output across claude / copilot / glm.',
-        'cmd':         [sys.executable, '-u', 'scripts/tests/parity/run.py'],
+        'module':      'orquestrum.core.tests.parity.run',
+        'render_md':   False,
+        'timeout_s':   180,
     },
     'attention-distribution': {
         'label':       'Attention Score Distribution',
         'description': 'Walks artifacts with attention frontmatter; reports band counts, '
                        'percentiles, calibration signal (R2).',
-        'cmd':         [sys.executable, '-u', 'scripts/audit/attention_distribution.py'],
+        'module':      'orquestrum.core.audit.attention_distribution',
+        'render_md':   True,
+        'timeout_s':   120,
     },
 }
 
@@ -48,45 +51,21 @@ async def index(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(request, 'audits_index.html', {'audits': _AUDITS})
 
 
-@router.post('/{name}', response_class=HTMLResponse)
-@router.get('/{name}',  response_class=HTMLResponse)
-async def run(request: Request, name: str) -> HTMLResponse:
+@router.post('/{name}')
+@router.get('/{name}')
+async def run(request: Request, name: str) -> RedirectResponse:
     if name not in _AUDITS:
         raise HTTPException(status_code=404, detail=f'unknown audit: {name}')
-    cfg       = request.app.state.config
-    templates = request.app.state.templates
-    spec      = _AUDITS[name]
+    cfg  = request.app.state.config
+    spec = _AUDITS[name]
 
     cwd = cfg.root if cfg.is_framework else _REPO_ROOT
-    try:
-        proc = subprocess.run(
-            spec['cmd'],
-            cwd=str(cwd),
-            capture_output=True,
-            text=True,
-            timeout=120,
-        )
-        output_md = proc.stdout
-        stderr    = proc.stderr
-        exit_code = proc.returncode
-        timed_out = False
-    except subprocess.TimeoutExpired:
-        output_md = ''
-        stderr    = 'timeout after 120s'
-        exit_code = -1
-        timed_out = True
-
-    rendered = doc_loader.render_markdown(output_md) if output_md else ''
-    return templates.TemplateResponse(
-        request,
-        'audit_result.html',
-        {
-            'name':       name,
-            'spec':       spec,
-            'rendered':   rendered,
-            'output':     output_md,
-            'stderr':     stderr,
-            'exit_code':  exit_code,
-            'timed_out':  timed_out,
-        },
+    job = jobs.submit(
+        label=spec['label'],
+        cmd=[sys.executable, '-u', '-m', spec['module']],
+        cwd=cwd,
+        timeout_s=spec['timeout_s'],
+        render_md=spec['render_md'],
+        extra={'back_url': '/audits'},
     )
+    return RedirectResponse(f'/jobs/{job.id}', status_code=303)

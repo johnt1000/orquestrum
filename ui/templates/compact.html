@@ -44,10 +44,5 @@
   </div>
   <button type="submit">Run compress_refs</button>
 </form>
-
-{% if output is not none %}
-<h2>Output {% if exit_code is defined %}<small>(exit {{ exit_code }})</small>{% endif %}</h2>
-<pre>{{ output }}</pre>
-{% endif %}
 {% endif %}
 {% endblock %}

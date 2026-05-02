@@ -1,15 +1,12 @@
-"""install.py — UI route to run scripts/install.py.
-
-Framework mode only. Form picks tool + target dir + dry-run flag (auto detect).
-Subprocess runs synchronously; output captured and shown.
-"""
+"""install.py — UI route to run orquestrum.core.install via async job runner."""
 from __future__ import annotations
-import subprocess
 import sys
 from pathlib import Path
 
 from fastapi import APIRouter, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
+
+from ui.lib import jobs
 
 router = APIRouter(prefix='/install')
 
@@ -31,13 +28,13 @@ async def show(request: Request) -> HTMLResponse:
     )
 
 
-@router.post('', response_class=HTMLResponse)
+@router.post('')
 async def run(
     request: Request,
     tool:   str = Form(default=''),
     target: str = Form(...),
     auto:   str = Form(default=''),
-) -> HTMLResponse:
+):
     cfg       = request.app.state.config
     templates = request.app.state.templates
 
@@ -67,29 +64,15 @@ async def run(
             },
         )
 
-    cmd = [sys.executable, '-u', 'scripts/install.py', '--target', str(target_path)]
+    cmd = [sys.executable, '-u', '-m', 'orquestrum.core.install', '--target', str(target_path)]
     if auto:
         cmd.append('--auto')
     else:
         cmd += ['--tool', tool]
 
-    try:
-        proc = subprocess.run(
-            cmd, cwd=str(cfg.root), capture_output=True, text=True, timeout=120,
-        )
-        output    = (proc.stdout or '') + (('\n--- stderr ---\n' + proc.stderr) if proc.stderr else '')
-        exit_code = proc.returncode
-    except subprocess.TimeoutExpired:
-        output    = 'timeout after 120s'
-        exit_code = -1
-
-    return templates.TemplateResponse(
-        request, 'install.html',
-        {
-            'tools':                _TOOLS,
-            'output':               output,
-            'exit_code':            exit_code,
-            'last':                 {'tool': tool, 'target': str(target_path), 'auto': bool(auto)},
-            'project_mode_warning': False,
-        },
+    label = f'install {"auto" if auto else tool} → {target_path.name}'
+    job = jobs.submit(
+        label=label, cmd=cmd, cwd=cfg.root, timeout_s=180,
+        extra={'back_url': '/install'},
     )
+    return RedirectResponse(f'/jobs/{job.id}', status_code=303)

@@ -2,7 +2,7 @@
 {% block title %}Audits{% endblock %}
 {% block content %}
 <h1>Audits</h1>
-<p>Each audit runs synchronously and shows its output. Read-only — these scripts do not modify your files (some accept <code>--output</code> at CLI to write a baseline; the UI never passes it).</p>
+<p>Each audit runs as a background job and progress is shown live. Read-only — these scripts do not modify your files (some accept <code>--output</code> at CLI to write a baseline; the UI never passes it).</p>
 
 <div class="audit-grid">
   {% for name, spec in audits.items() %}
