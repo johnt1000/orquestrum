@@ -4,7 +4,7 @@
 # `orquestrum` CLI; they exist so a new contributor can clone the repo
 # and bootstrap without memorising flags.
 
-.PHONY: help dev sync lint convert convert-dry test web doctor audit clean
+.PHONY: help dev sync lint convert convert-dry test test-cov test-commands web doctor audit clean
 
 help:  ## Show this help (default target)
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -31,8 +31,14 @@ convert:  ## Generate integrations/ for all tools (no provider)
 convert-dry:  ## Inventory + cost projection without writing files
 	orquestrum convert --all --dry-run
 
-test:  ## Run the full test suite (156 tests across lib, core, ui)
+test:  ## Run the full test suite (lib, core, commands, ui)
 	uv run pytest tests/ -q
+
+test-cov:  ## Run the full test suite with a coverage report
+	uv run pytest tests/ --cov=orquestrum --cov-report=term-missing -q
+
+test-commands:  ## Run only CLI command tests (fast — no UI)
+	uv run pytest tests/commands/ -q
 
 web:  ## Launch the local FastAPI console (127.0.0.1:7700)
 	orquestrum web
