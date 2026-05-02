@@ -1,0 +1,39 @@
+# Orquestrum — pre-commit hooks.
+#
+# Opt-in: contributors install with `pre-commit install` (no auto-install
+# from pyproject so first-time clone stays minimal).
+#
+# Why this set:
+#   - trailing-whitespace + end-of-file-fixer: catch trivial diffs that
+#     pollute review.
+#   - check-yaml + check-toml: validate config / frontmatter outside .md
+#     (frontmatter inside .md is validated by `orquestrum lint`).
+#   - check-merge-conflict: refuse to commit unresolved markers.
+#   - orquestrum-lint (local): runs the framework's own validator on any
+#     change under agents/ or skills/. Mirrors what CI will do once Onda 4
+#     lands.
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-merge-conflict
+      - id: check-yaml
+        exclude: ^(skills/.*/SKILL\.md|agents/.*\.md)$  # frontmatter checked by orquestrum lint
+      - id: check-toml
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+
+  - repo: local
+    hooks:
+      - id: orquestrum-lint
+        name: orquestrum lint (agents + skills frontmatter)
+        entry: orquestrum lint
+        language: system
+        pass_filenames: false
+        files: ^(agents/.*\.md|skills/.*/SKILL\.md|docs/.*\.md)$
+        # `orquestrum` must be on PATH — typically via `make dev` or
+        # `uv tool install --editable .`. Hook is skipped on CI runners
+        # that don't have it (PRE_COMMIT_HOME isolation).
