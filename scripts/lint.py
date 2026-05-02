@@ -197,8 +197,13 @@ def check_registry() -> None:
     pass_('REGISTRY.md checked')
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     global errors, warnings
+    # lint.py takes no flags today; argv accepted for CLI wrapper symmetry
+    if argv is not None and argv:
+        import argparse
+        argparse.ArgumentParser(prog='orquestrum lint',
+                                description='Validate agent and skill files.').parse_args(argv)
 
     print()
     print(f'{BLUE}=== Agents ==={NC}')

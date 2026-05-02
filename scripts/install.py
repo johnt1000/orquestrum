@@ -163,8 +163,9 @@ def install_tool(tool: str, target: Path) -> bool:
     return True
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
+        prog='orquestrum install',
         description='Install a generated integration package into a target project.',
     )
     group = parser.add_mutually_exclusive_group(required=True)
@@ -174,7 +175,7 @@ def main() -> None:
                        help='Auto-detect installed tools and install all')
     parser.add_argument('--target', required=True, metavar='PATH',
                         help='Target directory (project root or tool config dir)')
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     target = Path(args.target).expanduser()
     if not target.exists():

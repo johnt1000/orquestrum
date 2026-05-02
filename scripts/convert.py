@@ -468,8 +468,9 @@ def dry_run_report(tools: list[str], provider: str | None) -> None:
 
 # ─── CLI ──────────────────────────────────────────────────────────────────────
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
+        prog='orquestrum convert',
         description='Generate integration packages from canonical source.',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
@@ -485,7 +486,7 @@ def main() -> None:
                         help='Model provider (claude | copilot | glm)')
     parser.add_argument('--dry-run', action='store_true',
                         help='Print summary (inventory, cost projection, tier collapses) without writing files')
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     provider = args.provider or None
     tools = list(ADAPTERS) if args.all else [args.tool]

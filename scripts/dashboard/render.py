@@ -189,14 +189,15 @@ def _html_escape(s: str) -> str:
              .replace('>', '&gt;').replace('"', '&quot;'))
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description='Render Orquestrum session metrics dashboard.')
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(prog='orquestrum dashboard',
+                                     description='Render Orquestrum session metrics dashboard.')
     parser.add_argument('--metrics-dir', type=Path, default=Path('.orquestrum/metrics'),
                         help='Directory containing events.jsonl (default: .orquestrum/metrics)')
     parser.add_argument('--tier', default=None,
                         help='Tier for budget overlay (deep | balanced | mechanical | sharp)')
     parser.add_argument('--html', action='store_true', help='Also write dashboard.html')
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     events_file = args.metrics_dir / 'events.jsonl'
     if not events_file.exists():

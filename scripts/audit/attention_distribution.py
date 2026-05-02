@@ -138,14 +138,15 @@ def render_markdown(items: list[dict], threshold_n: int = 30) -> str:
     return '\n'.join(lines)
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description='Attention score distribution analysis')
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(prog='orquestrum audit attention',
+                                     description='Attention score distribution analysis')
     parser.add_argument('--root', default='.', help='Root to scan (default: cwd)')
     parser.add_argument('--threshold-n', type=int, default=30,
                         help='Minimum N to issue calibration signals (default 30)')
     parser.add_argument('--output', metavar='PATH',
                         help='Write the markdown report to this path (also prints to stdout)')
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     root = Path(args.root).expanduser().resolve()
     if not root.is_dir():

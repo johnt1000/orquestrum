@@ -226,8 +226,9 @@ def update_pins() -> None:
     ok(f'Updated {len(new_shas)} pin(s). Review with `git diff pinned_refs.toml` and commit.')
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
+        prog='orquestrum deps',
         description='Install external agent/skill dependencies for Orquestrum.',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
@@ -244,7 +245,7 @@ def main() -> None:
                         help='Install specific dependency only (agency | skills | supabase)')
     parser.add_argument('--update-pins', action='store_true',
                         help='Rewrite pinned_refs.toml with current upstream HEADs and exit')
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.update_pins:
         update_pins()
