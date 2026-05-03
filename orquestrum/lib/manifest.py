@@ -1,8 +1,12 @@
-"""orquestrum.lib.manifest — read/write ORQUESTRUM.md (project manifest).
+"""orquestrum.lib.manifest — read/write the project manifest.
 
-The manifest lives at the repo root and is BOTH human-readable AND
-machine-managed. Everything above the marker is rewritten by the CLI;
+Since v0.5 the manifest lives at `<project>/.orquestrum/manifest.md` so all
+orquestrum-related files share a single root. The file is BOTH human-readable
+AND machine-managed: everything above the marker is rewritten by the CLI;
 everything below is preserved verbatim.
+
+`init` migrates legacy `<project>/ORQUESTRUM.md` (≤v0.4) on first run by
+reading from the old path, writing the new file, and deleting the old one.
 """
 from __future__ import annotations
 import datetime as dt
@@ -12,7 +16,12 @@ from pathlib import Path
 from orquestrum import __version__
 
 
-MANIFEST_FILENAME = 'ORQUESTRUM.md'
+# Current location: <project>/.orquestrum/manifest.md
+MANIFEST_DIR      = '.orquestrum'
+MANIFEST_FILENAME = 'manifest.md'
+
+# Legacy location used by ≤v0.4: <project>/ORQUESTRUM.md
+LEGACY_MANIFEST_FILENAME = 'ORQUESTRUM.md'
 
 MARKER = '<!-- ===== orquestrum:auto-managed-above ===== -->'
 
@@ -98,9 +107,21 @@ def _split_existing(text: str) -> tuple[str | None, str]:
     return above, below.lstrip('\n')
 
 
+def manifest_path(project_root: Path) -> Path:
+    """Return the canonical manifest path: `<project>/.orquestrum/manifest.md`."""
+    return project_root / MANIFEST_DIR / MANIFEST_FILENAME
+
+
+def legacy_manifest_path(project_root: Path) -> Path:
+    """Return the legacy manifest path used by ≤v0.4: `<project>/ORQUESTRUM.md`."""
+    return project_root / LEGACY_MANIFEST_FILENAME
+
+
 def write_manifest(project_root: Path, state: ManifestState) -> Path:
-    """Write or update ORQUESTRUM.md, preserving the user-editable section."""
-    path = project_root / MANIFEST_FILENAME
+    """Write or update the manifest at `.orquestrum/manifest.md`, preserving
+    the user-editable section if present."""
+    path = manifest_path(project_root)
+    path.parent.mkdir(parents=True, exist_ok=True)
     user_section = _DEFAULT_USER_SECTION
     if path.exists():
         existing = path.read_text(encoding='utf-8')
@@ -113,12 +134,19 @@ def write_manifest(project_root: Path, state: ManifestState) -> Path:
 
 
 def read_manifest_state(project_root: Path) -> ManifestState | None:
-    """Best-effort parse of ORQUESTRUM.md to recover state. Returns None if missing.
+    """Best-effort parse of the manifest to recover state. Returns None if
+    missing.
 
-    Only reads what's in the Configuration table + History list. Other fields
-    are derived from .orquestrum/config.toml when needed.
+    Looks at the new path first (`.orquestrum/manifest.md`) and falls back to
+    the legacy path (`<project>/ORQUESTRUM.md`) so projects from before v0.5
+    keep working until they're migrated. Only reads the Configuration table
+    + History list — other fields come from `.orquestrum/config.toml`.
     """
-    path = project_root / MANIFEST_FILENAME
+    path = manifest_path(project_root)
+    if not path.exists():
+        legacy = legacy_manifest_path(project_root)
+        if legacy.exists():
+            path = legacy
     if not path.exists():
         return None
     text = path.read_text(encoding='utf-8')
