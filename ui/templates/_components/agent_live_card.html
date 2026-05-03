@@ -1,0 +1,37 @@
+{# agent_live_card(fm) — live preview of an agent based on the in-flight form state.
+   `fm` is a dict with name/description/mode/emoji/tier/temperature/max_tokens/tools.
+   Used by both initial GET render and the HTMX swap target #preview-pane. #}
+{% from "_components/tier_badge.html" import tier_badge %}
+{% macro agent_live_card(fm, tier='?') %}
+<div class="live-card live-card-agent">
+  <header class="live-card-head">
+    <span class="live-card-emoji" aria-hidden="true">{{ fm.emoji or '◇' }}</span>
+    <div class="live-card-title">
+      <span class="live-card-name">{{ fm.name or '—' }}</span>
+      <span class="live-card-meta">
+        {{ tier_badge(tier) }}
+        {% if fm.mode %}<span class="live-chip">{{ fm.mode }}</span>{% endif %}
+      </span>
+    </div>
+  </header>
+  <p class="live-card-desc">{{ fm.description or '' }}</p>
+  <dl class="live-card-stats">
+    <div class="live-stat">
+      <dt>temperature</dt>
+      <dd>{{ '%.2f' | format(fm.temperature | float) if fm.temperature is not none else '—' }}</dd>
+    </div>
+    <div class="live-stat">
+      <dt>max_tokens</dt>
+      <dd>{{ fm.max_tokens or '—' }}</dd>
+    </div>
+  </dl>
+  {% set tools = fm.tools or {} %}
+  <div class="live-card-tools">
+    {% for key in ['write', 'edit', 'bash', 'question'] %}
+      <span class="live-tool {% if tools[key] %}is-on{% endif %}">
+        <span class="live-tool-dot" aria-hidden="true"></span>{{ key }}
+      </span>
+    {% endfor %}
+  </div>
+</div>
+{% endmacro %}

@@ -1,9 +1,20 @@
 {% extends "base.html" %}
-{% block title %}Edit skill: {{ slug }}{% endblock %}
+{% from "_components/skill_live_card.html" import skill_live_card %}
+{% from "_components/diff_pane.html" import diff_pane %}
+{% block title %}{{ 'edit.skill.title' | t }} · {{ slug }}{% endblock %}
 {% block content %}
-<nav><a href="/catalog">← back to catalog</a></nav>
-<h1>Edit skill — <code>{{ slug }}</code></h1>
-<small>source: <code>{{ path }}</code></small>
+
+<header class="page-head">
+  <div class="breadcrumb">
+    <a href="/catalog/skills">{{ 'nav.skills' | t }}</a>
+    <span class="breadcrumb-sep">·</span>
+    <code>{{ slug }}</code>
+  </div>
+  <div class="page-head-row">
+    <h1>{{ 'edit.skill.title' | t }}</h1>
+    <div class="page-head-meta"><code>{{ path }}</code></div>
+  </div>
+</header>
 
 {% set ebf = errors_by_field or {} %}
 
@@ -17,111 +28,114 @@
   {%- if ebf.get(name) %} aria-invalid="true"{% endif -%}
 {%- endmacro %}
 
-{% if errors %}
-<article class="warn">
-  <strong>Lint preflight failed — write blocked.</strong>
-  Each affected field is highlighted below.
-  {% if ebf.get('_global') %}
-    <ul>{% for msg in ebf['_global'] %}<li><code>{{ msg }}</code></li>{% endfor %}</ul>
-  {% endif %}
-</article>
-{% endif %}
+<div class="edit-grid">
 
-{% if preview and diff and not errors %}
-<article class="diff-card">
-  <strong>Preview — review before applying:</strong>
-  {% if diff %}
-    <dl class="diff-list">
-      {% for key, old_val, new_val in diff %}
-        <dt><code>{{ key }}</code></dt>
-        <dd>
-          <div class="diff-pair">
-            <div class="diff-old"><span class="diff-label">old</span><code>{{ old_val }}</code></div>
-            <div class="diff-new"><span class="diff-label">new</span><code>{{ new_val }}</code></div>
-          </div>
-        </dd>
-      {% endfor %}
-    </dl>
-  {% else %}
-    <p><em>no changes</em></p>
-  {% endif %}
+  <section class="edit-form-pane">
+    <form id="edit-form"
+          method="post"
+          action="/skills/{{ slug }}/edit"
+          hx-post="/skills/{{ slug }}/preview"
+          hx-target="#preview-pane"
+          hx-swap="innerHTML"
+          hx-trigger="keyup changed delay:300ms from:input, keyup changed delay:300ms from:textarea, change from:select, change from:input[type=checkbox]">
 
-  {% if diff %}
-  <form method="post" action="/skills/{{ slug }}/edit/apply" style="margin-top:1rem;"
-        data-confirm="Apply these changes to skills/{{ slug }}/SKILL.md on disk?" data-spinner>
-    <input type="hidden" name="name" value="{{ fm.name }}">
-    <input type="hidden" name="description" value="{{ fm.description }}">
-    <input type="hidden" name="inject_references" value="{{ fm.inject_references or 'false' }}">
-    <input type="hidden" name="inject_fewshot" value="{{ fm.inject_fewshot or 'false' }}">
-    {% if fm.emits_confidence %}<input type="hidden" name="emits_confidence" value="1">{% endif %}
-    <input type="hidden" name="depends_on" value="{{ fm.depends_on | join(',') if fm.depends_on else '' }}">
-    <input type="hidden" name="chain_next" value="{{ fm.chain.next if fm.chain else '' }}">
-    <input type="hidden" name="chain_condition" value="{{ fm.chain.condition if fm.chain else '' }}">
-    <button type="submit" class="contrast">Apply changes</button>
-  </form>
-  {% endif %}
-</article>
-{% endif %}
+      <label class="form-label">{{ 'edit.skill.field.name' | t }}
+        <input type="text" name="name" value="{{ fm.name }}" required {{ field_invalid('name') }}>
+        {{ field_errors('name') }}
+      </label>
 
-<form method="post" action="/skills/{{ slug }}/edit" data-spinner>
-  <label>Name
-    <input type="text" name="name" value="{{ fm.name }}" required {{ field_invalid('name') }}>
-    {{ field_errors('name') }}
-  </label>
-  <label>Description
-    <textarea name="description" rows="3" required {{ field_invalid('description') }}>{{ fm.description }}</textarea>
-    {{ field_errors('description') }}
-  </label>
-  <div class="grid">
-    <label>inject_references
-      <select name="inject_references" {{ field_invalid('inject_references') }}>
-        {% for v in valid_inject %}
-          <option value="{{ v }}" {% if (fm.inject_references or 'false') == v %}selected{% endif %}>{{ v }}</option>
-        {% endfor %}
-      </select>
-      {{ field_errors('inject_references') }}
-    </label>
-    <label>inject_fewshot
-      <select name="inject_fewshot" {{ field_invalid('inject_fewshot') }}>
-        {% for v in valid_inject %}
-          <option value="{{ v }}" {% if (fm.inject_fewshot or 'false') == v %}selected{% endif %}>{{ v }}</option>
-        {% endfor %}
-      </select>
-      {{ field_errors('inject_fewshot') }}
-    </label>
+      <label class="form-label">{{ 'edit.skill.field.description' | t }}
+        <textarea name="description" rows="3" required {{ field_invalid('description') }}>{{ fm.description }}</textarea>
+        {{ field_errors('description') }}
+      </label>
+
+      <div class="form-row">
+        <label class="form-label">{{ 'edit.skill.field.inject_references' | t }}
+          <select name="inject_references" {{ field_invalid('inject_references') }}>
+            {% for v in valid_inject %}
+              <option value="{{ v }}" {% if fm.inject_references == v %}selected{% endif %}>{{ v }}</option>
+            {% endfor %}
+          </select>
+          {{ field_errors('inject_references') }}
+        </label>
+        <label class="form-label">{{ 'edit.skill.field.inject_fewshot' | t }}
+          <select name="inject_fewshot" {{ field_invalid('inject_fewshot') }}>
+            {% for v in valid_inject %}
+              <option value="{{ v }}" {% if fm.inject_fewshot == v %}selected{% endif %}>{{ v }}</option>
+            {% endfor %}
+          </select>
+          {{ field_errors('inject_fewshot') }}
+        </label>
+      </div>
+
+      <label class="form-label">{{ 'edit.skill.field.depends_on' | t }}
+        <input type="text" name="depends_on"
+               value="{{ (fm.depends_on or []) | join(', ') }}"
+               placeholder="slug-a, slug-b" {{ field_invalid('depends_on') }}>
+        <small class="meta">{{ 'edit.skill.field.depends_on.hint' | t }}</small>
+        {{ field_errors('depends_on') }}
+      </label>
+
+      <fieldset class="form-fieldset">
+        <legend>{{ 'edit.skill.field.chain' | t }}</legend>
+        <div class="form-row">
+          <label class="form-label">{{ 'edit.skill.field.chain_next' | t }}
+            <input type="text" name="chain_next"
+                   value="{{ (fm.chain or {}).get('next', '') }}" {{ field_invalid('chain.next') }}>
+            {{ field_errors('chain.next') }}
+          </label>
+          <label class="form-label">{{ 'edit.skill.field.chain_condition' | t }}
+            <input type="text" name="chain_condition"
+                   value="{{ (fm.chain or {}).get('condition', '') }}" {{ field_invalid('chain.condition') }}>
+            {{ field_errors('chain.condition') }}
+          </label>
+        </div>
+      </fieldset>
+
+      <label class="form-toggle form-toggle-row">
+        <input type="checkbox" name="emits_confidence" value="1"
+               {% if fm.emits_confidence %}checked{% endif %}>
+        <span>{{ 'edit.skill.field.emits_confidence' | t }}</span>
+      </label>
+
+      <div class="edit-actions">
+        <button type="submit"
+                class="btn-primary"
+                hx-post="/skills/{{ slug }}/edit"
+                hx-target="#diff-pane"
+                hx-swap="outerHTML">{{ 'edit.btn.validate' | t }}</button>
+        <a href="/catalog/skills" class="btn-link">{{ 'edit.btn.cancel' | t }}</a>
+      </div>
+    </form>
+  </section>
+
+  <aside class="edit-preview-pane">
+    <header class="edit-pane-head">
+      <h2>{{ 'edit.preview.title' | t }}</h2>
+      <span class="meta">{{ 'edit.preview.subtitle' | t }}</span>
+    </header>
+    <div id="preview-pane">
+      {{ skill_live_card(fm) }}
+    </div>
+  </aside>
+</div>
+
+{% if preview %}
+  {% set chain = fm.chain or {} %}
+  {{ diff_pane(diff, errors, ebf, '/skills/' ~ slug ~ '/edit/apply', {
+    'name': fm.name,
+    'description': fm.description,
+    'inject_references': fm.inject_references,
+    'inject_fewshot':    fm.inject_fewshot,
+    'depends_on':        (fm.depends_on or []) | join(', '),
+    'chain_next':        chain.get('next', ''),
+    'chain_condition':   chain.get('condition', ''),
+    'emits_confidence':  fm.emits_confidence or False,
+  }, ('Apply changes to skills/' ~ slug ~ '/SKILL.md?')) }}
+{% else %}
+  <div id="diff-pane" class="diff-pane diff-pane-empty">
+    <p class="meta">{{ 'edit.diff.empty' | t }}</p>
   </div>
-  <label>
-    <input type="checkbox" name="emits_confidence" value="1"
-           {% if fm.emits_confidence %}checked{% endif %}>
-    <strong>emits_confidence</strong> — does this skill compute attention scores in artifacts?
-  </label>
-  {{ field_errors('emits_confidence') }}
-  <label>depends_on (comma-separated skill slugs)
-    <input type="text" name="depends_on"
-           value="{{ fm.depends_on | join(', ') if fm.depends_on else '' }}"
-           placeholder="task-manager, qa-manager"
-           {{ field_invalid('depends_on') }}>
-    <small>Available: {{ all_slugs | join(', ') }}</small>
-    {{ field_errors('depends_on') }}
-  </label>
-  <fieldset>
-    <legend>Chain (optional — automatic next skill)</legend>
-    <label>chain.next
-      <select name="chain_next" {{ field_invalid('chain.next') }}>
-        <option value="">— none —</option>
-        {% for s in all_slugs %}
-          <option value="{{ s }}" {% if fm.chain and fm.chain.next == s %}selected{% endif %}>{{ s }}</option>
-        {% endfor %}
-      </select>
-      {{ field_errors('chain.next') }}
-    </label>
-    <label>chain.condition
-      <input type="text" name="chain_condition"
-             value="{{ fm.chain.condition if fm.chain else '' }}"
-             placeholder="e.g. review approved, ready for QA">
-    </label>
-    {{ field_errors('chain') }}
-  </fieldset>
-  <button type="submit">Validate & preview</button>
-</form>
+{% endif %}
+
 {% endblock %}

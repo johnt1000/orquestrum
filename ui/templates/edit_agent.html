@@ -1,9 +1,20 @@
 {% extends "base.html" %}
-{% block title %}Edit agent: {{ slug }}{% endblock %}
+{% from "_components/agent_live_card.html" import agent_live_card %}
+{% from "_components/diff_pane.html" import diff_pane %}
+{% block title %}{{ 'edit.agent.title' | t }} · {{ slug }}{% endblock %}
 {% block content %}
-<nav><a href="/catalog">← back to catalog</a></nav>
-<h1>Edit agent — <code>{{ slug }}</code></h1>
-<small>source: <code>{{ path }}</code></small>
+
+<header class="page-head">
+  <div class="breadcrumb">
+    <a href="/catalog/agents">{{ 'nav.agents' | t }}</a>
+    <span class="breadcrumb-sep">·</span>
+    <code>{{ slug }}</code>
+  </div>
+  <div class="page-head-row">
+    <h1>{{ 'edit.agent.title' | t }}</h1>
+    <div class="page-head-meta"><code>{{ path }}</code></div>
+  </div>
+</header>
 
 {% set ebf = errors_by_field or {} %}
 
@@ -17,100 +28,107 @@
   {%- if ebf.get(name) %} aria-invalid="true"{% endif -%}
 {%- endmacro %}
 
-{% if errors %}
-<article class="warn">
-  <strong>Lint preflight failed — write blocked.</strong>
-  Each affected field is highlighted below.
-  {% if ebf.get('_global') %}
-    <ul>{% for msg in ebf['_global'] %}<li><code>{{ msg }}</code></li>{% endfor %}</ul>
-  {% endif %}
-</article>
-{% endif %}
+<div class="edit-grid">
 
-{% if preview and diff and not errors %}
-<article class="diff-card">
-  <strong>Preview — review before applying:</strong>
-  {% if diff %}
-    <dl class="diff-list">
-      {% for key, old_val, new_val in diff %}
-        <dt><code>{{ key }}</code></dt>
-        <dd>
-          <div class="diff-pair">
-            <div class="diff-old"><span class="diff-label">old</span><code>{{ old_val }}</code></div>
-            <div class="diff-new"><span class="diff-label">new</span><code>{{ new_val }}</code></div>
-          </div>
-        </dd>
-      {% endfor %}
-    </dl>
-  {% else %}
-    <p><em>no changes</em></p>
-  {% endif %}
+  {# ─── LEFT — form ─────────────────────────────────────────────────────── #}
+  <section class="edit-form-pane">
+    <form id="edit-form"
+          method="post"
+          action="/agents/{{ slug }}/edit"
+          hx-post="/agents/{{ slug }}/preview"
+          hx-target="#preview-pane"
+          hx-swap="innerHTML"
+          hx-trigger="keyup changed delay:300ms from:input, keyup changed delay:300ms from:textarea, change from:select, change from:input[type=checkbox]">
 
-  {% if diff %}
-  <form method="post" action="/agents/{{ slug }}/edit/apply" style="margin-top:1rem;"
-        data-confirm="Apply these changes to {{ slug }}.md on disk?" data-spinner>
-    <input type="hidden" name="name" value="{{ fm.name }}">
-    <input type="hidden" name="description" value="{{ fm.description }}">
-    <input type="hidden" name="mode" value="{{ fm.mode }}">
-    <input type="hidden" name="emoji" value="{{ fm.emoji }}">
-    <input type="hidden" name="temperature" value="{{ fm.temperature }}">
-    <input type="hidden" name="max_tokens" value="{{ fm.max_tokens }}">
-    {% for key in ['write', 'edit', 'bash', 'question'] %}
-      {% if fm.tools and fm.tools[key] %}<input type="hidden" name="tools_{{ key }}" value="1">{% endif %}
-    {% endfor %}
-    <button type="submit" class="contrast">Apply changes</button>
-  </form>
-  {% endif %}
-</article>
-{% endif %}
-
-<form method="post" action="/agents/{{ slug }}/edit" data-spinner>
-  <label>Name
-    <input type="text" name="name" value="{{ fm.name }}" required {{ field_invalid('name') }}>
-    {{ field_errors('name') }}
-  </label>
-  <label>Description
-    <textarea name="description" rows="3" required {{ field_invalid('description') }}>{{ fm.description }}</textarea>
-    {{ field_errors('description') }}
-  </label>
-  <div class="grid">
-    <label>Mode
-      <select name="mode" {{ field_invalid('mode') }}>
-        {% for m in ['primary', 'agent', 'subagent'] %}
-          <option value="{{ m }}" {% if fm.mode == m %}selected{% endif %}>{{ m }}</option>
-        {% endfor %}
-      </select>
-      {{ field_errors('mode') }}
-    </label>
-    <label>Emoji
-      <input type="text" name="emoji" value="{{ fm.emoji }}" required maxlength="8" {{ field_invalid('emoji') }}>
-      {{ field_errors('emoji') }}
-    </label>
-  </div>
-  <div class="grid">
-    <label>Temperature
-      <input type="number" name="temperature" value="{{ fm.temperature }}"
-             min="0" max="2" step="0.05" required {{ field_invalid('temperature') }}>
-      {{ field_errors('temperature') }}
-    </label>
-    <label>max_tokens (output cap)
-      <input type="number" name="max_tokens" value="{{ fm.max_tokens }}"
-             min="1" max="16384" required {{ field_invalid('max_tokens') }}>
-      {{ field_errors('max_tokens') }}
-    </label>
-  </div>
-  <fieldset>
-    <legend>Tools allowed</legend>
-    {% for key in ['write', 'edit', 'bash', 'question'] %}
-      <label>
-        <input type="checkbox" name="tools_{{ key }}" value="1"
-               {% if fm.tools and fm.tools[key] %}checked{% endif %}>
-        <code>{{ key }}</code>
+      <label class="form-label">{{ 'edit.agent.field.name' | t }}
+        <input type="text" name="name" value="{{ fm.name }}" required {{ field_invalid('name') }}>
+        {{ field_errors('name') }}
       </label>
-      {{ field_errors('tools.' ~ key) }}
-    {% endfor %}
-    {{ field_errors('tools') }}
-  </fieldset>
-  <button type="submit">Validate & preview</button>
-</form>
+
+      <label class="form-label">{{ 'edit.agent.field.description' | t }}
+        <textarea name="description" rows="3" required {{ field_invalid('description') }}>{{ fm.description }}</textarea>
+        {{ field_errors('description') }}
+      </label>
+
+      <div class="form-row">
+        <label class="form-label">{{ 'edit.agent.field.mode' | t }}
+          <select name="mode" {{ field_invalid('mode') }}>
+            {% for m in ['primary', 'agent', 'subagent'] %}
+              <option value="{{ m }}" {% if fm.mode == m %}selected{% endif %}>{{ m }}</option>
+            {% endfor %}
+          </select>
+          {{ field_errors('mode') }}
+        </label>
+        <label class="form-label">{{ 'edit.agent.field.emoji' | t }}
+          <input type="text" name="emoji" value="{{ fm.emoji }}" required maxlength="8" {{ field_invalid('emoji') }}>
+          {{ field_errors('emoji') }}
+        </label>
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">{{ 'edit.agent.field.temperature' | t }}
+          <input type="number" name="temperature" value="{{ fm.temperature }}"
+                 min="0" max="2" step="0.05" required {{ field_invalid('temperature') }}>
+          {{ field_errors('temperature') }}
+        </label>
+        <label class="form-label">{{ 'edit.agent.field.max_tokens' | t }}
+          <input type="number" name="max_tokens" value="{{ fm.max_tokens }}"
+                 min="1" max="16384" required {{ field_invalid('max_tokens') }}>
+          {{ field_errors('max_tokens') }}
+        </label>
+      </div>
+
+      <fieldset class="form-fieldset">
+        <legend>{{ 'edit.agent.field.tools' | t }}</legend>
+        <div class="form-tools">
+          {% for key in ['write', 'edit', 'bash', 'question'] %}
+            <label class="form-toggle">
+              <input type="checkbox" name="tools_{{ key }}" value="1"
+                     {% if fm.tools and fm.tools[key] %}checked{% endif %}>
+              <code>{{ key }}</code>
+            </label>
+          {% endfor %}
+        </div>
+        {{ field_errors('tools') }}
+      </fieldset>
+
+      <div class="edit-actions">
+        <button type="submit"
+                class="btn-primary"
+                hx-post="/agents/{{ slug }}/edit"
+                hx-target="#diff-pane"
+                hx-swap="outerHTML">{{ 'edit.btn.validate' | t }}</button>
+        <a href="/catalog/agents" class="btn-link">{{ 'edit.btn.cancel' | t }}</a>
+      </div>
+    </form>
+  </section>
+
+  {# ─── RIGHT — live preview ────────────────────────────────────────────── #}
+  <aside class="edit-preview-pane">
+    <header class="edit-pane-head">
+      <h2>{{ 'edit.preview.title' | t }}</h2>
+      <span class="meta">{{ 'edit.preview.subtitle' | t }}</span>
+    </header>
+    <div id="preview-pane">
+      {{ agent_live_card(fm, tier=tier) }}
+    </div>
+  </aside>
+</div>
+
+{# ─── BOTTOM — diff (HTMX swap target) ─────────────────────────────────── #}
+{% if preview %}
+  {{ diff_pane(diff, errors, ebf, '/agents/' ~ slug ~ '/edit/apply', {
+    'name': fm.name, 'description': fm.description, 'mode': fm.mode, 'emoji': fm.emoji,
+    'temperature': fm.temperature, 'max_tokens': fm.max_tokens,
+    'tools_write':    fm.tools.write    if fm.tools else False,
+    'tools_edit':     fm.tools.edit     if fm.tools else False,
+    'tools_bash':     fm.tools.bash     if fm.tools else False,
+    'tools_question': fm.tools.question if fm.tools else False,
+  }, ('Apply changes to ' ~ slug ~ '.md?')) }}
+{% else %}
+  <div id="diff-pane" class="diff-pane diff-pane-empty">
+    <p class="meta">{{ 'edit.diff.empty' | t }}</p>
+  </div>
+{% endif %}
+
 {% endblock %}

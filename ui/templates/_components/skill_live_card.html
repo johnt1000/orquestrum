@@ -1,0 +1,47 @@
+{# skill_live_card(fm) — live preview of a skill based on form state. #}
+{% macro skill_live_card(fm) %}
+<div class="live-card live-card-skill">
+  <header class="live-card-head">
+    <span class="live-card-emoji live-card-emoji-skill" aria-hidden="true">◇</span>
+    <div class="live-card-title">
+      <span class="live-card-name">{{ fm.name or '—' }}</span>
+      {% if fm.emits_confidence %}
+        <span class="live-card-meta"><span class="live-chip is-on">emits confidence</span></span>
+      {% endif %}
+    </div>
+  </header>
+  <p class="live-card-desc">{{ fm.description or '' }}</p>
+
+  <dl class="live-card-stats">
+    <div class="live-stat">
+      <dt>inject_references</dt>
+      <dd><code>{{ fm.inject_references or 'false' }}</code></dd>
+    </div>
+    <div class="live-stat">
+      <dt>inject_fewshot</dt>
+      <dd><code>{{ fm.inject_fewshot or 'false' }}</code></dd>
+    </div>
+  </dl>
+
+  {% set deps = fm.depends_on or [] %}
+  {% if deps %}
+  <div class="live-card-deps">
+    <span class="live-card-deps-label">depends on</span>
+    <span class="skill-deps">
+      {% for d in deps %}<code class="skill-dep-chip">{{ d }}</code>{% endfor %}
+    </span>
+  </div>
+  {% endif %}
+
+  {% set chain = fm.chain or {} %}
+  {% if chain.next %}
+  <div class="live-card-chain">
+    <span class="live-card-deps-label">next</span>
+    <code class="skill-chain">{{ chain.next }}</code>
+    {% if chain.condition %}
+      <span class="live-card-chain-cond">when: {{ chain.condition }}</span>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endmacro %}

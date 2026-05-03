@@ -1,0 +1,69 @@
+{# diff_pane(diff, errors, errors_by_field, apply_url, hidden_fields)
+   Self-contained partial for the bottom diff/apply zone. Used both as initial
+   empty placeholder and as the HTMX swap result of POST /{...}/edit.
+
+   `diff`            list of (key, old_val, new_val) tuples (may be empty)
+   `errors`          list of validation errors (may be empty)
+   `errors_by_field` dict mapping field name → list of messages
+   `apply_url`       string — POST target for the Apply button
+   `hidden_fields`   dict of name → value pairs to embed as hidden inputs in the apply form
+                     (carries the validated form state into the apply POST)
+   `confirm_text`    string — confirmation prompt for data-confirm
+#}
+{% macro diff_pane(diff, errors, errors_by_field, apply_url, hidden_fields, confirm_text) %}
+<div id="diff-pane" class="diff-pane">
+
+  {% if errors %}
+    <article class="warn diff-errors">
+      <strong>{{ 'edit.lint_failed' | t }}</strong>
+      <p class="meta">{{ 'edit.lint_failed.body' | t }}</p>
+      {% if errors_by_field.get('_global') %}
+        <ul>{% for msg in errors_by_field['_global'] %}<li><code>{{ msg }}</code></li>{% endfor %}</ul>
+      {% endif %}
+      {% set field_keys = errors_by_field.keys() | reject('eq', '_global') | list %}
+      {% if field_keys %}
+        <ul>{% for f in field_keys %}{% for msg in errors_by_field[f] %}<li><code>{{ f }}</code>: {{ msg }}</li>{% endfor %}{% endfor %}</ul>
+      {% endif %}
+    </article>
+  {% endif %}
+
+  {% if diff and not errors %}
+    <article class="diff-card">
+      <header class="diff-pane-head">
+        <strong>{{ 'edit.diff.title' | t }}</strong>
+        <span class="meta">{{ 'edit.diff.count' | t(n=diff|length) }}</span>
+      </header>
+      <dl class="diff-list">
+        {% for key, old_val, new_val in diff %}
+          <dt><code>{{ key }}</code></dt>
+          <dd>
+            <div class="diff-pair">
+              <div class="diff-old"><span class="diff-label">{{ 'edit.diff.old' | t }}</span><code>{{ old_val }}</code></div>
+              <div class="diff-new"><span class="diff-label">{{ 'edit.diff.new' | t }}</span><code>{{ new_val }}</code></div>
+            </div>
+          </dd>
+        {% endfor %}
+      </dl>
+
+      <form method="post" action="{{ apply_url }}" class="edit-apply-form"
+            data-confirm="{{ confirm_text }}" data-spinner>
+        {% for k, v in hidden_fields.items() %}
+          {% if v is iterable and v is not string %}
+            {% for item in v %}<input type="hidden" name="{{ k }}" value="{{ item }}">{% endfor %}
+          {% elif v is sameas true %}
+            <input type="hidden" name="{{ k }}" value="1">
+          {% elif v is sameas false %}
+            {# omit — apply route treats absence as false #}
+          {% else %}
+            <input type="hidden" name="{{ k }}" value="{{ v }}">
+          {% endif %}
+        {% endfor %}
+        <button type="submit" class="btn-primary">{{ 'edit.btn.apply' | t }}</button>
+      </form>
+    </article>
+  {% elif not errors and diff is not none %}
+    <p class="meta diff-empty">{{ 'edit.diff.no_changes' | t }}</p>
+  {% endif %}
+
+</div>
+{% endmacro %}

@@ -1,19 +1,14 @@
 """edit_skill.py — refine skill frontmatter through the UI.
 
-Mirrors edit_agent.py with skill-specific fields:
-  - inject_references, inject_fewshot ∈ {false, full, compact}
-  - emits_confidence (bool)
-  - depends_on (list of slugs)
-  - chain.next, chain.condition
-
-Same three-step flow, same atomic write, same in-process lint preflight.
+Onda 5 mirrors edit_agent.py: 2-col layout, /preview HTMX endpoint,
+HTMX-aware /edit returning diff partial. Same atomic write at apply.
 """
 from __future__ import annotations
 import os
 import tempfile
 from pathlib import Path
 
-from fastapi import APIRouter, Form, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse
 
 from ui.lib import edit_validator
@@ -41,28 +36,6 @@ def _existing_slugs(cfg) -> list[str]:
                   if d.is_dir() and (d / 'SKILL.md').exists())
 
 
-@router.get('/{slug}/edit', response_class=HTMLResponse)
-async def show(request: Request, slug: str) -> HTMLResponse:
-    cfg       = request.app.state.config
-    templates = request.app.state.templates
-    path      = _slug_to_path(cfg, slug)
-    post      = fm.load(str(path))
-    return templates.TemplateResponse(
-        request, 'edit_skill.html',
-        {
-            'slug':         slug,
-            'path':         str(path.relative_to(cfg.root)),
-            'fm':           dict(post.metadata),
-            'errors':          [],
-            'errors_by_field': {},
-            'preview':         None,
-            'diff':            None,
-            'all_slugs':       _existing_slugs(cfg),
-            'valid_inject':    sorted(edit_validator.VALID_INJECT_VALUES),
-        },
-    )
-
-
 def _coerce_form_to_fm(orig: dict, form: dict) -> dict:
     new = dict(orig)
     if 'name' in form:           new['name']        = form['name'].strip()
@@ -75,7 +48,6 @@ def _coerce_form_to_fm(orig: dict, form: dict) -> dict:
     if 'emits_confidence' in form:
         new['emits_confidence'] = (form['emits_confidence'] == '1')
     elif 'emits_confidence' in new:
-        # Form omits the field when checkbox is unchecked → treat as false
         new['emits_confidence'] = False
 
     if 'depends_on' in form:
@@ -91,10 +63,66 @@ def _coerce_form_to_fm(orig: dict, form: dict) -> dict:
         if chain_condition:
             new['chain']['condition'] = chain_condition
     elif 'chain' in new and not chain_next and not chain_condition:
-        # Cleared both → drop chain
         new.pop('chain', None)
 
     return new
+
+
+def _hidden_fields_from_fm(new_fm: dict) -> dict:
+    out: dict = {
+        'name':              new_fm.get('name', ''),
+        'description':       new_fm.get('description', ''),
+        'inject_references': new_fm.get('inject_references', ''),
+        'inject_fewshot':    new_fm.get('inject_fewshot', ''),
+        'depends_on':        ', '.join(new_fm.get('depends_on') or []),
+    }
+    chain = new_fm.get('chain') or {}
+    out['chain_next']      = chain.get('next', '')
+    out['chain_condition'] = chain.get('condition', '')
+    if new_fm.get('emits_confidence'):
+        out['emits_confidence'] = '1'
+    return out
+
+
+def _is_htmx(request: Request) -> bool:
+    return request.headers.get('hx-request', '').lower() == 'true'
+
+
+@router.get('/{slug}/edit', response_class=HTMLResponse)
+async def show(request: Request, slug: str) -> HTMLResponse:
+    cfg       = request.app.state.config
+    templates = request.app.state.templates
+    path      = _slug_to_path(cfg, slug)
+    post      = fm.load(str(path))
+    return templates.TemplateResponse(
+        request, 'edit_skill.html',
+        {
+            'slug':            slug,
+            'path':            str(path.relative_to(cfg.root)),
+            'fm':              dict(post.metadata),
+            'errors':          [],
+            'errors_by_field': {},
+            'preview':         None,
+            'diff':            None,
+            'all_slugs':       _existing_slugs(cfg),
+            'valid_inject':    sorted(edit_validator.VALID_INJECT_VALUES),
+        },
+    )
+
+
+@router.post('/{slug}/preview', response_class=HTMLResponse)
+async def preview_card(request: Request, slug: str) -> HTMLResponse:
+    cfg       = request.app.state.config
+    templates = request.app.state.templates
+    path      = _slug_to_path(cfg, slug)
+    post      = fm.load(str(path))
+
+    form_data = dict(await request.form())
+    new_fm    = _coerce_form_to_fm(dict(post.metadata), form_data)
+    return templates.TemplateResponse(
+        request, '_partials/skill_preview.html',
+        {'fm': new_fm},
+    )
 
 
 @router.post('/{slug}/edit', response_class=HTMLResponse)
@@ -110,6 +138,20 @@ async def preview(request: Request, slug: str) -> HTMLResponse:
     all_slugs = _existing_slugs(cfg)
     errors = edit_validator.validate_skill_frontmatter(new_fm, all_slugs)
     diff   = edit_validator.diff_frontmatter(dict(post.metadata), new_fm)
+    ebf    = edit_validator.errors_by_field(errors)
+
+    if _is_htmx(request):
+        return templates.TemplateResponse(
+            request, '_partials/diff.html',
+            {
+                'diff':            diff,
+                'errors':          errors,
+                'errors_by_field': ebf,
+                'apply_url':       f'/skills/{slug}/edit/apply',
+                'hidden_fields':   _hidden_fields_from_fm(new_fm),
+                'confirm_text':    f'Apply changes to skills/{slug}/SKILL.md?',
+            },
+        )
 
     return templates.TemplateResponse(
         request, 'edit_skill.html',
@@ -118,7 +160,7 @@ async def preview(request: Request, slug: str) -> HTMLResponse:
             'path':            str(path.relative_to(cfg.root)),
             'fm':              new_fm,
             'errors':          errors,
-            'errors_by_field': edit_validator.errors_by_field(errors),
+            'errors_by_field': ebf,
             'preview':         True,
             'diff':            diff,
             'all_slugs':       all_slugs,
