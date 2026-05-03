@@ -342,3 +342,111 @@ class TestRenderListing:
         rendered = verify.render_listing(out, max_per_dir=5)
         # Truncation marker visible
         assert '+45 more' in rendered or '… +' in rendered
+
+    def test_only_filter_focuses_on_named_entries(self, tmp_path: Path):
+        out = tmp_path / 'home'
+        out.mkdir()
+        # Simulate a busy home dir: orquestrum dirs + lots of unrelated stuff
+        (out / '.claude').mkdir()
+        (out / '.sdd').mkdir()
+        (out / 'Documents').mkdir()
+        (out / 'Downloads').mkdir()
+        (out / '.zshrc').write_text('x', encoding='utf-8')
+        rendered = verify.render_listing(out, only=['.claude', '.sdd'])
+        assert '.claude/' in rendered
+        assert '.sdd/' in rendered
+        # Unrelated user dirs filtered out
+        assert 'Documents' not in rendered
+        assert 'Downloads' not in rendered
+
+    def test_skips_unlistable_subdir_without_crashing(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ):
+        """If a subdirectory raises PermissionError on iterdir
+        (e.g. ~/.Trash on macOS), the listing must continue, not abort."""
+        out = tmp_path / 'home'
+        out.mkdir()
+        (out / 'good').mkdir()
+        (out / 'good' / 'file.md').write_text('x', encoding='utf-8')
+        bad = out / 'bad'
+        bad.mkdir()
+
+        original_iterdir = Path.iterdir
+
+        def fake_iterdir(self):
+            if self == bad:
+                raise PermissionError(1, 'Operation not permitted', str(self))
+            return original_iterdir(self)
+
+        monkeypatch.setattr(Path, 'iterdir', fake_iterdir)
+        # Must not raise
+        rendered = verify.render_listing(out)
+        # Reports the failure inline instead of crashing
+        assert 'good' in rendered
+        assert 'bad' in rendered
+        assert 'not listable' in rendered or 'Operation not permitted' in rendered
+
+    def test_top_level_iterdir_failure_returns_message(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ):
+        out = tmp_path / 'restricted'
+        out.mkdir()
+        original_iterdir = Path.iterdir
+
+        def fake_iterdir(self):
+            if self == out:
+                raise PermissionError(1, 'denied', str(self))
+            return original_iterdir(self)
+
+        monkeypatch.setattr(Path, 'iterdir', fake_iterdir)
+        rendered = verify.render_listing(out)
+        assert 'cannot list' in rendered
+
+
+class TestRenderInstallListing:
+    def test_focuses_on_tool_specific_top_level_entries(self, tmp_path: Path):
+        target = tmp_path / 'home'
+        target.mkdir()
+        (target / '.claude').mkdir()
+        (target / '.sdd').mkdir()
+        (target / 'Documents').mkdir()
+        rendered = verify.render_install_listing('claude-code', target)
+        assert '.claude/' in rendered
+        assert '.sdd/' in rendered
+        assert 'Documents' not in rendered
+
+
+class TestVerifyInstallTolerantOfUserAgents:
+    """Regression for the 'expected 8, found 12' false negative when the
+    user has their own agents in .claude/agents/ alongside orquestrum's."""
+
+    def test_claude_code_passes_with_extra_user_agent_files(self, tmp_path: Path):
+        target = tmp_path / 'project'
+        _build_claude_code(target)
+        # User agents in the same dir
+        agents = target / '.claude' / 'agents'
+        (agents / 'my-personal-agent.md').write_text(
+            '---\nname: mine\n---\n', encoding='utf-8',
+        )
+        (agents / 'team-reviewer.md').write_text(
+            '---\nname: team\n---\n', encoding='utf-8',
+        )
+        report = verify.verify_install_target('claude-code', target)
+        assert report.passed, report.render()
+
+    def test_claude_code_fails_when_orquestrum_agent_missing(self, tmp_path: Path):
+        target = tmp_path / 'project'
+        _build_claude_code(target)
+        # Drop a known-orquestrum agent
+        (target / '.claude' / 'agents' / 'helm-the-architect.md').unlink()
+        report = verify.verify_install_target('claude-code', target)
+        assert not report.passed
+        assert any('helm-the-architect' in c.detail
+                   for c in report.checks if not c.ok)
+
+    def test_opencode_passes_with_extra_user_agents(self, tmp_path: Path):
+        target = tmp_path / 'opencode-config'
+        _build_opencode(target, with_placeholder=False)
+        (target / 'agents' / 'my-extra.md').write_text('x', encoding='utf-8')
+        report = verify.verify_install_target('opencode', target)
+        assert report.passed, report.render()

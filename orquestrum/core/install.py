@@ -225,14 +225,14 @@ def verify_install(tool: str, target: Path) -> bool:
     """Verify a completed install. Prints a per-check report and returns
     True if every check passed. Kept separate from `install_tool` so unit
     tests of copy mechanics don't have to provide a complete fixture."""
-    from orquestrum.lib.verify import verify_install_target, render_listing
+    from orquestrum.lib.verify import verify_install_target, render_install_listing
     abs_target = target.expanduser().resolve()
     report = verify_install_target(tool, abs_target)
     print(report.render())
-    # Surface what landed in the target — especially valuable for claude-code
-    # and cursor whose integration is entirely under dot-dirs that `ls`
-    # without -a hides.
-    print(render_listing(abs_target))
+    # Focused listing: only orquestrum-owned top-level entries under the
+    # target. When --target is ~, this avoids walking the entire home dir
+    # (and crashing on restricted dirs like ~/.Trash on macOS).
+    print(render_install_listing(tool, abs_target))
     if not report.passed:
         err(f'{tool}: install verification failed — '
             f'{report.fail_count} check(s) did not pass.')

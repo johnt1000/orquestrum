@@ -442,12 +442,14 @@ class TestVerifyInstall:
     def test_returns_true_on_complete_install(
         self, tmp_path: Path, capsys: pytest.CaptureFixture,
     ):
-        # Build the cursor integration in-place at the target
+        # Build the cursor integration in-place at the target with the
+        # real orquestrum agent .mdc filenames the verifier expects.
+        from orquestrum.lib.verify import _expected_agent_mdc_filenames
         target = tmp_path / 'target'
         rules = target / '.cursor' / 'rules'
         rules.mkdir(parents=True)
-        for i in range(8):
-            (rules / f'agent-{i}.mdc').write_text('rules', encoding='utf-8')
+        for fname in _expected_agent_mdc_filenames():
+            (rules / fname).write_text('rules', encoding='utf-8')
         assert core_install.verify_install('cursor', target) is True
         out = capsys.readouterr().out
         assert 'verify: install:cursor' in out

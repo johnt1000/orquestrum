@@ -126,6 +126,30 @@ def _check_count(report: VerifyReport, rel_path: str, glob: str,
     return n
 
 
+def _check_required_files(report: VerifyReport, rel_path: str,
+                          filenames: list[str], root: Path | None = None) -> int:
+    """Check that every name in `filenames` is present under `rel_path`.
+
+    Designed for verifying installs into shared directories where the user
+    may have other files alongside ours — e.g. `.claude/agents/` can contain
+    user agents next to orquestrum's. We assert OUR files are there, NOT
+    that the directory has exactly N files.
+
+    Returns the number of missing files (0 = all present).
+    """
+    base = root or report.root
+    dir_path = base / rel_path
+    missing = [name for name in filenames if not (dir_path / name).is_file()]
+    found = len(filenames) - len(missing)
+    if missing:
+        detail = f'{found}/{len(filenames)} present; missing: {", ".join(missing)}'
+        report.add(f'{rel_path}/<orq agents>', False, detail)
+    else:
+        report.add(f'{rel_path}/<orq agents>', True,
+                   f'{found}/{len(filenames)} present in {dir_path}')
+    return len(missing)
+
+
 # ─── per-tool verifiers ─────────────────────────────────────────────────────
 
 
@@ -186,10 +210,26 @@ def verify_convert_output(tool: str, out_dir: Path,
     return report
 
 
+def _expected_agent_md_filenames() -> list[str]:
+    """Return the 8 .md filenames orquestrum installs as agent files for
+    claude-code and opencode. Source: lib.models.AGENT_TIERS + name_to_kebab.
+    """
+    from orquestrum.lib.models import AGENT_TIERS
+    from orquestrum.lib.rewrite import name_to_kebab
+    return [f'{name_to_kebab(name)}.md' for name in AGENT_TIERS]
+
+
+def _expected_agent_mdc_filenames() -> list[str]:
+    """Same 8 names but with `.mdc` extension (cursor)."""
+    return [f.replace('.md', '.mdc') for f in _expected_agent_md_filenames()]
+
+
 def verify_install_target(tool: str, target: Path) -> VerifyReport:
     """Verify the artefacts copied by `orquestrum install --tool <tool> --target <target>`.
 
-    Project-level checks: agent files in the right place, no orphan placeholders.
+    Crucially, checks that orquestrum's NAMED files exist (not that the
+    target directory contains exactly N files). Users may have their own
+    agents/rules in the same shared dir and that's fine.
     """
     report = VerifyReport(target=f'install:{tool} → {target}', root=target)
 
@@ -200,9 +240,11 @@ def verify_install_target(tool: str, target: Path) -> VerifyReport:
     report.add('target directory exists', True, str(target))
 
     if tool == 'claude-code':
-        agents_dir = target / '.claude' / 'agents'
         _check_dir(report, '.claude/agents')
-        _check_count(report, '.claude/agents', '*.md', EXPECTED_AGENT_COUNT)
+        # Check the 8 specific orquestrum agent filenames exist —
+        # tolerant of user-owned agents in the same dir.
+        _check_required_files(report, '.claude/agents',
+                              _expected_agent_md_filenames())
         _check_file(report, '.claude/settings.json', min_bytes=10)
         _check_dir(report, '.sdd/docs')
         _check_dir(report, '.sdd/skills')
@@ -210,7 +252,9 @@ def verify_install_target(tool: str, target: Path) -> VerifyReport:
 
     elif tool == 'opencode':
         _check_dir(report, 'agents')
-        _check_count(report, 'agents', '*.md', EXPECTED_AGENT_COUNT)
+        # Same: orquestrum's 8 named agent files (not exact count).
+        _check_required_files(report, 'agents',
+                              _expected_agent_md_filenames())
         _check_dir(report, 'docs')
         _check_dir(report, 'skills')
         # Critical post-install check: __OPENCODE_ROOT__ must be resolved
@@ -220,8 +264,12 @@ def verify_install_target(tool: str, target: Path) -> VerifyReport:
 
     elif tool == 'cursor':
         _check_dir(report, '.cursor/rules')
-        _check_count(report, '.cursor/rules', '*.mdc',
-                     EXPECTED_AGENT_COUNT, exact=False)
+        # Cursor agent rules have deterministic .mdc names; check those
+        # specifically. Skill rules are part of orquestrum but their
+        # names depend on the source skills/ tree, so we don't enumerate
+        # them here.
+        _check_required_files(report, '.cursor/rules',
+                              _expected_agent_mdc_filenames())
 
     elif tool == 'aider':
         _check_file(report, 'CONVENTIONS.md', min_bytes=500)
@@ -310,21 +358,39 @@ def render_summary(reports: list[VerifyReport]) -> str:
     return '\n'.join(lines)
 
 
-def render_listing(out_dir: Path, max_per_dir: int = 12) -> str:
-    """Walk a 1-2 level deep listing of `out_dir` so dot-dirs and per-tool
-    top-level entries are visible at a glance.
+def render_listing(out_dir: Path, max_per_dir: int = 12,
+                   only: list[str] | None = None) -> str:
+    """Walk a 1-2 level deep listing of `out_dir`.
 
-    Designed for the convert/install final summary so users can confirm
-    files materialized — particularly important for claude-code whose
-    integration is entirely under .claude/ + .sdd/ (invisible to plain `ls`).
+    `only`: when given, render only top-level entries whose name matches.
+            Used by install verification to focus on orquestrum-owned
+            roots (e.g. ['.claude', '.sdd']) when the target is a large
+            directory like the user's home, where listing everything is
+            both noisy and prone to permission errors (~/.Trash on macOS,
+            mounted volumes, etc.).
+
+    Robust to OSError on individual entries: a single permission-denied
+    subdir does not abort the whole listing.
     """
     if not out_dir.is_dir():
         return f'  (directory not present: {out_dir})'
     lines = [f'  {out_dir}/']
-    entries = sorted(out_dir.iterdir(), key=lambda p: (not p.is_dir(), p.name))
+    try:
+        all_entries = list(out_dir.iterdir())
+    except (OSError, PermissionError) as e:
+        return f'  {out_dir}/   (cannot list: {e})'
+
+    if only is not None:
+        all_entries = [e for e in all_entries if e.name in only]
+
+    entries = sorted(all_entries, key=lambda p: (not p.is_dir(), p.name))
     for entry in entries:
         if entry.is_dir():
-            children = sorted(entry.iterdir())
+            try:
+                children = sorted(entry.iterdir())
+            except (OSError, PermissionError) as e:
+                lines.append(f'    {entry.name}/   {_DIM}(not listable: {e}){_NC}')
+                continue
             count = len(children)
             preview = ', '.join(c.name for c in children[:max_per_dir])
             if count > max_per_dir:
@@ -337,3 +403,21 @@ def render_listing(out_dir: Path, max_per_dir: int = 12) -> str:
             except OSError:
                 lines.append(f'    {entry.name}')
     return '\n'.join(lines)
+
+
+# Top-level orquestrum-owned entries per tool. Used by `verify_install` to
+# focus the post-install listing on what we wrote — avoids dumping the user's
+# entire home dir when --target is ~ and crashing on restricted system dirs.
+_INSTALL_TOP_LEVEL: dict[str, list[str]] = {
+    'claude-code': ['.claude', '.sdd'],
+    'opencode':    ['agents', 'docs', 'scripts', 'skills'],
+    'cursor':      ['.cursor', '.sdd'],
+    'aider':       ['CONVENTIONS.md', 'scripts'],
+    'windsurf':    ['.windsurfrules', 'scripts'],
+}
+
+
+def render_install_listing(tool: str, target: Path) -> str:
+    """Render a focused post-install listing — only orquestrum-owned roots."""
+    only = _INSTALL_TOP_LEVEL.get(tool)
+    return render_listing(target, only=only)
