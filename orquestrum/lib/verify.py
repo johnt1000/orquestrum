@@ -175,10 +175,10 @@ def verify_convert_output(tool: str, out_dir: Path,
         _check_count(report, '.claude/agents', '*.md', EXPECTED_AGENT_COUNT)
         _check_dir(report, '.claude/skills')
         _check_file(report, '.claude/settings.json', min_bytes=10)
-        _check_dir(report, '.sdd/docs')
-        _check_dir(report, '.sdd/scripts/hooks')
-        _check_dir(report, '.sdd/scripts/lib')
-        _check_file(report, '.sdd/scripts/archive-cleanup.sh', min_bytes=100)
+        _check_dir(report, '.claude/sdd/docs')
+        _check_dir(report, '.claude/sdd/scripts/hooks')
+        _check_dir(report, '.claude/sdd/scripts/lib')
+        _check_file(report, '.claude/sdd/scripts/archive-cleanup.sh', min_bytes=100)
 
     elif tool == 'opencode':
         _check_dir(report, 'agents')
@@ -247,8 +247,8 @@ def verify_install_target(tool: str, target: Path) -> VerifyReport:
                               _expected_agent_md_filenames())
         _check_dir(report, '.claude/skills')
         _check_file(report, '.claude/settings.json', min_bytes=10)
-        _check_dir(report, '.sdd/docs')
-        _check_dir(report, '.sdd/scripts/hooks')
+        _check_dir(report, '.claude/sdd/docs')
+        _check_dir(report, '.claude/sdd/scripts/hooks')
 
     elif tool == 'opencode':
         _check_dir(report, 'agents')
@@ -409,7 +409,9 @@ def render_listing(out_dir: Path, max_per_dir: int = 12,
 # focus the post-install listing on what we wrote — avoids dumping the user's
 # entire home dir when --target is ~ and crashing on restricted system dirs.
 _INSTALL_TOP_LEVEL: dict[str, list[str]] = {
-    'claude-code': ['.claude', '.sdd'],
+    # claude-code: everything is under .claude/ now (sdd moved inside) —
+    # one root, no top-level pollution outside Claude's own config dir.
+    'claude-code': ['.claude'],
     'opencode':    ['agents', 'docs', 'scripts', 'skills'],
     'cursor':      ['.cursor', '.sdd'],
     'aider':       ['CONVENTIONS.md', 'scripts'],

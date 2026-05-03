@@ -14,8 +14,10 @@ from orquestrum.lib import verify
 def _build_claude_code(out: Path) -> None:
     """Build a complete claude-code integration tree under `out`.
 
-    Reflects the v0.3 layout: skills under .claude/skills/ (Claude Code's
-    discovery path); docs + hook scripts stay under .sdd/.
+    Reflects the v0.3.1 layout: everything under .claude/ for total
+    isolation. Skills at .claude/skills/ (Claude Code's discovery path);
+    governance docs + hook scripts at .claude/sdd/ (orquestrum-internal
+    but still inside .claude/ so a single uninstall reclaims it cleanly).
     """
     agents = out / '.claude' / 'agents'
     agents.mkdir(parents=True)
@@ -29,10 +31,11 @@ def _build_claude_code(out: Path) -> None:
     (out / '.claude' / 'settings.json').write_text(
         json.dumps({'hooks': {}}), encoding='utf-8',
     )
-    (out / '.sdd' / 'docs').mkdir(parents=True)
-    (out / '.sdd' / 'scripts' / 'hooks').mkdir(parents=True)
-    (out / '.sdd' / 'scripts' / 'lib').mkdir(parents=True)
-    (out / '.sdd' / 'scripts' / 'archive-cleanup.sh').write_text(
+    sdd = out / '.claude' / 'sdd'
+    (sdd / 'docs').mkdir(parents=True)
+    (sdd / 'scripts' / 'hooks').mkdir(parents=True)
+    (sdd / 'scripts' / 'lib').mkdir(parents=True)
+    (sdd / 'scripts' / 'archive-cleanup.sh').write_text(
         '#!/usr/bin/env bash\n' + 'echo cleanup\n' * 10, encoding='utf-8',
     )
 
@@ -116,7 +119,7 @@ class TestConvertVerifierClaudeCode:
         out = tmp_path / 'claude-code'
         _build_claude_code(out)
         import shutil
-        shutil.rmtree(out / '.sdd' / 'scripts' / 'hooks')
+        shutil.rmtree(out / '.claude' / 'sdd' / 'scripts' / 'hooks')
         report = verify.verify_convert_output('claude-code', out)
         assert not report.passed
 
@@ -325,9 +328,8 @@ class TestRenderListing:
         out = tmp_path / 'cache' / 'claude-code'
         _build_claude_code(out)
         rendered = verify.render_listing(out)
-        # Top-level dot-dirs and files surface in the listing
+        # claude-code is now fully under .claude/ — single top-level entry
         assert '.claude/' in rendered
-        assert '.sdd/' in rendered
         # Sub-entries shown with count
         assert 'items' in rendered
 
@@ -412,11 +414,10 @@ class TestRenderInstallListing:
         target = tmp_path / 'home'
         target.mkdir()
         (target / '.claude').mkdir()
-        (target / '.sdd').mkdir()
         (target / 'Documents').mkdir()
         rendered = verify.render_install_listing('claude-code', target)
+        # claude-code is fully under .claude/ now — only that root surfaces
         assert '.claude/' in rendered
-        assert '.sdd/' in rendered
         assert 'Documents' not in rendered
 
 

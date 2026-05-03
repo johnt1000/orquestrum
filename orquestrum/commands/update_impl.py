@@ -85,11 +85,31 @@ def _cleanup_old_tool(project_root: Path, old_tool: str) -> list[str]:
         agents_dir = project_root / '.claude' / 'agents'
         if agents_dir.is_dir():
             removed += _remove_only_framework_files(agents_dir, agent_files)
-        # .sdd/ is exclusively Orquestrum's — safe to remove entirely
-        sdd = project_root / '.sdd'
+        # .claude/skills/ is shared — remove only Orquestrum-installed skills
+        skills_dir = project_root / '.claude' / 'skills'
+        if skills_dir.is_dir():
+            from orquestrum.lib.paths import canonical_assets_root
+            try:
+                canonical_skills = canonical_assets_root() / 'skills'
+                orq_skill_names = {d.name for d in canonical_skills.iterdir()
+                                   if d.is_dir()}
+                for name in orq_skill_names:
+                    target_skill = skills_dir / name
+                    if target_skill.is_dir():
+                        shutil.rmtree(target_skill, ignore_errors=True)
+                        removed.append(f'.claude/skills/{name}')
+            except OSError:
+                pass
+        # .claude/sdd/ is exclusively Orquestrum's — safe to remove entirely
+        sdd = project_root / '.claude' / 'sdd'
         if sdd.is_dir():
             shutil.rmtree(sdd, ignore_errors=True)
-            removed.append('.sdd')
+            removed.append('.claude/sdd')
+        # Legacy layout (pre-v0.3.1): .sdd/ at the project root
+        legacy_sdd = project_root / '.sdd'
+        if legacy_sdd.is_dir():
+            shutil.rmtree(legacy_sdd, ignore_errors=True)
+            removed.append('.sdd (legacy)')
         # settings.json: remove only OUR hook entries, preserve user keys
         settings = project_root / '.claude' / 'settings.json'
         if settings.exists():
@@ -182,21 +202,28 @@ def _run_self_upgrade() -> int:
 
 def _scrub_claude_settings_hooks(settings_path: Path) -> None:
     """Remove orquestrum hook entries from a Claude Code settings.json,
-    preserve user keys / other hooks."""
+    preserve user keys / other hooks.
+
+    Recognises both the current path (`.claude/sdd/scripts/...`) and the
+    legacy path (`.sdd/scripts/...`) so old installs scrub cleanly too.
+    """
     import json
     try:
         data = json.loads(settings_path.read_text(encoding='utf-8'))
     except (json.JSONDecodeError, OSError):
         return
     hooks = data.get('hooks') or {}
-    target_cmd = 'uv run .sdd/scripts/hooks/emit_metrics.py'
+    orq_cmds = {
+        'uv run .claude/sdd/scripts/hooks/emit_metrics.py',  # current
+        'uv run .sdd/scripts/hooks/emit_metrics.py',          # legacy (≤0.3.0)
+    }
     for event, blocks in list(hooks.items()):
         if not isinstance(blocks, list):
             continue
         new_blocks = []
         for block in blocks:
             inner = block.get('hooks') or []
-            kept = [h for h in inner if h.get('command') != target_cmd]
+            kept = [h for h in inner if h.get('command') not in orq_cmds]
             if kept:
                 new_blocks.append({**block, 'hooks': kept})
         if new_blocks:

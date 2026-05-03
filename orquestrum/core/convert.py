@@ -114,7 +114,7 @@ _CLAUDE_SETTINGS_TEMPLATE = '''{
         "hooks": [
           {
             "type": "command",
-            "command": "uv run .sdd/scripts/hooks/emit_metrics.py"
+            "command": "uv run .claude/sdd/scripts/hooks/emit_metrics.py"
           }
         ]
       }
@@ -125,7 +125,7 @@ _CLAUDE_SETTINGS_TEMPLATE = '''{
         "hooks": [
           {
             "type": "command",
-            "command": "uv run .sdd/scripts/hooks/emit_metrics.py"
+            "command": "uv run .claude/sdd/scripts/hooks/emit_metrics.py"
           }
         ]
       }
@@ -184,20 +184,32 @@ class ToolAdapter(ABC):
 
 
 class ClaudeCodeAdapter(ToolAdapter):
-    docs_prefix   = '.sdd/docs'
+    # Everything orquestrum installs lives under .claude/ for total isolation
+    # — opencode-style. Hook scripts and governance docs go to .claude/sdd/
+    # so a single `rm -rf ~/.claude` (or scoped uninstall) reclaims it cleanly.
+    docs_prefix   = '.claude/sdd/docs'
     # Skills go where Claude Code looks: ~/.claude/skills/ or
     # <project>/.claude/skills/. The .sdd/ prefix was OpenCode-style and
     # made Claude Code's /skills + auto-discovery blind to them.
     skills_prefix = '.claude/skills'
 
+    # Map orquestrum tiers → Claude Code model aliases. Aliases (opus/sonnet/
+    # haiku) are guaranteed-stable across Claude Code versions; full IDs
+    # (claude-opus-4-7) work in current versions but have been observed to
+    # fail-silently with "0 tool uses · 0 tokens · 1s" on certain plan
+    # configurations. Aliases sidestep that entirely.
+    _CLAUDE_TIER_ALIAS = {
+        'deep':       'opus',
+        'sharp':      'sonnet',   # collapsed (no intermediate Claude model)
+        'balanced':   'sonnet',
+        'mechanical': 'haiku',
+    }
+
     def _frontmatter(self, agent: AgentConfig, provider: str | None) -> str:
-        # Always resolve model — claude-code is always Anthropic; default to 'claude'.
-        # `resolve_model` returns OpenCode-style identifiers (`anthropic/claude-…`)
-        # but Claude Code's frontmatter expects the bare model name. Without this
-        # strip, Claude Code rejects the agent at load time ("erro de modelo")
-        # and falls back to the parent session's model.
-        raw_model = resolve_model(agent.name, provider or 'claude', agent.model_tier_override)
-        model = raw_model.split('/', 1)[-1] if '/' in raw_model else raw_model
+        # Use the alias for the agent's tier — see _CLAUDE_TIER_ALIAS above.
+        from orquestrum.lib.models import AGENT_TIERS
+        tier = agent.model_tier_override or AGENT_TIERS.get(agent.name, 'balanced')
+        model = self._CLAUDE_TIER_ALIAS.get(tier, 'sonnet')
         lines = ['---',
                  f'name: {_yaml_quote(agent.name)}',
                  f'description: {_yaml_quote(agent.description)}',
@@ -213,14 +225,18 @@ class ClaudeCodeAdapter(ToolAdapter):
     def convert(self, provider: str | None) -> None:
         out = INTEGRATIONS / 'claude-code'
         shutil.rmtree(out, ignore_errors=True)
+        # All orquestrum content under .claude/ for total isolation:
+        #   .claude/agents/       (subagents — Claude Code shift+tab + /agents)
+        #   .claude/skills/       (skills — Claude Code /skills + auto-load)
+        #   .claude/settings.json (hooks merged into existing user settings)
+        #   .claude/sdd/docs/     (orquestrum governance docs, agent refs)
+        #   .claude/sdd/scripts/  (metrics hook + lib)
         agents_out = out / '.claude' / 'agents'
-        agents_out.mkdir(parents=True)
-        # Skills live under .claude/skills/ so Claude Code's /skills command
-        # and auto-discovery find them. .sdd/ is reserved for orquestrum-
-        # internal docs + scripts that the agents reference by path.
         skills_out = out / '.claude' / 'skills'
+        sdd_root   = out / '.claude' / 'sdd'
+        agents_out.mkdir(parents=True)
         skills_out.mkdir(parents=True)
-        (out / '.sdd' / 'scripts').mkdir(parents=True)
+        (sdd_root / 'scripts').mkdir(parents=True)
 
         for agent_file in sorted(AGENTS_DIR.glob('*.md')):
             agent = parse_agent(agent_file)
@@ -230,17 +246,15 @@ class ClaudeCodeAdapter(ToolAdapter):
             out_file.write_text(content, encoding='utf-8')
             self._check_canonical(content, out_file.name, provider)
 
-        # docs/ stays under .sdd/ — orquestrum-internal governance content
-        # referenced by agent bodies via .sdd/docs/<...> paths.
-        shutil.copytree(DOCS_DIR, out / '.sdd' / 'docs', dirs_exist_ok=True)
+        shutil.copytree(DOCS_DIR, sdd_root / 'docs', dirs_exist_ok=True)
         shutil.copytree(SKILLS_DIR, skills_out, dirs_exist_ok=True)
         for bak in skills_out.rglob('*.bak'):
             bak.unlink()
 
         # Hook + lib copy: metrics hook needs orquestrum/lib/models for estimate_cost
-        shutil.copytree(CORE_DIR / 'hooks', out / '.sdd' / 'scripts' / 'hooks', dirs_exist_ok=True)
-        shutil.copytree(LIB_DIR,            out / '.sdd' / 'scripts' / 'lib',   dirs_exist_ok=True)
-        shutil.copy(BUNDLE_DIR / 'archive-cleanup.sh', out / '.sdd' / 'scripts')
+        shutil.copytree(CORE_DIR / 'hooks', sdd_root / 'scripts' / 'hooks', dirs_exist_ok=True)
+        shutil.copytree(LIB_DIR,            sdd_root / 'scripts' / 'lib',   dirs_exist_ok=True)
+        shutil.copy(BUNDLE_DIR / 'archive-cleanup.sh', sdd_root / 'scripts')
 
         # Claude Code settings.json template — install.py merges with user's existing
         (out / '.claude' / 'settings.json').write_text(_CLAUDE_SETTINGS_TEMPLATE, encoding='utf-8')
@@ -248,8 +262,8 @@ class ClaudeCodeAdapter(ToolAdapter):
         ok(f'claude-code → {out}')
         print(f'    .claude/agents/        ← Claude Code subagents (shift+tab picker)')
         print(f'    .claude/skills/        ← Claude Code skills (/skills, auto-loaded)')
-        print(f'    .claude/settings.json  ← merged into your project\'s settings (hooks for metrics)')
-        print(f'    .sdd/                  ← orquestrum docs + hook scripts')
+        print(f'    .claude/settings.json  ← merged hooks for orquestrum metrics')
+        print(f'    .claude/sdd/           ← orquestrum docs + hook scripts (isolated)')
 
 
 class OpenCodeAdapter(ToolAdapter):
