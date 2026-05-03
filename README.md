@@ -167,7 +167,7 @@ orquestrum update --tool opencode                # cleanup + reinstall + history
 | Command | What it does |
 |---------|--------------|
 | `orquestrum init [--name N] [--yes]` | Bootstrap `<project>/.orquestrum/` (config, manifest, gitignore, metrics dir) and register globally. Asks 3 interactive prompts about optional integrations (metrics hook, MCP server, agents). `--yes` accepts defaults silently. Tool installs are SEPARATE — see `orquestrum install`. |
-| `orquestrum update [--tool X] [--all] [--check] [--self]` | Re-sync this project (or all). `--tool` switches integrations with cleanup of the old one. `--self` prints the upgrade command for the CLI itself. |
+| `orquestrum update [--tool X] [--all] [--check] [--self]` | Re-sync this project (or all). `--tool` switches integrations with cleanup of the old one. `--self` upgrades the CLI itself (detects `uv tool` vs source install and runs the matching command — equivalent to re-running `install.sh`). |
 | `orquestrum web [--mode {project,framework,auto}] [--port N] [--no-browser]` | Launch the local console. Auto-detects mode from cwd. |
 | `orquestrum repos {list,add,remove}` | Manage the global registry at `~/.orquestrum/registry.toml`. |
 | `orquestrum convert [--tool X] [--all] [--provider Y] [--dry-run]` | Generate integration packages from canonical source. |

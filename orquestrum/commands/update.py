@@ -13,7 +13,10 @@ def register(sub: argparse._SubParsersAction) -> None:
     p.add_argument('--all', action='store_true', help='Iterate every registered project')
     p.add_argument('--check', action='store_true', help='Dry-run; show what would change')
     p.add_argument('--self', action='store_true', dest='self_update',
-                   help='Print the upgrade command for the CLI itself (no auto-update)')
+                   help='Upgrade the orquestrum CLI itself. Detects install '
+                        'mode (uv tool / source / unknown) and runs the '
+                        'matching upgrade command. Equivalent to re-running '
+                        'install.sh.')
     p.set_defaults(handler=_handler)
 
 
