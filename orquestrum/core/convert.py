@@ -205,6 +205,20 @@ class ClaudeCodeAdapter(ToolAdapter):
         'mechanical': 'haiku',
     }
 
+    # Per-agent tools allowlist for Claude Code subagents.
+    # Without `tools:`, the subagent inherits ALL tools, including Edit/Bash/
+    # Glob/Grep — which has been observed to trigger overreach (orchestrator
+    # editing user settings.json mid-task). Omitting an entry here means
+    # "no restriction" (all tools available); list it to constrain.
+    #
+    # Helm and Flux are pure coordinators: they classify, route via Task,
+    # read CHECKPOINT.md and write it back. They have no business writing
+    # to project files, running shell commands, or scanning code with grep.
+    _CLAUDE_TOOLS_ALLOWLIST = {
+        'Helm - The Architect': 'Task, Read, Write',
+        'Flux - Support Lead':  'Task, Read, Grep, Glob',  # +Grep/Glob for triage
+    }
+
     def _frontmatter(self, agent: AgentConfig, provider: str | None) -> str:
         # Claude Code recognises only `name`, `description`, `model`, and
         # `tools` in subagent frontmatter. Custom fields like `temperature`,
@@ -218,8 +232,11 @@ class ClaudeCodeAdapter(ToolAdapter):
         lines = ['---',
                  f'name: {_yaml_quote(agent.name)}',
                  f'description: {_yaml_quote(agent.description)}',
-                 f'model: {model}',
-                 '---\n']
+                 f'model: {model}']
+        tools_allowed = self._CLAUDE_TOOLS_ALLOWLIST.get(agent.name)
+        if tools_allowed:
+            lines.append(f'tools: {tools_allowed}')
+        lines.append('---\n')
         return '\n'.join(lines) + '\n'
 
     def convert(self, provider: str | None) -> None:
