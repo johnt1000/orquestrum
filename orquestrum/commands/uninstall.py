@@ -72,11 +72,33 @@ def _uninstall_self(*, yes: bool, dry_run: bool = False) -> int:
 # ── project ───────────────────────────────────────────────────────────────────
 
 def _describe_removal(project_root: Path, tool: str | None) -> list[str]:
-    """Return a list of items that will be removed (for preview)."""
+    """Return a list of items that will be removed (for preview).
+
+    Prefers the persistent install manifest (`~/.orquestrum/installs.json`)
+    as the source of truth — orquestrum only proposes to remove files it
+    actually installed. Falls back to the legacy heuristic when no manifest
+    record exists (e.g. installs that predate the manifest).
+    """
     from orquestrum.commands.update_impl import _orquestrum_agent_filenames
+    from orquestrum.lib import installs_manifest
     items: list[str] = []
 
-    if tool == 'claude-code':
+    # Source of truth — manifest knows exactly which files we wrote.
+    record = installs_manifest.get_install(tool, project_root) if tool else None
+
+    if record is not None:
+        # File-by-file accounting; user content under shared dirs is safe.
+        for rel in record.files:
+            if (project_root / rel).is_file():
+                items.append(rel)
+        # Directories only listed when empty after files would be removed
+        # (i.e. orquestrum-owned and would actually be reclaimed).
+        for rel in record.directories:
+            d = project_root / rel
+            if d.is_dir():
+                items.append(f'{rel}/ (if empty after file removal)')
+    elif tool == 'claude-code':
+        # Pre-manifest heuristic — kept for projects installed by older CLIs.
         agents_dir = project_root / '.claude' / 'agents'
         if agents_dir.is_dir():
             for fname in _orquestrum_agent_filenames():

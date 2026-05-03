@@ -157,6 +157,16 @@ def install_tool(tool: str, target: Path, *, force: bool = False) -> bool:
     for line in plan.render().splitlines():
         print(line)
 
+    # Enumerate exactly what we're about to write — needed so the
+    # post-install manifest can record orquestrum-owned files/dirs and
+    # uninstall can later be surgical (never touching user content).
+    from orquestrum.lib.installs_manifest import (
+        enumerate_writes, record_install,
+    )
+    files_to_record, dirs_we_create = enumerate_writes(
+        src, abs_target, ignore_filenames=ignored,
+    )
+
     abs_target.mkdir(parents=True, exist_ok=True)
 
     # Special handling: claude-code settings.json — merge instead of overwrite
@@ -170,6 +180,7 @@ def install_tool(tool: str, target: Path, *, force: bool = False) -> bool:
         # Then merge settings.json
         if template_settings.exists():
             _merge_claude_settings(template_settings, target_settings)
+            files_to_record.append(target_settings)
     else:
         shutil.copytree(src, abs_target, dirs_exist_ok=True)
 
@@ -197,6 +208,14 @@ def install_tool(tool: str, target: Path, *, force: bool = False) -> bool:
                     )
             except (OSError, UnicodeDecodeError):
                 pass
+
+    # Persist the install record. ~/.orquestrum/installs.json is now the
+    # source of truth for "which files does orquestrum own at this target?"
+    # — uninstall reads it to remove only orquestrum's files, leaving any
+    # user content that may have been added inside our managed dirs alone.
+    record_install(tool, abs_target,
+                   files=files_to_record,
+                   directories=dirs_we_create)
 
     ok(f'{tool} installed into {abs_target}')
     return True

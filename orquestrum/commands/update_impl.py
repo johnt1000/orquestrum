@@ -45,11 +45,38 @@ def _remove_only_framework_files(directory: Path, filenames: list[str]) -> list[
 
 
 def _cleanup_old_tool(project_root: Path, old_tool: str) -> list[str]:
-    """Remove only the files that Orquestrum installed for the given tool.
-    Never deletes shared directories (agents/, skills/) — only removes the
-    specific files Orquestrum placed there.
-    Returns a list of removed paths for the report.
+    """Remove only the files Orquestrum installed for the given tool.
+
+    Strategy:
+      1. If a manifest entry exists at `~/.orquestrum/installs.json` for
+         (target=project_root, tool=old_tool), use it as source of truth —
+         orquestrum removes ONLY the files/dirs it recorded. User-added
+         content in shared dirs is preserved (the rmdir of those dirs
+         fails if non-empty, leaving user files untouched).
+      2. Otherwise, fall back to the legacy heuristic for installs that
+         predate the manifest. The heuristic uses uniqueness of agent
+         filenames + `.sdd/` being orquestrum-exclusive by convention,
+         which is correct for the canonical install but cannot defend
+         against user files dropped under those dirs.
+
+    The manifest path is the future-proof one; the heuristic remains so
+    upgrades from older CLIs don't regress.
     """
+    from orquestrum.lib import installs_manifest
+
+    record = installs_manifest.get_install(old_tool, project_root)
+    if record is not None:
+        removed_files, removed_dirs = installs_manifest.surgical_uninstall(
+            old_tool, project_root,
+        )
+        # claude-code: hooks live inside settings.json, not as a separate file
+        if old_tool == 'claude-code':
+            settings = project_root / '.claude' / 'settings.json'
+            if settings.exists():
+                _scrub_claude_settings_hooks(settings)
+        return removed_files + [f'{d}/' for d in removed_dirs]
+
+    # ── legacy heuristic (no manifest entry) ────────────────────────────
     removed: list[str] = []
     agent_files = _orquestrum_agent_filenames()
 

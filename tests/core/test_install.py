@@ -248,6 +248,52 @@ class TestInstallToolUserFileProtection:
         # Plan shows new file count
         assert 'new' in out
 
+
+class TestInstallPersistsManifest:
+    """install_tool() must record what it created in
+    ~/.orquestrum/installs.json so future uninstalls are surgical."""
+
+    def test_records_files_and_dirs_after_cursor_install(
+        self, tmp_path: Path, fake_integrations: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        # Sandbox ORQUESTRUM_HOME for the test
+        home = tmp_path / 'orq-home'
+        home.mkdir()
+        monkeypatch.setenv('ORQUESTRUM_HOME', str(home))
+
+        target = tmp_path / 'project'
+        target.mkdir()
+        ok = core_install.install_tool('cursor', target)
+        assert ok is True
+
+        from orquestrum.lib import installs_manifest
+        record = installs_manifest.get_install('cursor', target)
+        assert record is not None
+        assert record.tool == 'cursor'
+        # Files actually written are in the manifest
+        assert any(rel.endswith('.mdc') for rel in record.files)
+        # New directories created are in the manifest
+        assert any('.cursor' in d for d in record.directories)
+
+    def test_records_settings_json_for_claude_code(
+        self, tmp_path: Path, fake_integrations: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        home = tmp_path / 'orq-home'
+        home.mkdir()
+        monkeypatch.setenv('ORQUESTRUM_HOME', str(home))
+
+        target = tmp_path / 'project'
+        target.mkdir()
+        core_install.install_tool('claude-code', target)
+        from orquestrum.lib import installs_manifest
+        record = installs_manifest.get_install('claude-code', target)
+        assert record is not None
+        # settings.json (handled by merge path, not classify) should still
+        # be recorded so uninstall can scrub or remove it.
+        assert any('settings.json' in f for f in record.files)
+
     def test_suggests_claude_code_on_typo(
         self, tmp_path: Path, fake_integrations: Path,
         capsys: pytest.CaptureFixture,

@@ -293,6 +293,98 @@ class TestCleanupOldTool:
         assert update_impl._cleanup_old_tool(project_root, 'made-up') == []
 
 
+class TestCleanupOldToolWithManifest:
+    """When an install manifest exists, cleanup must use it as source of
+    truth — never blanket-rmtree shared directories that could contain
+    user content."""
+
+    def test_manifest_path_preserves_user_files_in_sdd(
+        self, project_root: Path, isolated_home: Path,
+    ):
+        from orquestrum.lib import installs_manifest
+
+        # Simulate a real install state: orquestrum's files + user file
+        # placed inside .sdd/ (e.g. user added their own notes).
+        sdd = project_root / '.sdd'
+        sdd.mkdir(parents=True)
+        (sdd / 'docs').mkdir()
+        orq_doc = sdd / 'docs' / 'SDLC.md'
+        orq_doc.write_text('# orquestrum SDLC', encoding='utf-8')
+
+        agents = project_root / '.claude' / 'agents'
+        agents.mkdir(parents=True)
+        orq_agent = agents / 'helm-the-architect.md'
+        orq_agent.write_text('---\nname: x\n---', encoding='utf-8')
+
+        # User dropped a personal file inside orquestrum's .sdd/
+        user_note = sdd / 'my-personal-notes.md'
+        user_note.write_text('private notes', encoding='utf-8')
+
+        # Manifest records ONLY orquestrum's files
+        installs_manifest.record_install(
+            'claude-code', project_root,
+            files=[orq_doc, orq_agent],
+            directories=[
+                project_root / '.claude' / 'agents',
+                project_root / '.claude',
+                project_root / '.sdd' / 'docs',
+                project_root / '.sdd',
+            ],
+        )
+
+        update_impl._cleanup_old_tool(project_root, 'claude-code')
+
+        # Orquestrum files gone
+        assert not orq_doc.exists()
+        assert not orq_agent.exists()
+        # User file PRESERVED
+        assert user_note.is_file()
+        # .sdd/ NOT removed (still has user content)
+        assert sdd.is_dir()
+        # Manifest entry cleaned up
+        assert installs_manifest.get_install('claude-code', project_root) is None
+
+    def test_manifest_path_removes_dirs_when_orquestrum_only(
+        self, project_root: Path, isolated_home: Path,
+    ):
+        from orquestrum.lib import installs_manifest
+
+        rules = project_root / '.cursor' / 'rules'
+        rules.mkdir(parents=True)
+        f1 = rules / 'helm.mdc'
+        f1.write_text('rules', encoding='utf-8')
+        installs_manifest.record_install(
+            'cursor', project_root,
+            files=[f1],
+            directories=[rules, project_root / '.cursor'],
+        )
+
+        update_impl._cleanup_old_tool(project_root, 'cursor')
+
+        # All gone — directories were orquestrum-only
+        assert not f1.exists()
+        assert not rules.exists()
+        assert not (project_root / '.cursor').exists()
+
+    def test_falls_back_to_heuristic_without_manifest(
+        self, project_root: Path, isolated_home: Path,
+    ):
+        """Pre-manifest installs still cleanup correctly via legacy heuristic."""
+        agents = project_root / '.claude' / 'agents'
+        agents.mkdir(parents=True)
+        for name in update_impl._orquestrum_agent_filenames():
+            (agents / name).write_text('---\nname: x\n---', encoding='utf-8')
+        sdd = project_root / '.sdd' / 'docs'
+        sdd.mkdir(parents=True)
+        (sdd / 'X.md').write_text('x', encoding='utf-8')
+
+        # No manifest record → falls back to heuristic (blanket rmtree of .sdd)
+        update_impl._cleanup_old_tool(project_root, 'claude-code')
+        for name in update_impl._orquestrum_agent_filenames():
+            assert not (agents / name).exists()
+        assert not (project_root / '.sdd').exists()
+
+
 class TestDetectInstallMode:
     def test_returns_source_when_canonical_repo_has_git(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
