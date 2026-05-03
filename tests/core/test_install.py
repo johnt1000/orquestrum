@@ -294,6 +294,91 @@ class TestInstallPersistsManifest:
         # be recorded so uninstall can scrub or remove it.
         assert any('settings.json' in f for f in record.files)
 
+class TestMcpServersMerge:
+    """The settings.json merge must register the orquestrum MCP server
+    without clobbering other mcpServers entries the user has installed."""
+
+    def _build_claude_with_mcp(self, integrations_root: Path) -> None:
+        cc = integrations_root / 'claude-code'
+        (cc / '.claude' / 'agents').mkdir(parents=True, exist_ok=True)
+        (cc / '.claude' / 'agents' / 'helm-the-architect.md').write_text(
+            '---\nname: x\n---', encoding='utf-8',
+        )
+        (cc / '.sdd').mkdir(parents=True, exist_ok=True)
+        (cc / '.claude' / 'settings.json').write_text(json.dumps({
+            'hooks': {
+                'Stop': [{'matcher': '', 'hooks': [
+                    {'type': 'command',
+                     'command': 'uv run .claude/sdd/scripts/hooks/emit_metrics.py'},
+                ]}],
+            },
+            'mcpServers': {
+                'orquestrum': {
+                    'command': 'orquestrum',
+                    'args': ['mcp'],
+                    'type': 'stdio',
+                },
+            },
+        }), encoding='utf-8')
+
+    def test_registers_orquestrum_mcp_on_first_install(
+        self, tmp_path: Path, fake_integrations: Path,
+    ):
+        self._build_claude_with_mcp(fake_integrations)
+        target = tmp_path / 'project'
+        target.mkdir()
+        core_install.install_tool('claude-code', target)
+        out = json.loads((target / '.claude' / 'settings.json').read_text(encoding='utf-8'))
+        assert 'orquestrum' in out['mcpServers']
+        assert out['mcpServers']['orquestrum']['command'] == 'orquestrum'
+        assert out['mcpServers']['orquestrum']['args'] == ['mcp']
+
+    def test_preserves_user_mcp_servers_on_install(
+        self, tmp_path: Path, fake_integrations: Path,
+    ):
+        self._build_claude_with_mcp(fake_integrations)
+        target = tmp_path / 'project'
+        (target / '.claude').mkdir(parents=True)
+        # User already has their own MCP servers
+        (target / '.claude' / 'settings.json').write_text(json.dumps({
+            'theme': 'dark',
+            'mcpServers': {
+                'filesystem': {'command': 'mcp-filesystem', 'args': ['/']},
+                'github':     {'command': 'mcp-github',     'args': []},
+            },
+        }), encoding='utf-8')
+
+        core_install.install_tool('claude-code', target)
+        out = json.loads((target / '.claude' / 'settings.json').read_text(encoding='utf-8'))
+        # User entries preserved
+        assert 'filesystem' in out['mcpServers']
+        assert out['mcpServers']['filesystem']['command'] == 'mcp-filesystem'
+        assert 'github' in out['mcpServers']
+        # Orquestrum added alongside
+        assert 'orquestrum' in out['mcpServers']
+        # Theme key untouched
+        assert out['theme'] == 'dark'
+
+    def test_replaces_outdated_orquestrum_mcp_on_reinstall(
+        self, tmp_path: Path, fake_integrations: Path,
+    ):
+        self._build_claude_with_mcp(fake_integrations)
+        target = tmp_path / 'project'
+        (target / '.claude').mkdir(parents=True)
+        # Previous install used a different command
+        (target / '.claude' / 'settings.json').write_text(json.dumps({
+            'mcpServers': {
+                'orquestrum': {'command': 'old-cmd', 'args': ['legacy']},
+            },
+        }), encoding='utf-8')
+
+        core_install.install_tool('claude-code', target)
+        out = json.loads((target / '.claude' / 'settings.json').read_text(encoding='utf-8'))
+        # Latest config wins
+        assert out['mcpServers']['orquestrum']['command'] == 'orquestrum'
+        assert out['mcpServers']['orquestrum']['args'] == ['mcp']
+
+
     def test_suggests_claude_code_on_typo(
         self, tmp_path: Path, fake_integrations: Path,
         capsys: pytest.CaptureFixture,

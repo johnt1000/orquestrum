@@ -93,6 +93,25 @@ def _merge_claude_settings(template_path: Path, target_path: Path) -> None:
             existing.append(block)
             added.append(f'{event_name}: {block_command}')
 
+    # ── mcpServers merge ────────────────────────────────────────────────
+    # The orquestrum MCP server registers under the well-known key
+    # "orquestrum". On re-install we replace the entry (idempotent) so
+    # users always run the latest server config — but never touch other
+    # MCP servers the user has registered (filesystem, github, etc.).
+    target_mcp   = target_data.setdefault('mcpServers', {})
+    template_mcp = template_data.get('mcpServers', {}) or {}
+    mcp_added: list[str] = []
+    mcp_replaced: list[str] = []
+    for name, config in template_mcp.items():
+        if name in target_mcp:
+            mcp_replaced.append(name)
+        else:
+            mcp_added.append(name)
+        target_mcp[name] = config
+    # If the user manually deleted mcpServers entirely, don't reinstate empty.
+    if not target_mcp:
+        target_data.pop('mcpServers', None)
+
     target_path.write_text(json.dumps(target_data, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
     if removed_legacy:
         log(f'  settings.json: replaced {removed_legacy} prior orquestrum hook entr(y/ies)')
@@ -100,6 +119,10 @@ def _merge_claude_settings(template_path: Path, target_path: Path) -> None:
         ok(f'  settings.json: added {len(added)} hook(s)')
         for entry in added:
             print(f'    + {entry}')
+    if mcp_replaced:
+        log(f'  settings.json: replaced MCP server entries: {", ".join(mcp_replaced)}')
+    if mcp_added:
+        ok(f'  settings.json: registered MCP server(s): {", ".join(mcp_added)}')
 
 
 def detect_tools(target: Path) -> list[str]:

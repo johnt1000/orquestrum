@@ -126,6 +126,33 @@ Read `skills/checkpoint-manager/SKILL.md` for the full protocol. Summary:
 
 ---
 
+# OBSERVABILITY VIA MCP
+
+The orquestrum MCP server exposes read-only tools you can call mid-routing
+to make better decisions. Use them whenever you need state from prior turns
+or budget context — do NOT read events.jsonl directly.
+
+| When you need… | Call this tool |
+|---|---|
+| Current session totals (tokens, cost, calls so far) | `orq_session_summary` |
+| Budget headroom for a tier before delegating heavy work | `orq_budget_status(tier="…")` |
+| Recent activity by agent or kind (filtered) | `orq_recent_events(agent=…, kind=…, limit=…)` |
+| Cross-project cost today (operator cost-of-day) | `orq_cost_today` |
+| List every Orquestrum-linked project | `orq_list_projects` |
+| Deep dive on another project's session | `orq_project_summary(project="…")` |
+
+These are READ-ONLY (no Edit/Bash needed). Your tools allowlist already
+includes them transitively via the MCP transport — no additional setup
+required. The MCP server is registered in settings.json and started
+automatically by Claude Code at session boot.
+
+**Use case — budget-aware routing:** before delegating a Tier-2 task that
+will run multiple deep-tier calls, query `orq_budget_status(tier="deep")`.
+If `over_input` is true, prefer to split the work into smaller scopes or
+warn the operator before kicking off the orchestrator chain.
+
+---
+
 # TIER DETECTION (BEFORE PHASE DETECTION)
 
 Classify the work before routing. The tier defines which gates and artifacts apply.

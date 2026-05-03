@@ -5,6 +5,11 @@ description = "Specification-Driven Development framework for multi-agent AI sys
 requires-python = ">=3.12"
 dependencies = [
     "python-frontmatter>=1.1",
+    # MCP server (orquestrum mcp): exposes orq_* tools to LLM agents.
+    # Includes Pydantic for input validation. The official MCP Python SDK
+    # bundles FastMCP under `mcp.server.fastmcp`.
+    "mcp>=1.0",
+    "pydantic>=2.0",
 ]
 
 [project.scripts]

@@ -105,7 +105,10 @@ def _maybe_invalidate_cache(out: Path) -> None:
     except OSError:
         pass
 
-# Settings.json template for Claude Code with metrics hook installed
+# Settings.json template for Claude Code: metrics hook + MCP server.
+# Hooks remain the canonical source of token counts (Claude Code's API
+# counters are authoritative). The orquestrum MCP server adds rich domain
+# events + real-time queries that the hook cannot capture.
 _CLAUDE_SETTINGS_TEMPLATE = '''{
   "hooks": {
     "Stop": [
@@ -130,6 +133,13 @@ _CLAUDE_SETTINGS_TEMPLATE = '''{
         ]
       }
     ]
+  },
+  "mcpServers": {
+    "orquestrum": {
+      "command": "orquestrum",
+      "args": ["mcp"],
+      "type": "stdio"
+    }
   }
 }
 '''
@@ -214,9 +224,29 @@ class ClaudeCodeAdapter(ToolAdapter):
     # Helm and Flux are pure coordinators: they classify, route via Task,
     # read CHECKPOINT.md and write it back. They have no business writing
     # to project files, running shell commands, or scanning code with grep.
+    #
+    # The mcp__orquestrum__orq_* entries grant access to the READ-ONLY tools
+    # of the orquestrum MCP server (session_summary, budget_status, etc.).
+    # Write MCP tools (orq_record_event, orq_skill_completed) are
+    # intentionally excluded — coordinators don't author metric events;
+    # the executors (Forge/Ward/etc., which have no allowlist) do.
     _CLAUDE_TOOLS_ALLOWLIST = {
-        'Helm - The Architect': 'Task, Read, Write',
-        'Flux - Support Lead':  'Task, Read, Grep, Glob',  # +Grep/Glob for triage
+        'Helm - The Architect': (
+            'Task, Read, Write, '
+            'mcp__orquestrum__orq_session_summary, '
+            'mcp__orquestrum__orq_budget_status, '
+            'mcp__orquestrum__orq_recent_events, '
+            'mcp__orquestrum__orq_list_projects, '
+            'mcp__orquestrum__orq_project_summary, '
+            'mcp__orquestrum__orq_cost_today'
+        ),
+        'Flux - Support Lead': (
+            'Task, Read, Grep, Glob, '
+            'mcp__orquestrum__orq_session_summary, '
+            'mcp__orquestrum__orq_recent_events, '
+            'mcp__orquestrum__orq_list_projects, '
+            'mcp__orquestrum__orq_cost_today'
+        ),
     }
 
     def _frontmatter(self, agent: AgentConfig, provider: str | None) -> str:
