@@ -116,15 +116,6 @@ def _describe_removal(project_root: Path, tool: str | None) -> list[str]:
                     items.append(f'.opencode/agents/{fname}')
         if (project_root / '.opencode' / 'docs').is_dir():
             items.append('.opencode/docs/')
-    elif tool == 'cursor':
-        if (project_root / '.cursor' / 'rules').is_dir():
-            items.append('.cursor/rules/')
-    elif tool == 'aider':
-        if (project_root / 'CONVENTIONS.md').exists():
-            items.append('CONVENTIONS.md')
-    elif tool == 'windsurf':
-        if (project_root / '.windsurfrules').exists():
-            items.append('.windsurfrules')
 
     if (project_root / '.orquestrum').is_dir():
         items.append('.orquestrum/')

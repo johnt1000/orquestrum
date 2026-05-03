@@ -214,7 +214,7 @@ class TestConvertPost:
     async def test_creates_job_entry(self, fw_client: httpx.AsyncClient):
         r = await fw_client.post(
             '/convert',
-            data={'tool': 'cursor', 'provider': '(none)'},
+            data={'tool': 'claude-code', 'provider': '(none)'},
             follow_redirects=False,
         )
         assert r.status_code == 303

@@ -70,7 +70,7 @@ Agents and skill assets always use **paths without tool-specific prefixes**:
 - `./references/`, `./assets/` — internal references within a skill
 
 `orquestrum convert` (logic in `orquestrum/core/convert.py`) rewrites these paths for each tool:
-- Claude Code / Cursor / Aider / Windsurf: `docs/` → `.sdd/docs/`, `skills/` → `.sdd/skills/`
+- Claude Code: `docs/` → `.claude/sdd/docs/`, `skills/` → `.claude/skills/` (everything under `.claude/` for full isolation)
 - OpenCode: `docs/` → `__OPENCODE_ROOT__/docs/`, substituted with the absolute target path at install time
 
 ### Pipeline phases

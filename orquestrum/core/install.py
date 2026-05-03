@@ -133,12 +133,6 @@ def detect_tools(target: Path) -> list[str]:
     if ((home / '.config' / 'opencode').is_dir() or
             (target / '.opencode').is_dir() or shutil.which('opencode')):
         found.append('opencode')
-    if (target / '.cursor').is_dir() or shutil.which('cursor'):
-        found.append('cursor')
-    if shutil.which('aider'):
-        found.append('aider')
-    if (target / '.windsurfrules').exists() or shutil.which('windsurf'):
-        found.append('windsurf')
     return found
 
 

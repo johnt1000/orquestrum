@@ -1,22 +1,19 @@
 """orquestrum.lib.install_plan — pre-flight classification for `install`.
 
 Guarantees the user-facing contract: orquestrum only ever creates / updates
-files it owns. User files at the same path are detected and refused unless
-the operator passes `--force`.
+files it owns.
 
-Two layers of protection:
+Plan classification — for every file in the staging dir, decide whether the
+install would CREATE, UPDATE (orquestrum's own previous write), or LEAVE
+UNCHANGED at the target. Reported back to the user so the action is never
+opaque.
 
-1. **Single-owner files** — paths owned by exactly one tool (aider's
-   `CONVENTIONS.md`, windsurf's `.windsurfrules`). Both are common
-   project-level files that pre-exist in many repos. Detection is via
-   a marker line at the top of orquestrum-generated content (set by the
-   adapters in `orquestrum/core/convert.py`). Files lacking the marker
-   are user-owned.
-
-2. **Plan classification** — for every file in the staging dir, decide
-   whether the install would CREATE, UPDATE (orquestrum's own previous
-   write), or LEAVE UNCHANGED at the target. Reported back to the user
-   so the action is never opaque.
+Single-owner protection (kept as no-op since v0.4): the previous design
+guarded a few common project-level files (aider's `CONVENTIONS.md`,
+windsurf's `.windsurfrules`) that orquestrum used to own outright. With
+those tools dropped in v0.4, no current integration ships a single-owner
+file; the dict below is left empty and the function still exposed so
+re-introducing a guarded path stays a one-line change.
 """
 from __future__ import annotations
 from dataclasses import dataclass, field
@@ -24,11 +21,9 @@ from pathlib import Path
 
 
 # Tools where a single conventional file is fully owned by the integration.
-# `(relative_path, marker_substring_in_first_kb)` per tool.
-_SINGLE_OWNER_FILES: dict[str, list[tuple[str, str]]] = {
-    'aider':    [('CONVENTIONS.md', 'Orquestrum — Agent Conventions')],
-    'windsurf': [('.windsurfrules',  'Orquestrum — Agent Rules')],
-}
+# Empty in v0.4 (claude-code and opencode write into dedicated dirs); kept
+# here as a documented extension point.
+_SINGLE_OWNER_FILES: dict[str, list[tuple[str, str]]] = {}
 
 
 # ANSI colours mirror the rest of the verify module so output is uniform.

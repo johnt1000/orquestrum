@@ -34,7 +34,7 @@ class TestLintOnRealRepo:
     def test_no_tool_specific_paths_in_stdout(self):
         result = _run_lint()
         # These would appear in ✗ error lines if found in source files
-        for forbidden in ('.opencode/', '.cursor/', '.sdd/'):
+        for forbidden in ('.opencode/', '.sdd/'):
             assert forbidden not in result.stdout
 
     def test_all_agents_pass(self):

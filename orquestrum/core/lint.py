@@ -40,7 +40,7 @@ NC     = '\033[0m'
 errors   = 0
 warnings = 0
 
-TOOL_PATHS = ['.opencode/', '.cursor/rules/', '.windsurfrules', '.sdd/']
+TOOL_PATHS = ['.opencode/', '.sdd/']
 
 
 def fail(msg: str) -> None:

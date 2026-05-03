@@ -6,7 +6,7 @@
 > shell hooks, and `uv tool install` semantics that diverge on Windows. WSL2 is best-effort
 > but unsupported. See [`docs/governance/DISTRIBUTION.md`](docs/governance/DISTRIBUTION.md).
 
-Orquestrum is a collection of orchestrator agents and specialized skills that guide a software project through a structured pipeline — from discovery to release. It is tool-agnostic: the canonical source is converted to work with Claude Code, OpenCode, Cursor, Aider, and Windsurf.
+Orquestrum is a collection of orchestrator agents and specialized skills that guide a software project through a structured pipeline — from discovery to release. The canonical source is converted to work with **Claude Code** and **OpenCode** — the two LLM agent runtimes with mature subagent + MCP support. (Earlier versions also targeted Cursor, Aider, and Windsurf; v0.4 narrowed scope to the runtimes whose orchestration capabilities match the framework's design.)
 
 ---
 
@@ -238,11 +238,9 @@ orquestrum audit parity
 orquestrum deps --update-pins
 ```
 
-**Claude Code** — agents to `.claude/agents/`, docs/skills to `.sdd/` (paths resolved relative to project root)  
-**OpenCode** — 8 flat agent files with `mode: primary` (all visible in Tab picker), docs/skills to `--target`  
-**Cursor** — rule files in `.cursor/rules/` with `.sdd/docs` paths and embedded reference content  
-**Aider** — single `CONVENTIONS.md` with all agents, skills, and `.sdd/docs` paths  
-**Windsurf** — single `.windsurfrules` with all agents, skills, and `.sdd/docs` paths
+**Claude Code** — agents to `.claude/agents/`, skills to `.claude/skills/`, governance docs + hook scripts to `.claude/sdd/`. Subagents are picker-discoverable via `@` and `/agents`.
+
+**OpenCode** — 8 flat agent files with `mode: primary` (all visible in Tab picker), docs/skills under the `--target` config dir.
 
 ---
 
@@ -303,7 +301,7 @@ When generated **without** `--provider`, the `model` field is omitted from agent
 
 ## Static RAG
 
-Skills for Cursor, Aider, and Windsurf include their reference knowledge **embedded at convert time** — no runtime file reads required. Claude Code and OpenCode keep references as separate files (cheaper context).
+Skill references are kept as separate files for both supported tools (cheaper context — agents read on demand instead of carrying everything in the prompt).
 
 The `pattern-manager` reference uses a **fragmented structure** — an index file lists all patterns, and individual pattern files are loaded on demand. This reduces context from ~8,000 tokens (monolithic) to ~2,000-4,000 tokens per session.
 
@@ -313,13 +311,10 @@ The `pattern-manager` reference uses a **fragmented structure** — an index fil
 
 Canonical source uses bare paths (`docs/agent-context/SDLC.md`, `skills/.../SKILL.md`). `convert.py` rewrites them per tool:
 
-| Tool        | Docs/skills prefix               | Resolved at                                       |
-| ----------- | -------------------------------- | ------------------------------------------------- |
-| claude-code | `.sdd/docs` / `.sdd/skills`      | Runtime (relative to project CWD)                 |
-| opencode    | `__OPENCODE_ROOT__` placeholder  | Install time — replaced with absolute `--target` path |
-| cursor      | `.sdd/docs` / `.sdd/skills`      | Runtime (relative to project CWD)                 |
-| aider       | `.sdd/docs` / `.sdd/skills`      | Runtime (relative to project CWD)                 |
-| windsurf    | `.sdd/docs` / `.sdd/skills`      | Runtime (relative to project CWD)                 |
+| Tool        | Docs prefix              | Skills prefix             | Resolved at                                       |
+| ----------- | ------------------------ | ------------------------- | ------------------------------------------------- |
+| claude-code | `.claude/sdd/docs`       | `.claude/skills`          | Runtime (relative to project CWD)                 |
+| opencode    | `__OPENCODE_ROOT__/docs` | `__OPENCODE_ROOT__/skills`| Install time — placeholder replaced with absolute `--target` path |
 
 ---
 
@@ -341,7 +336,7 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full workflow, instructions for
 The lint checks:
 
 - Frontmatter has required fields: `name`, `description`
-- No hardcoded tool-specific paths (`.opencode/`, `.claude/`, `.cursor/`) in canonical source
+- No hardcoded tool-specific paths (`.opencode/`, `.claude/`) in canonical source
 - `chain.next` and `depends_on` point to existing skills
 - REGISTRY.md is consistent with the skills directory
 

@@ -14,56 +14,16 @@ class TestDetectUserOwnedFiles:
     def test_returns_empty_when_no_files_present(self, tmp_path: Path):
         target = tmp_path / 'fresh-project'
         target.mkdir()
-        assert install_plan.detect_user_owned_files('aider', target) == []
-        assert install_plan.detect_user_owned_files('windsurf', target) == []
+        assert install_plan.detect_user_owned_files('claude-code', target) == []
+        assert install_plan.detect_user_owned_files('opencode', target) == []
 
-    def test_aider_user_conventions_md_detected(self, tmp_path: Path):
+    def test_supported_tools_have_no_single_owner_files(self, tmp_path: Path):
+        # v0.4: both supported tools (claude-code, opencode) write into
+        # dedicated subdirs (.claude/, agents/, etc.), so no file at the
+        # target root is single-owner. The dict is empty by design.
         target = tmp_path / 'project'
         target.mkdir()
-        # User's own CONVENTIONS.md (no orquestrum marker)
-        (target / 'CONVENTIONS.md').write_text(
-            '# My project conventions\nUse 2-space indentation.\n',
-            encoding='utf-8',
-        )
-        result = install_plan.detect_user_owned_files('aider', target)
-        assert len(result) == 1
-        assert result[0].name == 'CONVENTIONS.md'
-
-    def test_aider_orquestrum_conventions_md_not_flagged(self, tmp_path: Path):
-        target = tmp_path / 'project'
-        target.mkdir()
-        # Orquestrum-generated CONVENTIONS.md (has marker)
-        (target / 'CONVENTIONS.md').write_text(
-            '# Orquestrum — Agent Conventions\n\n> Auto-generated.\n',
-            encoding='utf-8',
-        )
-        assert install_plan.detect_user_owned_files('aider', target) == []
-
-    def test_windsurf_user_windsurfrules_detected(self, tmp_path: Path):
-        target = tmp_path / 'project'
-        target.mkdir()
-        (target / '.windsurfrules').write_text(
-            'My personal windsurf rules\nrule 1\nrule 2\n', encoding='utf-8',
-        )
-        result = install_plan.detect_user_owned_files('windsurf', target)
-        assert len(result) == 1
-        assert result[0].name == '.windsurfrules'
-
-    def test_windsurf_orquestrum_windsurfrules_not_flagged(self, tmp_path: Path):
-        target = tmp_path / 'project'
-        target.mkdir()
-        (target / '.windsurfrules').write_text(
-            '# Orquestrum — Agent Rules\n\n> Auto-generated.\n',
-            encoding='utf-8',
-        )
-        assert install_plan.detect_user_owned_files('windsurf', target) == []
-
-    def test_other_tools_have_no_single_owner_files(self, tmp_path: Path):
-        target = tmp_path / 'project'
-        target.mkdir()
-        # claude-code, opencode, cursor have no single-owner conflict files
-        # because their content lives in dedicated subdirs.
-        for tool in ('claude-code', 'opencode', 'cursor'):
+        for tool in ('claude-code', 'opencode'):
             assert install_plan.detect_user_owned_files(tool, target) == []
 
     def test_unknown_tool_returns_empty(self, tmp_path: Path):

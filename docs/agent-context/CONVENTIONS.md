@@ -172,7 +172,6 @@ Default (no markers): treated as **volatile** — no cache benefit but also no r
 |---------|------------------|
 | `claude-code` | Markers preserved as comments; Anthropic backend auto-caches stable system prompts ≥1024 tokens. Native segmented caching may be added when Claude Code exposes the API. |
 | `opencode` | Markers stripped (no cache support today). |
-| `cursor`, `aider`, `windsurf` | Markers stripped; static RAG already shrinks per-session payload. |
 
 The single source of truth for adapter cache support is `_segment_for_cache()` in `orquestrum/core/convert.py`. When a tool gains native cache support, only that adapter changes — canonical sources remain untouched.
 

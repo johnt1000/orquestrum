@@ -58,37 +58,6 @@ def _build_opencode(out: Path, *, with_placeholder: bool = True) -> None:
     )
 
 
-def _build_cursor(out: Path, skill_count: int = 25) -> None:
-    rules = out / '.cursor' / 'rules'
-    rules.mkdir(parents=True)
-    for i in range(8):
-        (rules / f'agent-{i}.mdc').write_text('rules', encoding='utf-8')
-    for i in range(skill_count):
-        (rules / f'skill-{i}.mdc').write_text('rules', encoding='utf-8')
-    (out / '.sdd' / 'scripts').mkdir(parents=True)
-    (out / '.sdd' / 'scripts' / 'archive-cleanup.sh').write_text(
-        '#!/usr/bin/env bash\n' + 'echo cleanup\n' * 10, encoding='utf-8',
-    )
-
-
-def _build_aider(out: Path) -> None:
-    out.mkdir(parents=True)
-    (out / 'CONVENTIONS.md').write_text('x' * 1000, encoding='utf-8')
-    (out / 'scripts').mkdir()
-    (out / 'scripts' / 'archive-cleanup.sh').write_text(
-        '#!/usr/bin/env bash\n' + 'echo cleanup\n' * 10, encoding='utf-8',
-    )
-
-
-def _build_windsurf(out: Path) -> None:
-    out.mkdir(parents=True)
-    (out / '.windsurfrules').write_text('x' * 1000, encoding='utf-8')
-    (out / 'scripts').mkdir()
-    (out / 'scripts' / 'archive-cleanup.sh').write_text(
-        '#!/usr/bin/env bash\n' + 'echo cleanup\n' * 10, encoding='utf-8',
-    )
-
-
 # ─── verify_convert_output ──────────────────────────────────────────────────
 
 
@@ -141,49 +110,6 @@ class TestConvertVerifierOpenCode:
         assert report.passed
 
 
-class TestConvertVerifierCursor:
-    def test_uses_skill_count_for_minimum(self, tmp_path: Path):
-        out = tmp_path / 'cursor'
-        _build_cursor(out, skill_count=25)
-        report = verify.verify_convert_output('cursor', out, expected_skill_count=25)
-        assert report.passed
-
-    def test_passes_when_skill_count_higher_than_expected(self, tmp_path: Path):
-        out = tmp_path / 'cursor'
-        _build_cursor(out, skill_count=30)
-        report = verify.verify_convert_output('cursor', out, expected_skill_count=25)
-        assert report.passed  # extras allowed
-
-    def test_fails_when_under_minimum(self, tmp_path: Path):
-        out = tmp_path / 'cursor'
-        _build_cursor(out, skill_count=2)
-        report = verify.verify_convert_output('cursor', out, expected_skill_count=25)
-        assert not report.passed
-
-
-class TestConvertVerifierAider:
-    def test_passes(self, tmp_path: Path):
-        out = tmp_path / 'aider'
-        _build_aider(out)
-        report = verify.verify_convert_output('aider', out)
-        assert report.passed
-
-    def test_fails_when_conventions_too_small(self, tmp_path: Path):
-        out = tmp_path / 'aider'
-        _build_aider(out)
-        (out / 'CONVENTIONS.md').write_text('tiny', encoding='utf-8')
-        report = verify.verify_convert_output('aider', out)
-        assert not report.passed
-
-
-class TestConvertVerifierWindsurf:
-    def test_passes(self, tmp_path: Path):
-        out = tmp_path / 'windsurf'
-        _build_windsurf(out)
-        report = verify.verify_convert_output('windsurf', out)
-        assert report.passed
-
-
 class TestConvertVerifierMissingDir:
     def test_reports_failure_when_output_dir_does_not_exist(self, tmp_path: Path):
         out = tmp_path / 'never-created'
@@ -229,7 +155,7 @@ class TestInstallVerifierOpenCode:
 class TestInstallVerifierMissingTarget:
     def test_reports_failure(self, tmp_path: Path):
         target = tmp_path / 'never-created'
-        report = verify.verify_install_target('cursor', target)
+        report = verify.verify_install_target('opencode', target)
         assert not report.passed
 
 
@@ -238,21 +164,23 @@ class TestInstallVerifierMissingTarget:
 
 class TestReportRender:
     def test_render_includes_each_check(self, tmp_path: Path):
-        out = tmp_path / 'aider'
-        _build_aider(out)
-        report = verify.verify_convert_output('aider', out)
+        out = tmp_path / 'opencode'
+        _build_opencode(out, with_placeholder=False)
+        report = verify.verify_convert_output('opencode', out)
         rendered = report.render()
-        assert 'verify: convert:aider' in rendered
-        assert 'CONVENTIONS.md' in rendered
+        assert 'verify: convert:opencode' in rendered
+        assert 'agents' in rendered
 
     def test_summary_counts_passes_and_fails(self, tmp_path: Path):
-        a = tmp_path / 'aider'
-        _build_aider(a)
-        b = tmp_path / 'cursor'
-        _build_cursor(b, skill_count=2)  # too few skills → fail
+        # Two reports: one valid opencode, one broken (missing dirs)
+        a = tmp_path / 'opencode'
+        _build_opencode(a, with_placeholder=False)
+        b = tmp_path / 'broken'
+        b.mkdir()
+        # b lacks the required agents/, docs/, skills/, scripts/ — fails
         reports = [
-            verify.verify_convert_output('aider', a),
-            verify.verify_convert_output('cursor', b, expected_skill_count=25),
+            verify.verify_convert_output('opencode', a),
+            verify.verify_convert_output('opencode', b),
         ]
         out = verify.render_summary(reports)
         assert '1/2 verifications passed' in out
@@ -289,13 +217,6 @@ class TestDetectTargetMisuse:
         assert 'double-nested' in msg
         # The error must suggest the parent path as the right answer
         assert str(tmp_path) in msg
-
-    def test_cursor_with_target_dot_cursor_is_rejected(self, tmp_path: Path):
-        target = tmp_path / '.cursor'
-        target.mkdir()
-        msg = verify.detect_target_misuse('cursor', target)
-        assert msg is not None
-        assert '.cursor' in msg
 
     def test_claude_code_with_project_root_is_ok(self, tmp_path: Path):
         target = tmp_path / 'myproject'

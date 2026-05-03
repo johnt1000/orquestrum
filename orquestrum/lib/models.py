@@ -2,7 +2,7 @@ from typing import Literal, get_args
 
 ModelTier = Literal['deep', 'sharp', 'balanced', 'mechanical']
 Provider  = Literal['claude', 'copilot', 'glm']
-Tool      = Literal['claude-code', 'opencode', 'cursor', 'aider', 'windsurf']
+Tool      = Literal['claude-code', 'opencode']
 
 VALID_PROVIDERS: tuple[str, ...] = get_args(Provider)
 VALID_TOOLS:     tuple[str, ...] = get_args(Tool)

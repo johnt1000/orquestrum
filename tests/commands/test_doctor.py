@@ -145,14 +145,14 @@ class TestIntegrationsCheck:
         from orquestrum.lib import paths as paths_mod
         monkeypatch.setattr(paths_mod, 'find_canonical_root', lambda *a, **kw: None)
         cache = tmp_path / 'cache'
-        for tool in ('claude-code', 'opencode', 'cursor', 'aider', 'windsurf'):
+        for tool in ('claude-code', 'opencode'):
             (cache / tool).mkdir(parents=True)
         monkeypatch.setenv('ORQUESTRUM_CACHE', str(cache))
         r = doctor.Report()
         doctor._check_integrations(r)
         # 1 ok for source + 1 ok for cache = 0 warnings
         assert r.errors == 0 and r.warnings == 0
-        assert any('5 tools' in (res.get('detail') or '') for res in r.results)
+        assert any('2 tools' in (res.get('detail') or '') for res in r.results)
 
 
 class TestRegistryCheck:

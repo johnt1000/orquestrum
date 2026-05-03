@@ -7,11 +7,8 @@ module runs a per-tool checklist against the output directory and reports
 results so users see, in plain text, exactly what was generated and where.
 
 Each tool has an expected manifest:
-  - claude-code  : .claude/agents/*.md (8), .claude/settings.json, .sdd/{docs,skills,scripts}/
+  - claude-code  : .claude/agents/*.md (8), .claude/skills/, .claude/settings.json, .claude/sdd/{docs,scripts}/
   - opencode     : agents/*.md (8), docs/, skills/, scripts/
-  - cursor       : .cursor/rules/*.mdc (>= 8 + skills count)
-  - aider        : CONVENTIONS.md
-  - windsurf     : .windsurfrules
 
 The verifier is read-only: it never modifies the target. On failure it
 returns a structured report that callers (CLI, tests) can render.
@@ -187,22 +184,6 @@ def verify_convert_output(tool: str, out_dir: Path,
         _check_dir(report, 'skills')
         _check_file(report, 'scripts/archive-cleanup.sh', min_bytes=100)
 
-    elif tool == 'cursor':
-        _check_dir(report, '.cursor/rules')
-        # 8 agents + ≥ N skills as .mdc files
-        skills = expected_skill_count or 0
-        _check_count(report, '.cursor/rules', '*.mdc',
-                     EXPECTED_AGENT_COUNT + skills, exact=False)
-        _check_file(report, '.sdd/scripts/archive-cleanup.sh', min_bytes=100)
-
-    elif tool == 'aider':
-        _check_file(report, 'CONVENTIONS.md', min_bytes=500)
-        _check_file(report, 'scripts/archive-cleanup.sh', min_bytes=100)
-
-    elif tool == 'windsurf':
-        _check_file(report, '.windsurfrules', min_bytes=500)
-        _check_file(report, 'scripts/archive-cleanup.sh', min_bytes=100)
-
     else:
         report.add(f'tool "{tool}" recognised', False,
                    'no verification rules registered')
@@ -217,11 +198,6 @@ def _expected_agent_md_filenames() -> list[str]:
     from orquestrum.lib.models import AGENT_TIERS
     from orquestrum.lib.rewrite import name_to_kebab
     return [f'{name_to_kebab(name)}.md' for name in AGENT_TIERS]
-
-
-def _expected_agent_mdc_filenames() -> list[str]:
-    """Same 8 names but with `.mdc` extension (cursor)."""
-    return [f.replace('.md', '.mdc') for f in _expected_agent_md_filenames()]
 
 
 def verify_install_target(tool: str, target: Path) -> VerifyReport:
@@ -262,21 +238,6 @@ def verify_install_target(tool: str, target: Path) -> VerifyReport:
         report.add('__OPENCODE_ROOT__ placeholders resolved', unresolved == 0,
                    '' if unresolved == 0 else f'{unresolved} unresolved instances')
 
-    elif tool == 'cursor':
-        _check_dir(report, '.cursor/rules')
-        # Cursor agent rules have deterministic .mdc names; check those
-        # specifically. Skill rules are part of orquestrum but their
-        # names depend on the source skills/ tree, so we don't enumerate
-        # them here.
-        _check_required_files(report, '.cursor/rules',
-                              _expected_agent_mdc_filenames())
-
-    elif tool == 'aider':
-        _check_file(report, 'CONVENTIONS.md', min_bytes=500)
-
-    elif tool == 'windsurf':
-        _check_file(report, '.windsurfrules', min_bytes=500)
-
     else:
         report.add(f'tool "{tool}" recognised', False,
                    'no verification rules registered')
@@ -311,7 +272,6 @@ def _count_placeholders(root: Path, marker: str) -> int:
 # user passes --target whose basename equals this dir, we'd nest it twice.
 _TOOL_ROOTS_THAT_MUST_NOT_NEST = {
     'claude-code': '.claude',
-    'cursor':      '.cursor',
 }
 
 
@@ -320,8 +280,7 @@ def detect_target_misuse(tool: str, target: Path) -> str | None:
     or None if it looks ok.
 
     Catches the canonical mistake: passing --target ~/.claude for claude-code
-    (would create ~/.claude/.claude/agents/) or --target ~/proj/.cursor for
-    cursor.
+    (would create ~/.claude/.claude/agents/).
     """
     target = target.expanduser().resolve()
     nest_dir = _TOOL_ROOTS_THAT_MUST_NOT_NEST.get(tool)
@@ -413,9 +372,6 @@ _INSTALL_TOP_LEVEL: dict[str, list[str]] = {
     # one root, no top-level pollution outside Claude's own config dir.
     'claude-code': ['.claude'],
     'opencode':    ['agents', 'docs', 'scripts', 'skills'],
-    'cursor':      ['.cursor', '.sdd'],
-    'aider':       ['CONVENTIONS.md', 'scripts'],
-    'windsurf':    ['.windsurfrules', 'scripts'],
 }
 
 

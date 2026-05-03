@@ -8,7 +8,7 @@ def register(sub: argparse._SubParsersAction) -> None:
         'update',
         help='Re-sync this project (or all registered) — re-installs integration, bumps manifest.',
     )
-    p.add_argument('--tool', choices=['claude-code', 'opencode', 'cursor', 'aider', 'windsurf'],
+    p.add_argument('--tool', choices=['claude-code', 'opencode'],
                    help='Switch to this tool (cleanup of old + install of new)')
     p.add_argument('--all', action='store_true', help='Iterate every registered project')
     p.add_argument('--check', action='store_true', help='Dry-run; show what would change')

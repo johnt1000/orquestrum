@@ -137,7 +137,7 @@ def _check_integrations(r: Report) -> None:
         r.warn('integration cache', detail=f'missing — {integrations_dir}',
                fix='orquestrum convert --all')
         return
-    expected = {'claude-code', 'opencode', 'cursor', 'aider', 'windsurf'}
+    expected = {'claude-code', 'opencode'}
     found = {p.name for p in integrations_dir.iterdir() if p.is_dir()}
     missing = expected - found
     label = f'integration cache ({integrations_dir})'

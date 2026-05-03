@@ -45,16 +45,16 @@ class TestConvertWritesToCache:
         home = tmp_path / 'orq-home'
         cache = tmp_path / 'orq-cache'
         result = _run_in_user_mode(
-            ['convert', '--tool', 'cursor'],
+            ['convert', '--tool', 'opencode'],
             cwd=cwd, home=home, cache=cache,
         )
         assert result.returncode == 0, (
             f'convert failed:\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}'
         )
         # Output landed in the cache, not in the repo
-        assert (cache / 'cursor').is_dir()
-        rules = list((cache / 'cursor').rglob('*.mdc'))
-        assert rules, 'expected at least one .mdc rule file'
+        assert (cache / 'opencode').is_dir()
+        agents = list((cache / 'opencode' / 'agents').glob('*.md'))
+        assert agents, 'expected at least one agent .md file'
 
     def test_does_not_pollute_repo_integrations(self, tmp_path: Path):
         cwd = tmp_path / 'far-away'
@@ -64,7 +64,7 @@ class TestConvertWritesToCache:
         before = sorted((REPO_ROOT / 'integrations').rglob('*')) \
             if (REPO_ROOT / 'integrations').exists() else []
         _run_in_user_mode(
-            ['convert', '--tool', 'cursor'],
+            ['convert', '--tool', 'opencode'],
             cwd=cwd, home=home, cache=cache,
         )
         after = sorted((REPO_ROOT / 'integrations').rglob('*')) \
@@ -81,11 +81,11 @@ class TestConvertWritesToCache:
         env['ORQUESTRUM_ASSETS_ROOT'] = str(REPO_ROOT)
         env.pop('ORQUESTRUM_CACHE', None)
         result = subprocess.run(
-            [sys.executable, '-m', 'orquestrum.cli', 'convert', '--tool', 'aider'],
+            [sys.executable, '-m', 'orquestrum.cli', 'convert', '--tool', 'opencode'],
             cwd=str(cwd), capture_output=True, text=True, env=env,
         )
         assert result.returncode == 0, result.stderr
-        assert (home / 'cache' / 'integrations' / 'aider').is_dir()
+        assert (home / 'cache' / 'integrations' / 'opencode').is_dir()
 
     def test_prints_install_hint_in_user_mode(self, tmp_path: Path):
         cwd = tmp_path / 'noplace'
@@ -93,7 +93,7 @@ class TestConvertWritesToCache:
         home = tmp_path / 'orq-home'
         cache = tmp_path / 'orq-cache'
         result = _run_in_user_mode(
-            ['convert', '--tool', 'cursor'],
+            ['convert', '--tool', 'opencode'],
             cwd=cwd, home=home, cache=cache,
         )
         assert result.returncode == 0
@@ -112,20 +112,20 @@ class TestInstallFromCache:
 
         # Step 1: convert
         r1 = _run_in_user_mode(
-            ['convert', '--tool', 'cursor'],
+            ['convert', '--tool', 'opencode'],
             cwd=cwd, home=home, cache=cache,
         )
         assert r1.returncode == 0, r1.stderr
 
         # Step 2: install — uses cache as source, copies to target
         r2 = _run_in_user_mode(
-            ['install', '--tool', 'cursor', '--target', str(target)],
+            ['install', '--tool', 'opencode', '--target', str(target)],
             cwd=cwd, home=home, cache=cache,
         )
         assert r2.returncode == 0, r2.stderr
-        assert (target / '.cursor' / 'rules').is_dir()
-        rules = list((target / '.cursor' / 'rules').glob('*.mdc'))
-        assert rules
+        assert (target / 'agents').is_dir()
+        agents = list((target / 'agents').glob('*.md'))
+        assert agents
 
 
 class TestVersionStamp:
@@ -135,7 +135,7 @@ class TestVersionStamp:
         home = tmp_path / 'orq-home'
         cache = tmp_path / 'orq-cache'
         _run_in_user_mode(
-            ['convert', '--tool', 'aider'],
+            ['convert', '--tool', 'opencode'],
             cwd=cwd, home=home, cache=cache,
         )
         stamp = cache / '.version'
@@ -153,7 +153,7 @@ class TestVersionStamp:
         (cache / '.version').write_text('0.0.0-old\n', encoding='utf-8')
         (cache / 'leftover-from-old-version').mkdir()
         result = _run_in_user_mode(
-            ['convert', '--tool', 'cursor'],
+            ['convert', '--tool', 'opencode'],
             cwd=cwd, home=home, cache=cache,
         )
         assert result.returncode == 0

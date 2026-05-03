@@ -112,9 +112,9 @@ class TestUpdateOneApply:
     def test_tool_switch_updates_config_toml(
         self, project_with_tool: Path, isolated_home: Path, stub_install_tool,
     ):
-        update_impl._update_one(project_with_tool, new_tool='cursor', check=False)
+        update_impl._update_one(project_with_tool, new_tool='opencode', check=False)
         text = (project_with_tool / '.orquestrum' / 'config.toml').read_text(encoding='utf-8')
-        assert 'tool      = "cursor"' in text
+        assert 'tool      = "opencode"' in text
 
 
 class TestRunUpdate:
@@ -268,26 +268,6 @@ class TestCleanupOldTool:
             assert not (agents / name).exists()
         assert not (project_root / '.opencode' / 'docs').is_dir()
         assert removed
-
-    def test_cursor_removes_rules_dir(self, project_root: Path):
-        rules = project_root / '.cursor' / 'rules'
-        rules.mkdir(parents=True)
-        (rules / 'sdlc.mdc').write_text('rules', encoding='utf-8')
-        removed = update_impl._cleanup_old_tool(project_root, 'cursor')
-        assert not rules.is_dir()
-        assert removed
-
-    def test_aider_removes_conventions(self, project_root: Path):
-        (project_root / 'CONVENTIONS.md').write_text('# c', encoding='utf-8')
-        removed = update_impl._cleanup_old_tool(project_root, 'aider')
-        assert not (project_root / 'CONVENTIONS.md').exists()
-        assert removed == ['CONVENTIONS.md']
-
-    def test_windsurf_removes_windsurfrules(self, project_root: Path):
-        (project_root / '.windsurfrules').write_text('rules', encoding='utf-8')
-        removed = update_impl._cleanup_old_tool(project_root, 'windsurf')
-        assert not (project_root / '.windsurfrules').exists()
-        assert removed == ['.windsurfrules']
 
     def test_unknown_tool_returns_empty_list(self, project_root: Path):
         assert update_impl._cleanup_old_tool(project_root, 'made-up') == []

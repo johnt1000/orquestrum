@@ -13,7 +13,7 @@ def register(sub: argparse._SubParsersAction) -> None:
     pa = repos_sub.add_parser('add', help='Register a project path.')
     pa.add_argument('path', help='Path to a project directory')
     pa.add_argument('--name', help='Project name (default: basename of path)')
-    pa.add_argument('--tool', choices=['claude-code', 'opencode', 'cursor', 'aider', 'windsurf'],
+    pa.add_argument('--tool', choices=['claude-code', 'opencode'],
                     help='Tool installed in this project (optional)')
     pa.add_argument('--provider', choices=['claude', 'copilot', 'glm'],
                     help='Provider locked at install time (optional)')

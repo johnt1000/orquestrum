@@ -8,7 +8,7 @@ def register(sub: argparse._SubParsersAction) -> None:
         'init',
         help='Initialize Orquestrum in the current project (creates .orquestrum/, ORQUESTRUM.md, registers in ~/.orquestrum/registry.toml).',
     )
-    p.add_argument('--tool', choices=['claude-code', 'opencode', 'cursor', 'aider', 'windsurf'],
+    p.add_argument('--tool', choices=['claude-code', 'opencode'],
                    help='Also install the integration for this tool')
     p.add_argument('--provider', choices=['claude', 'copilot', 'glm'],
                    help='Provider to lock when --tool is set')

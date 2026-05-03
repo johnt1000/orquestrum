@@ -104,9 +104,9 @@ class TestReinit:
         self, project_root: Path, isolated_home: Path, stub_install,
     ):
         init_impl.run_init(tool=None, provider=None, name=None)
-        init_impl.run_init(tool='cursor', provider='claude', name=None)
+        init_impl.run_init(tool='opencode', provider='claude', name=None)
         cfg_text = (project_root / '.orquestrum' / 'config.toml').read_text(encoding='utf-8')
-        assert 'tool      = "cursor"' in cfg_text
+        assert 'tool      = "opencode"' in cfg_text
         assert 'provider  = "claude"' in cfg_text
 
 
@@ -141,13 +141,13 @@ class TestRunInstall:
         from orquestrum.core import install as core_install
         # Simulate cache already populated for the chosen tool
         cache = tmp_path / 'cache'
-        (cache / 'cursor').mkdir(parents=True)
+        (cache / 'opencode').mkdir(parents=True)
         monkeypatch.setattr('orquestrum.lib.paths.convert_output_root', lambda: cache)
         convert_calls: list = []
         install_calls: list = []
         monkeypatch.setattr(core_convert, 'main', lambda argv: convert_calls.append(argv))
         monkeypatch.setattr(core_install, 'main', lambda argv: install_calls.append(argv))
-        init_impl._run_install(project_root, 'cursor', None)
+        init_impl._run_install(project_root, 'opencode', None)
         assert convert_calls == []  # convert skipped — cache hit
         assert install_calls  # install still runs
 

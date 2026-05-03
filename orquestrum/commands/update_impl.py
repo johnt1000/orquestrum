@@ -126,21 +126,6 @@ def _cleanup_old_tool(project_root: Path, old_tool: str) -> list[str]:
             if p.is_dir():
                 shutil.rmtree(p, ignore_errors=True)
                 removed.append(rel)
-    elif old_tool == 'cursor':
-        p = project_root / '.cursor' / 'rules'
-        if p.is_dir():
-            shutil.rmtree(p, ignore_errors=True)
-            removed.append('.cursor/rules')
-    elif old_tool == 'aider':
-        p = project_root / 'CONVENTIONS.md'
-        if p.exists():
-            p.unlink()
-            removed.append('CONVENTIONS.md')
-    elif old_tool == 'windsurf':
-        p = project_root / '.windsurfrules'
-        if p.exists():
-            p.unlink()
-            removed.append('.windsurfrules')
     return removed
 
 
