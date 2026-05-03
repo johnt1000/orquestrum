@@ -109,6 +109,12 @@ def _maybe_invalidate_cache(out: Path) -> None:
 # Hooks remain the canonical source of token counts (Claude Code's API
 # counters are authoritative). The orquestrum MCP server adds rich domain
 # events + real-time queries that the hook cannot capture.
+#
+# Hook command is `orquestrum hook` (resolved via PATH) rather than a
+# relative path to emit_metrics.py. Claude Code runs hooks with the
+# user's cwd, which usually doesn't contain `.claude/sdd/scripts/...` —
+# the relative form failed with ENOENT outside $HOME. PATH lookup works
+# everywhere `orquestrum` is installed.
 _CLAUDE_SETTINGS_TEMPLATE = '''{
   "hooks": {
     "Stop": [
@@ -117,7 +123,7 @@ _CLAUDE_SETTINGS_TEMPLATE = '''{
         "hooks": [
           {
             "type": "command",
-            "command": "uv run .claude/sdd/scripts/hooks/emit_metrics.py"
+            "command": "orquestrum hook"
           }
         ]
       }
@@ -128,7 +134,7 @@ _CLAUDE_SETTINGS_TEMPLATE = '''{
         "hooks": [
           {
             "type": "command",
-            "command": "uv run .claude/sdd/scripts/hooks/emit_metrics.py"
+            "command": "orquestrum hook"
           }
         ]
       }

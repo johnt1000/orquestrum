@@ -53,14 +53,17 @@ def _merge_claude_settings(template_path: Path, target_path: Path) -> None:
     target_hooks   = target_data.setdefault('hooks', {})
     template_hooks = template_data.get('hooks', {})
 
-    # Recognise any orquestrum-installed hook (current or legacy path) so
-    # we replace it on re-install instead of accumulating duplicates. The
-    # marker is the path tail `sdd/scripts/hooks/emit_metrics.py` — uniquely
-    # ours regardless of whether it sits under `.sdd/` (≤0.3.0) or
-    # `.claude/sdd/` (≥0.3.1).
+    # Recognise any orquestrum-installed hook (current or legacy form) so
+    # we replace it on re-install instead of accumulating duplicates.
+    # Markers:
+    #   - `orquestrum hook`                            ≥0.5.1 (current)
+    #   - `sdd/scripts/hooks/emit_metrics.py` tail     ≤0.5.0 (broken
+    #     relative path; replaced on first re-install)
     def _is_orq_hook(cmd: str | None) -> bool:
         if not cmd:
             return False
+        if 'orquestrum hook' in cmd:
+            return True
         return 'sdd/scripts/hooks/emit_metrics.py' in cmd
 
     removed_legacy = 0

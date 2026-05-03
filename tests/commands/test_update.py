@@ -231,6 +231,27 @@ class TestScrubClaudeSettingsHooks:
         # Should not raise
         update_impl._scrub_claude_settings_hooks(settings)
 
+    def test_removes_modern_orquestrum_hook_command(self, tmp_path: Path):
+        """≥0.5.1 hooks register as `orquestrum hook` — scrub must handle
+        that form too, not just the legacy emit_metrics.py paths."""
+        import json
+        settings = tmp_path / 'settings.json'
+        settings.write_text(json.dumps({
+            'hooks': {
+                'Stop': [{'matcher': '', 'hooks': [
+                    {'type': 'command', 'command': 'orquestrum hook'},
+                    {'type': 'command', 'command': 'echo user-hook'},
+                ]}],
+            },
+        }), encoding='utf-8')
+        update_impl._scrub_claude_settings_hooks(settings)
+        out = json.loads(settings.read_text(encoding='utf-8'))
+        cmds = [h['command']
+                for blk in out['hooks']['Stop']
+                for h in blk['hooks']]
+        assert 'echo user-hook' in cmds
+        assert all('orquestrum hook' not in c for c in cmds)
+
 
 class TestCleanupOldTool:
     def test_claude_code_removes_agent_files_and_sdd(self, project_root: Path):

@@ -25,7 +25,7 @@ def fake_integrations(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     (claude / '.claude' / 'settings.json').write_text(json.dumps({
         'hooks': {
             'Stop': [{'matcher': '', 'hooks': [
-                {'type': 'command', 'command': 'uv run .sdd/scripts/hooks/emit_metrics.py'},
+                {'type': 'command', 'command': 'orquestrum hook'},
             ]}],
         },
     }), encoding='utf-8')
@@ -180,8 +180,7 @@ class TestMcpServersMerge:
         (cc / '.claude' / 'settings.json').write_text(json.dumps({
             'hooks': {
                 'Stop': [{'matcher': '', 'hooks': [
-                    {'type': 'command',
-                     'command': 'uv run .claude/sdd/scripts/hooks/emit_metrics.py'},
+                    {'type': 'command', 'command': 'orquestrum hook'},
                 ]}],
             },
             'mcpServers': {
@@ -305,7 +304,7 @@ class TestMcpServersMerge:
         assert merged['theme'] == 'dark'
         cmds = [h['command'] for blk in merged['hooks']['Stop'] for h in blk['hooks']]
         assert 'echo user-hook' in cmds
-        assert any('emit_metrics.py' in c for c in cmds)
+        assert any('orquestrum hook' in c for c in cmds)
 
     def test_claude_code_creates_settings_when_missing(
         self, tmp_path: Path, fake_integrations: Path,
@@ -316,7 +315,35 @@ class TestMcpServersMerge:
         out = json.loads((target / '.claude' / 'settings.json').read_text(encoding='utf-8'))
         assert 'hooks' in out
         cmds = [h['command'] for blk in out['hooks']['Stop'] for h in blk['hooks']]
-        assert any('emit_metrics.py' in c for c in cmds)
+        assert any('orquestrum hook' in c for c in cmds)
+
+    def test_claude_code_replaces_legacy_emit_metrics_hook_on_reinstall(
+        self, tmp_path: Path, fake_integrations: Path,
+    ):
+        """Users with the broken ≤0.5.0 hook (`uv run .claude/sdd/scripts/
+        hooks/emit_metrics.py` — relative path that fails outside $HOME)
+        must end up with the working `orquestrum hook` after re-install,
+        with no duplicate orquestrum entries left behind."""
+        target = tmp_path / 'target'
+        (target / '.claude').mkdir(parents=True)
+        (target / '.claude' / 'settings.json').write_text(json.dumps({
+            'hooks': {
+                'Stop': [{'matcher': '', 'hooks': [
+                    {'type': 'command',
+                     'command': 'uv run .claude/sdd/scripts/hooks/emit_metrics.py'},
+                    {'type': 'command', 'command': 'echo user-hook'},
+                ]}],
+            },
+        }), encoding='utf-8')
+
+        core_install.install_tool('claude-code', target)
+        out = json.loads((target / '.claude' / 'settings.json').read_text(encoding='utf-8'))
+        cmds = [h['command'] for blk in out['hooks']['Stop'] for h in blk['hooks']]
+        # User hook preserved
+        assert 'echo user-hook' in cmds
+        # Legacy emit_metrics.py replaced (not duplicated alongside) by `orquestrum hook`
+        assert all('emit_metrics.py' not in c for c in cmds)
+        assert any('orquestrum hook' in c for c in cmds)
 
 
 class TestMain:

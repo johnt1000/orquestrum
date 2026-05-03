@@ -189,8 +189,12 @@ def _scrub_claude_settings_hooks(settings_path: Path) -> None:
     """Remove orquestrum hook entries from a Claude Code settings.json,
     preserve user keys / other hooks.
 
-    Recognises both the current path (`.claude/sdd/scripts/...`) and the
-    legacy path (`.sdd/scripts/...`) so old installs scrub cleanly too.
+    Recognises every form orquestrum has emitted historically:
+      - `orquestrum hook`                          (≥0.5.1, current)
+      - `uv run .claude/sdd/scripts/...`           (0.3.1–0.5.0)
+      - `uv run .sdd/scripts/...`                  (≤0.3.0)
+    so old installs scrub cleanly regardless of which version put the
+    entry there.
     """
     import json
     try:
@@ -198,17 +202,21 @@ def _scrub_claude_settings_hooks(settings_path: Path) -> None:
     except (json.JSONDecodeError, OSError):
         return
     hooks = data.get('hooks') or {}
-    orq_cmds = {
-        'uv run .claude/sdd/scripts/hooks/emit_metrics.py',  # current
-        'uv run .sdd/scripts/hooks/emit_metrics.py',          # legacy (≤0.3.0)
-    }
+
+    def _is_orq(cmd: str | None) -> bool:
+        if not cmd:
+            return False
+        if 'orquestrum hook' in cmd:
+            return True
+        return 'sdd/scripts/hooks/emit_metrics.py' in cmd
+
     for event, blocks in list(hooks.items()):
         if not isinstance(blocks, list):
             continue
         new_blocks = []
         for block in blocks:
             inner = block.get('hooks') or []
-            kept = [h for h in inner if h.get('command') not in orq_cmds]
+            kept = [h for h in inner if not _is_orq(h.get('command'))]
             if kept:
                 new_blocks.append({**block, 'hooks': kept})
         if new_blocks:

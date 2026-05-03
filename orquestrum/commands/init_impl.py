@@ -163,8 +163,9 @@ def _write_config(project_root: Path, name: str, choices: dict) -> Path:
 def _write_gitignore(project_root: Path) -> Path:
     gi = project_root / '.orquestrum' / '.gitignore'
     gi.parent.mkdir(parents=True, exist_ok=True)
-    if not gi.exists():
-        gi.write_text(_GITIGNORE, encoding='utf-8')
+    # Always overwrite — this file is auto-managed and must stay in sync with
+    # _GITIGNORE so re-inits on old projects pick up newly added ignore rules.
+    gi.write_text(_GITIGNORE, encoding='utf-8')
     return gi
 
 
