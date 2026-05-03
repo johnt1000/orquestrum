@@ -9,7 +9,7 @@ from ui.lib import jobs
 
 router = APIRouter(prefix='/convert')
 
-_TOOLS     = ['claude-code', 'opencode', 'cursor', 'aider', 'windsurf', 'all']
+_TOOLS     = ['claude-code', 'opencode', 'all']
 _PROVIDERS = ['(none)', 'claude', 'copilot', 'glm']
 
 

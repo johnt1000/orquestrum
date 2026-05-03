@@ -10,7 +10,7 @@ from ui.lib import jobs
 
 router = APIRouter(prefix='/install')
 
-_TOOLS = ['claude-code', 'opencode', 'cursor', 'aider', 'windsurf']
+_TOOLS = ['claude-code', 'opencode']
 
 
 @router.get('', response_class=HTMLResponse)
