@@ -222,38 +222,16 @@ class ClaudeCodeAdapter(ToolAdapter):
     }
 
     # Per-agent tools allowlist for Claude Code subagents.
-    # Without `tools:`, the subagent inherits ALL tools, including Edit/Bash/
-    # Glob/Grep — which has been observed to trigger overreach (orchestrator
-    # editing user settings.json mid-task). Omitting an entry here means
-    # "no restriction" (all tools available); list it to constrain.
+    # NOTE: Claude Code hides agents that have a `tools:` field from the
+    # Shift+Tab interactive picker — they become subagent-only (invocable
+    # only via Task, not by the user directly). All 8 orchestrators must
+    # be picker-visible, so this dict is intentionally empty.
     #
-    # Helm and Flux are pure coordinators: they classify, route via Task,
-    # read CHECKPOINT.md and write it back. They have no business writing
-    # to project files, running shell commands, or scanning code with grep.
-    #
-    # The mcp__orquestrum__orq_* entries grant access to the READ-ONLY tools
-    # of the orquestrum MCP server (session_summary, budget_status, etc.).
-    # Write MCP tools (orq_record_event, orq_skill_completed) are
-    # intentionally excluded — coordinators don't author metric events;
-    # the executors (Forge/Ward/etc., which have no allowlist) do.
-    _CLAUDE_TOOLS_ALLOWLIST = {
-        'Helm - The Architect': (
-            'Task, Read, Write, '
-            'mcp__orquestrum__orq_session_summary, '
-            'mcp__orquestrum__orq_budget_status, '
-            'mcp__orquestrum__orq_recent_events, '
-            'mcp__orquestrum__orq_list_projects, '
-            'mcp__orquestrum__orq_project_summary, '
-            'mcp__orquestrum__orq_cost_today'
-        ),
-        'Flux - Support Lead': (
-            'Task, Read, Grep, Glob, '
-            'mcp__orquestrum__orq_session_summary, '
-            'mcp__orquestrum__orq_recent_events, '
-            'mcp__orquestrum__orq_list_projects, '
-            'mcp__orquestrum__orq_cost_today'
-        ),
-    }
+    # Tool discipline for coordinators (Helm, Flux) is enforced via their
+    # prompt content ("⛔ MANDATORY DELEGATION RULES") rather than at the
+    # API level. This is a deliberate tradeoff: prompt-based enforcement
+    # keeps agents visible; API-based enforcement hides them.
+    _CLAUDE_TOOLS_ALLOWLIST: dict[str, str] = {}
 
     def _frontmatter(self, agent: AgentConfig, provider: str | None) -> str:
         # Claude Code recognises only `name`, `description`, `model`, and
