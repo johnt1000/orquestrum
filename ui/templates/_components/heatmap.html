@@ -1,0 +1,26 @@
+{# heatmap(rows, day_labels) — 8 rows × 7 day cells with opacity-scaled accent.
+   `rows` is a list of HeatmapRow(name, emoji, cells[]).
+   `cells[i]` has .count, .opacity, .day_label. #}
+{% macro heatmap(rows, day_labels) %}
+<div class="heatmap" role="img" aria-label="atividade dos agentes (últimos {{ day_labels | length }} dias)">
+  <div class="heatmap-row heatmap-head">
+    <span class="heatmap-axis"></span>
+    {% for label in day_labels %}
+      <span class="heatmap-day">{{ label }}</span>
+    {% endfor %}
+  </div>
+  {% for row in rows %}
+    <div class="heatmap-row">
+      <span class="heatmap-axis">
+        <span class="heatmap-emoji" aria-hidden="true">{{ row.emoji }}</span>
+        <span class="heatmap-name">{{ row.name }}</span>
+      </span>
+      {% for cell in row.cells %}
+        <span class="heatmap-cell"
+              style="opacity: {{ cell.opacity }}"
+              title="{{ row.name }} · {{ cell.day_label }} · {{ cell.count }}"></span>
+      {% endfor %}
+    </div>
+  {% endfor %}
+</div>
+{% endmacro %}

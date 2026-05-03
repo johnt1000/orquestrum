@@ -13,9 +13,9 @@ help:  ## Show this help (default target)
 # ── Setup ────────────────────────────────────────────────────────────────────
 
 dev: sync  ## Install the CLI in editable mode + ui/webview extras
-	uv tool install --editable .
+	uv tool install --editable ".[ui]" --force
 	@echo ""
-	@echo "✓ orquestrum installed globally (editable). Try: make doctor"
+	@echo "✓ orquestrum installed globally (editable, with [ui] extras). Try: make doctor"
 
 sync:  ## Refresh the local virtualenv with all extras
 	uv sync --extra ui --extra webview

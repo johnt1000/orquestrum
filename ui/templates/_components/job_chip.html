@@ -1,0 +1,10 @@
+{# job_chip(job) — single row in the recent-jobs list.
+   `job` is a ui.lib.jobs.Job; uses .id, .label, .state, .duration_s. #}
+{% macro job_chip(job) %}
+<a href="/jobs/{{ job.id }}" class="job-row job-row-{{ job.state }}">
+  <span class="job-dot job-dot-{{ job.state }}" aria-hidden="true"></span>
+  <span class="job-label">{{ job.label }}</span>
+  <span class="job-state">{{ ('state.' ~ job.state) | t }}</span>
+  <span class="job-time">{{ '%02d:%02d' | format((job.duration_s // 60) | int, (job.duration_s % 60) | int) }}</span>
+</a>
+{% endmacro %}

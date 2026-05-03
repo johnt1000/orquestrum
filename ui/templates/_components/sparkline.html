@@ -1,0 +1,19 @@
+{# sparkline(points, width=100, height=24, label='') — pure SVG, ≈8 LOC.
+   `points` is a pre-formatted "x,y x,y ..." string from live_metrics.spark_points(). #}
+{% macro sparkline(points, width=100, height=24, label='') %}
+{% if points %}
+<svg class="sparkline" viewBox="0 0 {{ width }} {{ height }}" preserveAspectRatio="none"
+     {% if label %}role="img" aria-label="{{ label }}"{% else %}aria-hidden="true"{% endif %}>
+  <polygon  points="0,{{ height }} {{ points }} {{ width }},{{ height }}"
+            fill="var(--accent)" fill-opacity="0.12"/>
+  <polyline points="{{ points }}"
+            fill="none" stroke="var(--accent)" stroke-width="1.5"
+            stroke-linejoin="round" stroke-linecap="round"/>
+</svg>
+{% else %}
+<svg class="sparkline" viewBox="0 0 {{ width }} {{ height }}" preserveAspectRatio="none" aria-hidden="true">
+  <line x1="0" y1="{{ (height/2)|round }}" x2="{{ width }}" y2="{{ (height/2)|round }}"
+        stroke="var(--border)" stroke-width="1" stroke-dasharray="2 3"/>
+</svg>
+{% endif %}
+{% endmacro %}

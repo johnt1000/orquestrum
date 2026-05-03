@@ -1,17 +1,46 @@
 {% extends "base.html" %}
-{% block title %}Dashboard{% endblock %}
+{% from "_components/kpi.html" import kpi %}
+{% from "_components/bar_row.html" import bar_list %}
+{% from "_components/ring.html" import ring %}
+{% from "_components/heatmap.html" import heatmap %}
+{% from "_components/donut.html" import donut %}
+{% from "_components/phase_pill.html" import phase_pill %}
+{% from "_components/job_chip.html" import job_chip %}
+{% block title %}{{ 'nav.overview' | t }}{% endblock %}
 {% block content %}
-<h1>Dashboard</h1>
 
+{# ─── HEADER ─────────────────────────────────────────────────────────────── #}
+<header class="page-head">
+  {% if breadcrumb %}
+  <div class="breadcrumb">
+    <span>{{ breadcrumb.path }}</span>
+    {% if breadcrumb.branch %}
+      <span class="breadcrumb-sep">·</span>
+      <span>{{ breadcrumb.branch }}</span>
+    {% endif %}
+  </div>
+  {% endif %}
+  <div class="page-head-row">
+    <h1>{{ 'nav.overview' | t }}</h1>
+    <div class="page-head-meta">
+      {{ 'period.last_7d' | t }}
+      {% if last_event_dt %}
+        <span class="breadcrumb-sep">·</span>
+        {{ 'dashboard.updated' | t(when=(last_event_dt | time_ago)) }}
+      {% else %}
+        <span class="breadcrumb-sep">·</span>
+        {{ 'dashboard.no_metrics_yet' | t }}
+      {% endif %}
+    </div>
+  </div>
+</header>
+
+{# ─── EMPTY STATES (preservados) ────────────────────────────────────────── #}
 {% if not is_linked %}
 <article class="empty-state">
-  <h3>No Orquestrum project found here</h3>
-  <p>The console was opened from <code>{{ orq_root }}</code>, which has no <code>.orquestrum/</code> directory.</p>
-  <p>To start tracking metrics in a project:</p>
-  <ol>
-    <li>Navigate to your project directory and run <code>orquestrum init --tool claude-code</code>.</li>
-    <li>Reopen the console from that directory: <code>cd /your/project &amp;&amp; orquestrum web</code>.</li>
-  </ol>
+  <h3>{{ 'empty.no_project.title' | t }}</h3>
+  <p>{{ orq_root }}</p>
+  <p>To start tracking metrics in a project, run <code>orquestrum init --tool claude-code</code> in your project root and reopen the console there.</p>
   {% if registry_projects %}
   <h4>Registered projects</h4>
   <table role="grid">
@@ -27,67 +56,135 @@
     {% endfor %}
     </tbody>
   </table>
-  {% else %}
-  <p><small>No projects registered yet. Run <code>orquestrum init</code> in a project to register it.</small></p>
   {% endif %}
 </article>
-
-{% elif not sess or sess.totals.calls == 0 %}
-<article class="empty-state">
-  <h3>No metrics yet</h3>
-  <p>Project: <code>{{ linked_project_root }}</code></p>
-  <p>This project has not emitted any LLM-call events to <code>.orquestrum/metrics/events.jsonl</code>.</p>
-  <p>To start collecting:</p>
-  <ol>
-    <li>Confirm the metrics hook is installed (see <a href="/docs/view?p=docs/governance/HOOKS.md">HOOKS</a>) — it auto-runs on every <code>Stop</code> and <code>SubagentStop</code>.</li>
-    <li>Use one of the orchestrators (Helm, Forge, Lore, Ward…) inside this project; each turn appends one event.</li>
-    <li>Reload this page — it will show input/output tokens, cached-token ratio, estimated cost, and per-skill breakdown.</li>
-  </ol>
-  <p><small>Operational guide: <a href="/docs/view?p=docs/governance/REAL_USAGE_PLAN.md">REAL_USAGE_PLAN.md</a>.</small></p>
-</article>
-
 {% else %}
-<p><small>Project: <code>{{ linked_project_root }}</code></small></p>
 
-<section class="totals-grid">
-  <article><strong>{{ "{:,}".format(sess.totals.input_tokens) }}</strong><br><small>input tokens</small></article>
-  <article><strong>{{ "{:,}".format(sess.totals.output_tokens) }}</strong><br><small>output tokens</small></article>
-  <article><strong>{{ "{:,}".format(sess.totals.cached_tokens) }}</strong><br><small>cached tokens</small></article>
-  <article><strong>${{ "%.4f"|format(sess.totals.cost_usd) }}</strong><br><small>est. cost USD</small></article>
-  <article><strong>{{ sess.totals.calls }}</strong><br><small>LLM calls</small></article>
-  <article><strong>{{ sess.totals.skill_calls }}</strong><br><small>skill completions</small></article>
+{# ─── PIPELINE RAIL ─────────────────────────────────────────────────────── #}
+<nav class="pipeline-rail" aria-label="pipeline">
+  <span class="pipeline-rail-label">{{ 'nav.group.pipeline' | t }}</span>
+  {% set rail = [
+    ('-1','phase.short.onboarding','phase-onboard','onboarding'),
+    ('0', 'phase.short.discovery','phase-discover','discovery'),
+    ('1', 'phase.short.design','phase-design','design'),
+    ('2', 'phase.short.planning','phase-plan','planning'),
+    ('3', 'phase.short.implementation','phase-design','implementation'),
+    ('4', 'phase.short.quality','phase-quality','quality'),
+    ('5', 'phase.short.release','phase-release','release'),
+    ('M', 'phase.short.maintenance','phase-maint','maintenance'),
+  ] %}
+  {% for mark, label_key, css, key in rail %}
+    {{ phase_pill(mark, label_key | t, css, active=(active_phase == key), disabled=true) }}
+    {% if not loop.last %}<span class="pipeline-rail-sep" aria-hidden="true">─</span>{% endif %}
+  {% endfor %}
+</nav>
+
+{# ─── KPI ROW ───────────────────────────────────────────────────────────── #}
+<section class="kpi-grid" aria-label="indicadores principais">
+  {{ kpi(series.cost,   'kpi.cost'   | t) }}
+  {{ kpi(series.calls,  'kpi.calls'  | t) }}
+  {{ kpi(series.cached, 'kpi.cached' | t) }}
+  {{ kpi(series.skills, 'kpi.skills' | t) }}
 </section>
 
-{% if budget %}
-<h2>Budget — <code>{{ budget.tier }}</code> tier</h2>
-{% set in_pct = (budget.input_tokens / budget.input_threshold * 100) if budget.input_threshold else 0 %}
-<progress value="{{ budget.input_tokens }}" max="{{ budget.input_threshold }}"></progress>
-<small>input: {{ "{:,}".format(budget.input_tokens) }} / {{ "{:,}".format(budget.input_threshold) }}
-  ({{ "%.0f"|format(in_pct) }}%){% if budget.over_input %} ⚠{% endif %}</small>
-{% if budget.has_warning %}
-<article class="warn">
-  <strong>⚠ Budget warning</strong><br>
-  <pre>{{ budget.format() }}</pre>
-</article>
-{% endif %}
-{% endif %}
+{# ─── 2×2 GRID ──────────────────────────────────────────────────────────── #}
+<section class="dash-grid">
 
-{% if by_skill %}
-<h2>Top skills (input tokens)</h2>
-<table role="grid">
-  <thead><tr><th>Skill</th><th>Calls</th><th>Input</th><th>Output</th><th>Cost USD</th></tr></thead>
-  <tbody>
-  {% for name, rec in by_skill %}
-    <tr>
-      <td><code>{{ name }}</code></td>
-      <td>{{ rec.calls }}</td>
-      <td>{{ "{:,}".format(rec.input_tokens|int) }}</td>
-      <td>{{ "{:,}".format(rec.output_tokens|int) }}</td>
-      <td>${{ "%.4f"|format(rec.cost_usd|float) }}</td>
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
-{% endif %}
+  {# (a) Top skills bar list #}
+  <article class="dash-card">
+    <header class="dash-card-head">
+      <h2>{{ 'top_skills.title' | t }}</h2>
+      {% if top_skills_total %}
+        <span class="dash-card-meta">
+          {{ 'top_skills.suffix' | t(n=top_skills | length, total=top_skills_total) }}
+        </span>
+      {% endif %}
+    </header>
+    {% if top_skills %}
+      {{ bar_list(top_skills) }}
+    {% else %}
+      <p class="meta">{{ 'dashboard.no_metrics_yet' | t }}</p>
+    {% endif %}
+  </article>
+
+  {# (b) Budget rings #}
+  <article class="dash-card">
+    <header class="dash-card-head">
+      <h2>{{ 'budget.title' | t }}</h2>
+      {% if budget %}
+        <span class="dash-card-meta">{{ ('budget.tier.' ~ budget.tier) | t }}</span>
+      {% endif %}
+    </header>
+    {% if budget and budget.input_threshold %}
+      {% set in_pct  = (budget.input_tokens  / budget.input_threshold  * 100) | round(0, 'floor') | int %}
+      {% set out_pct = (budget.output_tokens / budget.output_threshold * 100) | round(0, 'floor') | int %}
+      {% set cost_pct = budget_cost_pct | default(0) %}
+      <div class="ring-grid">
+        {{ ring(in_pct,  'budget.input'  | t, state=('crit' if in_pct  >= 100 else ('warn' if in_pct  >= 80 else 'ok'))) }}
+        {{ ring(out_pct, 'budget.output' | t, state=('crit' if out_pct >= 100 else ('warn' if out_pct >= 80 else 'ok'))) }}
+        {{ ring(cost_pct, 'budget.cost'  | t, state=('crit' if cost_pct >= 100 else ('warn' if cost_pct >= 80 else 'ok'))) }}
+      </div>
+      {% if budget.has_warning %}
+        <div class="dash-card-foot">⚠ {{ budget.format() | replace('\n', ' · ') }}</div>
+      {% endif %}
+    {% else %}
+      <p class="meta">{{ 'dashboard.no_metrics_yet' | t }}</p>
+    {% endif %}
+  </article>
+
+  {# (c) Agent activity heatmap #}
+  <article class="dash-card">
+    <header class="dash-card-head">
+      <h2>{{ 'agent_activity.title' | t }}</h2>
+      <span class="dash-card-meta">{{ 'period.last_7d' | t }}</span>
+    </header>
+    {{ heatmap(heatmap_rows, heatmap_days) }}
+  </article>
+
+  {# (d) Attention donut #}
+  <article class="dash-card">
+    <header class="dash-card-head">
+      <h2>{{ 'attention.title' | t }}</h2>
+      {% if attention %}
+        <span class="dash-card-meta">{{ 'attention.summary' | t(total=attention.total) }}</span>
+      {% endif %}
+    </header>
+    {% if attention %}
+      <div class="donut-row">
+        {{ donut(attention.score, [
+          {'value': attention.green,  'color': 'var(--ok)'},
+          {'value': attention.yellow, 'color': 'var(--warn)'},
+          {'value': attention.red,    'color': 'var(--crit)'},
+        ]) }}
+        <ul class="donut-legend">
+          <li><span class="legend-dot is-green"></span><span>{{ 'attention.green'  | t }}</span><span class="legend-count">{{ attention.green }}</span></li>
+          <li><span class="legend-dot is-yellow"></span><span>{{ 'attention.yellow' | t }}</span><span class="legend-count">{{ attention.yellow }}</span></li>
+          <li><span class="legend-dot is-red"></span><span>{{ 'attention.red'    | t }}</span><span class="legend-count">{{ attention.red }}</span></li>
+        </ul>
+      </div>
+      <div class="dash-card-foot">{{ 'attention.score_avg' | t(avg=attention.avg, p95=attention.p95) }}</div>
+    {% else %}
+      <p class="meta">{{ 'dashboard.no_metrics_yet' | t }}</p>
+    {% endif %}
+  </article>
+
+</section>
+
+{# ─── RECENT JOBS ───────────────────────────────────────────────────────── #}
+<section class="dash-card" aria-labelledby="recent-jobs-title">
+  <header class="dash-card-head">
+    <h2 id="recent-jobs-title">{{ 'recent_jobs.title' | t }}</h2>
+  </header>
+  {% if recent_jobs %}
+    <div class="job-list">
+      {% for job in recent_jobs %}
+        {{ job_chip(job) }}
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="meta">{{ 'dashboard.title.recent_jobs.empty' | t }}</p>
+  {% endif %}
+</section>
+
 {% endif %}
 {% endblock %}

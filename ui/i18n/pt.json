@@ -1,0 +1,105 @@
+{
+  "brand.name": "Orquestrum",
+  "brand.subtitle": "console v{version}",
+
+  "nav.group.general": "Geral",
+  "nav.group.pipeline": "Pipeline",
+  "nav.group.catalog": "Catálogo",
+  "nav.group.live": "Ao vivo",
+  "nav.group.system": "Sistema",
+
+  "nav.overview": "Visão geral",
+  "nav.agents": "Agentes",
+  "nav.skills": "Habilidades",
+  "nav.live_session": "Sessão",
+  "nav.live_routing": "Roteamento",
+  "nav.live_attention": "Atenção",
+  "nav.operations": "Operações",
+  "nav.docs": "Documentação",
+  "nav.coverage": "Cobertura",
+  "nav.jobs": "Jobs",
+
+  "phase.onboarding": "−1 · Descoberta",
+  "phase.discovery": "0 · Especificação",
+  "phase.design": "1 · Planejamento",
+  "phase.planning": "2 · Arquitetura",
+  "phase.implementation": "3 · Implementação",
+  "phase.quality": "4 · Verificação",
+  "phase.release": "5 · Entrega",
+  "phase.maintenance": "Manutenção",
+
+  "topbar.project": "projeto",
+  "topbar.search.placeholder": "Buscar agentes, habilidades, jobs…",
+  "topbar.jobs.running": "{count} em execução",
+
+  "health.ok": "saudável",
+  "health.degraded": "degradado",
+
+  "mode.framework": "framework",
+  "mode.project": "projeto",
+
+  "theme.auto": "auto",
+  "theme.light": "claro",
+  "theme.dark": "escuro",
+  "theme.label": "Tema",
+
+  "lang.label": "Idioma",
+
+  "footer.no_project": "sem projeto vinculado",
+
+  "kpi.cost": "Custo",
+  "kpi.calls": "Chamadas",
+  "kpi.cached": "Cache",
+  "kpi.skills": "Habilidades",
+
+  "budget.title": "Orçamento",
+  "budget.input": "entrada",
+  "budget.output": "saída",
+  "budget.cost": "custo",
+
+  "top_skills.title": "Habilidades em destaque",
+  "agent_activity.title": "Atividade dos agentes",
+  "attention.title": "Bandas de atenção",
+  "attention.green": "verde",
+  "attention.yellow": "amarelo",
+  "attention.red": "vermelho",
+  "recent_jobs.title": "Jobs recentes",
+
+  "state.running": "em execução",
+  "state.done": "concluído",
+  "state.failed": "falhou",
+  "state.timed_out": "tempo esgotado",
+
+  "btn.reload": "Recarregar",
+  "btn.open_project": "Abrir projeto",
+  "btn.see_all": "ver todos",
+
+  "empty.no_project.title": "Nenhum projeto Orquestrum aqui",
+  "empty.no_metrics.title": "Sem métricas ainda",
+
+  "period.last_7d": "últimos 7 dias",
+  "shortcut.help": "Atalhos do teclado",
+
+  "phase.short.onboarding": "descoberta",
+  "phase.short.discovery": "spec",
+  "phase.short.design": "plano",
+  "phase.short.planning": "arquitetura",
+  "phase.short.implementation": "implementação",
+  "phase.short.quality": "verificação",
+  "phase.short.release": "entrega",
+  "phase.short.maintenance": "manutenção",
+
+  "dashboard.updated": "atualizado {when}",
+  "dashboard.no_metrics_yet": "sem métricas ainda",
+  "dashboard.title.recent_jobs.empty": "sem jobs recentes",
+
+  "budget.tier.balanced": "balanced",
+  "budget.tier.deep": "deep",
+  "budget.tier.mechanical": "mechanical",
+  "budget.tier.sharp": "sharp",
+
+  "attention.summary": "{total} ativos",
+  "attention.score_avg": "score médio · {avg}/100 · p95 · {p95}",
+
+  "top_skills.suffix": "top {n} / {total}"
+}

@@ -1,0 +1,20 @@
+{# bar_row(name, count, pct) — single row of a horizontal bar list.
+   `pct` is 0..100; the bar fills proportionally. `name` is mono-styled. #}
+{% macro bar_row(name, count, pct) %}
+<li class="bar-row">
+  <span class="bar-name">{{ name }}</span>
+  <span class="bar-track" aria-hidden="true">
+    <span class="bar-fill" style="width: {{ pct }}%"></span>
+  </span>
+  <span class="bar-count">{{ count }}</span>
+</li>
+{% endmacro %}
+
+{# bar_list(rows) — `rows` is iterable of (name, count, pct). #}
+{% macro bar_list(rows) %}
+<ul class="bar-list">
+  {% for name, count, pct in rows %}
+    {{ bar_row(name, count, pct) }}
+  {% endfor %}
+</ul>
+{% endmacro %}

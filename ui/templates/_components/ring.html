@@ -1,0 +1,23 @@
+{# ring(pct, label, sublabel='', state='ok') — 96×96 progress ring (SVG stroke-dasharray).
+   `state` ∈ {ok, warn, crit} drives the stroke color. #}
+{% macro ring(pct, label, sublabel='', state='ok') %}
+{% set safe_pct = ([0, [pct, 100] | min] | max) %}
+<div class="ring-card ring-{{ state }}" role="img"
+     aria-label="{{ label }} {{ safe_pct }}%">
+  <svg class="ring-svg" viewBox="0 0 36 36" width="96" height="96">
+    <circle cx="18" cy="18" r="16" fill="none"
+            stroke="var(--l2)" stroke-width="3"/>
+    <circle cx="18" cy="18" r="16" fill="none"
+            stroke="var(--ring-stroke)" stroke-width="3"
+            stroke-dasharray="{{ safe_pct }} {{ 100 - safe_pct }}"
+            stroke-dashoffset="25"
+            transform="rotate(-90 18 18)"
+            stroke-linecap="round"/>
+  </svg>
+  <div class="ring-center">
+    <strong>{{ safe_pct }}%</strong>
+    {% if sublabel %}<small>{{ sublabel }}</small>{% endif %}
+  </div>
+  <div class="ring-label">{{ label }}</div>
+</div>
+{% endmacro %}

@@ -1,0 +1,14 @@
+{# phase_pill(mark, label, css_class, active=False, disabled=False, href=None) —
+   small colored chip for the pipeline rail. `mark` is a 1–2 char id ('-1', '0', 'M').
+   `css_class` selects the --phase-color (e.g. 'phase-design'). #}
+{% macro phase_pill(mark, label, css_class, active=False, disabled=False, href=None) %}
+{% set tag = 'a' if href and not disabled else 'span' %}
+<{{ tag }}
+  {% if href and not disabled %}href="{{ href }}"{% endif %}
+  class="phase-chip {{ css_class }} {% if active %}is-active{% endif %} {% if disabled %}is-disabled{% endif %}"
+  {% if disabled %}aria-disabled="true" title="em breve"{% endif %}
+>
+  <span class="phase-chip-mark" aria-hidden="true">{{ mark }}</span>
+  <span class="phase-chip-label">{{ label }}</span>
+</{{ tag }}>
+{% endmacro %}

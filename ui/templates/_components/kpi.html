@@ -1,0 +1,14 @@
+{# kpi(item, label) — KPICard. `item` is a KPISeries from live_metrics.series_by_day(). #}
+{% from "_components/sparkline.html" import sparkline %}
+{% macro kpi(item, label) %}
+<article class="kpi-card">
+  <header class="kpi-head">
+    <span class="kpi-label">{{ label }}</span>
+    {% if item.delta_text %}
+      <span class="kpi-delta {{ item.delta_cls }}">{{ item.delta_text }}</span>
+    {% endif %}
+  </header>
+  <div class="kpi-value">{{ item.formatted }}</div>
+  <div class="kpi-spark">{{ sparkline(item.sparkline_points, label=label) }}</div>
+</article>
+{% endmacro %}

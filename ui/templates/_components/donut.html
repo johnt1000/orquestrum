@@ -1,0 +1,22 @@
+{# donut(score, segments) — 96×96 donut with center number.
+   `segments` is a list of {value, color} dicts (already in % units summing to 100).
+   Renders each segment as a stacked stroke-dasharray. #}
+{% macro donut(score, segments) %}
+{% set total = (segments | sum(attribute='value')) or 100 %}
+<div class="donut-card" role="img" aria-label="atenção {{ score }}/100">
+  <svg class="donut-svg" viewBox="0 0 36 36" width="96" height="96">
+    <circle cx="18" cy="18" r="16" fill="none" stroke="var(--l2)" stroke-width="3"/>
+    {% set ns = namespace(offset=25) %}
+    {% for seg in segments %}
+      {% set frac = (seg.value / total * 100) %}
+      <circle cx="18" cy="18" r="16" fill="none"
+              stroke="{{ seg.color }}" stroke-width="3"
+              stroke-dasharray="{{ frac }} {{ 100 - frac }}"
+              stroke-dashoffset="{{ ns.offset }}"
+              transform="rotate(-90 18 18)"/>
+      {% set ns.offset = ns.offset - frac %}
+    {% endfor %}
+  </svg>
+  <div class="donut-center"><strong>{{ score }}</strong></div>
+</div>
+{% endmacro %}

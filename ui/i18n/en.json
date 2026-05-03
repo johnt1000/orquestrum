@@ -1,0 +1,105 @@
+{
+  "brand.name": "Orquestrum",
+  "brand.subtitle": "console v{version}",
+
+  "nav.group.general": "General",
+  "nav.group.pipeline": "Pipeline",
+  "nav.group.catalog": "Catalog",
+  "nav.group.live": "Live",
+  "nav.group.system": "System",
+
+  "nav.overview": "Overview",
+  "nav.agents": "Agents",
+  "nav.skills": "Skills",
+  "nav.live_session": "Session",
+  "nav.live_routing": "Routing",
+  "nav.live_attention": "Attention",
+  "nav.operations": "Operations",
+  "nav.docs": "Docs",
+  "nav.coverage": "Coverage",
+  "nav.jobs": "Jobs",
+
+  "phase.onboarding": "−1 · Onboarding",
+  "phase.discovery": "0 · Discovery",
+  "phase.design": "1 · Design",
+  "phase.planning": "2 · Planning",
+  "phase.implementation": "3 · Implementation",
+  "phase.quality": "4 · Quality",
+  "phase.release": "5 · Release",
+  "phase.maintenance": "Maintenance",
+
+  "topbar.project": "project",
+  "topbar.search.placeholder": "Search agents, skills, jobs…",
+  "topbar.jobs.running": "{count} running",
+
+  "health.ok": "healthy",
+  "health.degraded": "degraded",
+
+  "mode.framework": "framework",
+  "mode.project": "project",
+
+  "theme.auto": "auto",
+  "theme.light": "light",
+  "theme.dark": "dark",
+  "theme.label": "Theme",
+
+  "lang.label": "Language",
+
+  "footer.no_project": "no project linked",
+
+  "kpi.cost": "Cost",
+  "kpi.calls": "Calls",
+  "kpi.cached": "Cached",
+  "kpi.skills": "Skills",
+
+  "budget.title": "Budget",
+  "budget.input": "input",
+  "budget.output": "output",
+  "budget.cost": "cost",
+
+  "top_skills.title": "Top skills",
+  "agent_activity.title": "Agent activity",
+  "attention.title": "Attention bands",
+  "attention.green": "green",
+  "attention.yellow": "yellow",
+  "attention.red": "red",
+  "recent_jobs.title": "Recent jobs",
+
+  "state.running": "running",
+  "state.done": "done",
+  "state.failed": "failed",
+  "state.timed_out": "timed out",
+
+  "btn.reload": "Reload",
+  "btn.open_project": "Open project",
+  "btn.see_all": "see all",
+
+  "empty.no_project.title": "No Orquestrum project here",
+  "empty.no_metrics.title": "No metrics yet",
+
+  "period.last_7d": "last 7 days",
+  "shortcut.help": "Keyboard shortcuts",
+
+  "phase.short.onboarding": "onboarding",
+  "phase.short.discovery": "spec",
+  "phase.short.design": "design",
+  "phase.short.planning": "planning",
+  "phase.short.implementation": "implementation",
+  "phase.short.quality": "quality",
+  "phase.short.release": "release",
+  "phase.short.maintenance": "maintenance",
+
+  "dashboard.updated": "updated {when}",
+  "dashboard.no_metrics_yet": "no metrics yet",
+  "dashboard.title.recent_jobs.empty": "no recent jobs",
+
+  "budget.tier.balanced": "balanced",
+  "budget.tier.deep": "deep",
+  "budget.tier.mechanical": "mechanical",
+  "budget.tier.sharp": "sharp",
+
+  "attention.summary": "{total} active",
+  "attention.score_avg": "avg · {avg}/100 · p95 · {p95}",
+
+  "top_skills.suffix": "top {n} / {total}"
+}
