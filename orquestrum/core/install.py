@@ -53,9 +53,33 @@ def _merge_claude_settings(template_path: Path, target_path: Path) -> None:
     target_hooks   = target_data.setdefault('hooks', {})
     template_hooks = template_data.get('hooks', {})
 
-    added: list[str] = []
-    skipped: list[str] = []
+    # Recognise any orquestrum-installed hook (current or legacy path) so
+    # we replace it on re-install instead of accumulating duplicates. The
+    # marker is the path tail `sdd/scripts/hooks/emit_metrics.py` — uniquely
+    # ours regardless of whether it sits under `.sdd/` (≤0.3.0) or
+    # `.claude/sdd/` (≥0.3.1).
+    def _is_orq_hook(cmd: str | None) -> bool:
+        if not cmd:
+            return False
+        return 'sdd/scripts/hooks/emit_metrics.py' in cmd
 
+    removed_legacy = 0
+    for event_name, existing in list(target_hooks.items()):
+        if not isinstance(existing, list):
+            continue
+        cleaned: list[dict] = []
+        for block in existing:
+            inner = [h for h in block.get('hooks', []) if not _is_orq_hook(h.get('command'))]
+            removed = len(block.get('hooks', [])) - len(inner)
+            removed_legacy += removed
+            if inner:
+                cleaned.append({**block, 'hooks': inner})
+        if cleaned:
+            target_hooks[event_name] = cleaned
+        else:
+            target_hooks.pop(event_name, None)
+
+    added: list[str] = []
     for event_name, blocks in template_hooks.items():
         existing = target_hooks.setdefault(event_name, [])
         if not isinstance(existing, list):
@@ -66,26 +90,16 @@ def _merge_claude_settings(template_path: Path, target_path: Path) -> None:
                 (h.get('command') for h in block.get('hooks', []) if h.get('command')),
                 None,
             )
-            # Skip if any existing entry already runs the same command
-            duplicate = any(
-                h.get('command') == block_command
-                for ex in existing
-                for h in ex.get('hooks', [])
-                if isinstance(h, dict)
-            )
-            if duplicate:
-                skipped.append(f'{event_name}: {block_command}')
-            else:
-                existing.append(block)
-                added.append(f'{event_name}: {block_command}')
+            existing.append(block)
+            added.append(f'{event_name}: {block_command}')
 
     target_path.write_text(json.dumps(target_data, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+    if removed_legacy:
+        log(f'  settings.json: replaced {removed_legacy} prior orquestrum hook entr(y/ies)')
     if added:
         ok(f'  settings.json: added {len(added)} hook(s)')
         for entry in added:
             print(f'    + {entry}')
-    if skipped:
-        log(f'  settings.json: {len(skipped)} hook(s) already present; skipped')
 
 
 def detect_tools(target: Path) -> list[str]:

@@ -206,7 +206,12 @@ class ClaudeCodeAdapter(ToolAdapter):
     }
 
     def _frontmatter(self, agent: AgentConfig, provider: str | None) -> str:
-        # Use the alias for the agent's tier — see _CLAUDE_TIER_ALIAS above.
+        # Claude Code recognises only `name`, `description`, `model`, and
+        # `tools` in subagent frontmatter. Custom fields like `temperature`,
+        # `maxTokens`, `disallowedTools` are NOT honoured and have been
+        # observed to confuse the picker / cause unrelated agent overreach
+        # (e.g. a status-query agent suddenly editing settings.json). We
+        # emit only the standard fields and let Claude Code's defaults apply.
         from orquestrum.lib.models import AGENT_TIERS
         tier = agent.model_tier_override or AGENT_TIERS.get(agent.name, 'balanced')
         model = self._CLAUDE_TIER_ALIAS.get(tier, 'sonnet')
@@ -214,12 +219,7 @@ class ClaudeCodeAdapter(ToolAdapter):
                  f'name: {_yaml_quote(agent.name)}',
                  f'description: {_yaml_quote(agent.description)}',
                  f'model: {model}',
-                 f'temperature: {agent.temperature}']
-        if agent.max_tokens is not None:
-            lines.append(f'maxTokens: {agent.max_tokens}')
-        if not agent.bash:
-            lines.append('disallowedTools: Bash')
-        lines.append('---\n')
+                 '---\n']
         return '\n'.join(lines) + '\n'
 
     def convert(self, provider: str | None) -> None:
