@@ -4,6 +4,17 @@ What `init` does, what it does NOT do, and the contract it establishes about whi
 
 Companion to [`docs/governance/MCP.md`](MCP.md) (MCP server registration), [`docs/governance/OBSERVABILITY.md`](OBSERVABILITY.md) (what the metrics hook records), and [`docs/governance/DISTRIBUTION.md`](DISTRIBUTION.md) (how the CLI itself is installed).
 
+## Setup vs init
+
+These two commands are orthogonal — neither replaces the other:
+
+| Command | Scope | What it touches | When to run |
+|---|---|---|---|
+| `orquestrum setup` | **Global** | `~/.claude/agents/`, `~/.claude/skills/`, `~/.claude/settings.json`, `~/.config/opencode/` | One-time, after CLI install. Wizard detects what's missing and offers to install. |
+| `orquestrum init` | **Project** | `<project>/.orquestrum/` only | Per project. **Optional** — projects that don't want orquestrum metrics/MCP linkage simply skip it. |
+
+The framework lives in `~/.claude/` (global), the project's relationship to the framework lives in `<project>/.orquestrum/` (local). `init` never installs agents/skills; `setup` never writes inside a project.
+
 ---
 
 ## Contract

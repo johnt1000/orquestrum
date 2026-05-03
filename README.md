@@ -123,36 +123,39 @@ Contributing? See [CONTRIBUTING.md](CONTRIBUTING.md).
 ## Quickstart
 
 ```bash
-# In your project directory
+# 1. ONE-TIME setup (global — installs the framework on your system)
+orquestrum setup                  # interactive wizard
+# or
+orquestrum setup --yes            # accept defaults (install claude-code,
+                                  # skip opencode). Lands at ~/.claude/agents/,
+                                  # ~/.claude/skills/, registers MCP +
+                                  # metrics hook in ~/.claude/settings.json.
+
+# 2. PER-PROJECT (optional — only if you want metrics + MCP for THIS project)
 cd /path/to/your/project
+orquestrum init --yes             # creates ./.orquestrum/{config,manifest,metrics/}
+                                  # — that's the entire project footprint.
 
-# Bootstrap orquestrum locally — creates ONLY <project>/.orquestrum/
-# (config + manifest + metrics dir). Asks 3 prompts about optional
-# integrations; --yes accepts the safe defaults silently.
-orquestrum init --yes                # ←  creates .orquestrum/, registers globally,
-                                     #     installs metrics hook + MCP server
-                                     #     into ~/.claude/settings.json (global).
-                                     #     Agents are NOT installed by default.
-
-# Install the 8 subagents globally (optional — skip if you only want
-# the metrics + MCP integration). Always lands at ~/.claude/agents/,
-# never inside the project.
-orquestrum install --tool claude-code --target ~
-
-# Open the web dashboard
-orquestrum web                                   # auto-detects mode, opens browser
-
-# Use Claude Code normally:
-#   - Stop hook records tokens/cost in <project>/.orquestrum/metrics/events.jsonl
-#   - MCP server (orquestrum) lets agents query state mid-turn via
-#     mcp__orquestrum__orq_* tools (session_summary, budget_status,
-#     recent_events, cost_today, …).
-#   - Dashboard refresh: http://127.0.0.1:7700/dashboard
-
-# When you want to know what happened
-orquestrum dashboard                             # terminal summary
-orquestrum audit attention                       # review attention scores
+# 3. Day-to-day
+orquestrum web                    # dashboard (auto-detects project)
+orquestrum dashboard              # terminal summary
+orquestrum audit attention        # review attention scores
 ```
+
+What the two phases do:
+
+- **`orquestrum setup`** — global, one-time. Installs agents + skills + hooks
+  + MCP server under `~/.claude/`. Restart Claude Code afterwards.
+- **`orquestrum init`** — per-project, optional. Connects ONE repo to
+  metrics/MCP by writing `<project>/.orquestrum/`. Skip if the project
+  doesn't need orquestrum tracking.
+
+Use Claude Code normally afterwards:
+  - Stop hook records tokens/cost in `<project>/.orquestrum/metrics/events.jsonl`
+  - MCP server (`orquestrum`) lets agents query state mid-turn via
+    `mcp__orquestrum__orq_*` tools (`session_summary`, `budget_status`,
+    `recent_events`, `cost_today`, …).
+  - Dashboard refresh: http://127.0.0.1:7700/dashboard
 
 To switch tools later (e.g. claude-code → opencode):
 
@@ -166,7 +169,8 @@ orquestrum update --tool opencode                # cleanup + reinstall + history
 
 | Command | What it does |
 |---------|--------------|
-| `orquestrum init [--name N] [--yes]` | Bootstrap `<project>/.orquestrum/` (config, manifest, gitignore, metrics dir) and register globally. Asks 3 interactive prompts about optional integrations (metrics hook, MCP server, agents). `--yes` accepts defaults silently. Tool installs are SEPARATE — see `orquestrum install`. |
+| `orquestrum setup [--yes]` | Wizard for first-time global install. Detects what's already on the system and asks before installing claude-code / opencode integrations under `~/.claude/` / `~/.config/opencode/`. The recommended starting point — covers `convert + install` in one interactive step. |
+| `orquestrum init [--name N] [--yes]` | Bootstrap `<project>/.orquestrum/` (config, manifest, gitignore, metrics dir) and register globally. Asks 3 interactive prompts about optional integrations (metrics hook, MCP server, agents). `--yes` accepts defaults silently. Tool installs are SEPARATE — see `orquestrum setup` or `orquestrum install`. |
 | `orquestrum update [--tool X] [--all] [--check] [--self]` | Re-sync this project (or all). `--tool` switches integrations with cleanup of the old one. `--self` upgrades the CLI itself (detects `uv tool` vs source install and runs the matching command — equivalent to re-running `install.sh`). |
 | `orquestrum web [--mode {project,framework,auto}] [--port N] [--no-browser]` | Launch the local console. Auto-detects mode from cwd. |
 | `orquestrum repos {list,add,remove}` | Manage the global registry at `~/.orquestrum/registry.toml`. |
