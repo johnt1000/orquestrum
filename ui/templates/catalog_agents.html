@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "_components/agent_card.html" import agent_card %}
+{% from "_components/catalog_tabs.html" import catalog_tabs %}
+{% block title %}{{ 'nav.agents' | t }}{% endblock %}
+{% block content %}
+
+<header class="page-head">
+  <div class="page-head-row">
+    <h1>{{ 'nav.agents' | t }}</h1>
+    <div class="page-head-meta">
+      {{ 'period.last_7d' | t }}
+      {% if agents %}
+        <span class="breadcrumb-sep">·</span>
+        {{ agents | length }} {{ 'catalog.total' | t }}
+      {% endif %}
+    </div>
+  </div>
+</header>
+
+{{ catalog_tabs('agents', agents_count=agents|length, skills_count=skills_count) }}
+
+{% if agents %}
+  <section class="agent-grid">
+    {% for a in agents %}
+      {{ agent_card(a, series=series.get(a.short_name), edit_enabled=(mode == 'framework')) }}
+    {% endfor %}
+  </section>
+{% else %}
+  <article class="empty-state">
+    <h3>{{ 'catalog.empty.agents.title' | t }}</h3>
+    <p>{{ 'catalog.empty.agents.body' | t }}</p>
+  </article>
+{% endif %}
+
+{% endblock %}

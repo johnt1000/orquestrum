@@ -81,14 +81,14 @@
 
         <div class="nav-group">
           <span class="nav-group-label">{{ 'nav.group.catalog' | t }}</span>
-          <a href="/catalog" class="nav-item"
-             {% if p == '/catalog' or p.startswith('/agents') %}aria-current="page"{% endif %}>
+          <a href="/catalog/agents" class="nav-item"
+             {% if p == '/catalog' or p.startswith('/catalog/agents') or p.startswith('/agents') %}aria-current="page"{% endif %}>
             <span class="nav-item-icon" aria-hidden="true">◆</span>
             <span class="nav-item-label">{{ 'nav.agents' | t }}</span>
             {% if _counts.agents %}<span class="nav-item-count">{{ _counts.agents }}</span>{% endif %}
           </a>
-          <a href="/catalog#skills" class="nav-item"
-             {% if p.startswith('/skills') %}aria-current="page"{% endif %}>
+          <a href="/catalog/skills" class="nav-item"
+             {% if p.startswith('/catalog/skills') or p.startswith('/skills') %}aria-current="page"{% endif %}>
             <span class="nav-item-icon" aria-hidden="true">◇</span>
             <span class="nav-item-label">{{ 'nav.skills' | t }}</span>
             {% if _counts.skills %}<span class="nav-item-count">{{ _counts.skills }}</span>{% endif %}

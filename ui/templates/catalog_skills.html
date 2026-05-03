@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% from "_components/source_mark.html" import source_mark %}
+{% from "_components/catalog_tabs.html" import catalog_tabs %}
+{% block title %}{{ 'nav.skills' | t }}{% endblock %}
+{% block content %}
+
+<header class="page-head">
+  <div class="page-head-row">
+    <h1>{{ 'nav.skills' | t }}</h1>
+    <div class="page-head-meta">
+      {{ 'period.last_7d' | t }}
+      {% if skills %}
+        <span class="breadcrumb-sep">·</span>
+        {{ skills | length }} {{ 'catalog.total' | t }}
+      {% endif %}
+    </div>
+  </div>
+</header>
+
+{{ catalog_tabs('skills', agents_count=agents_count, skills_count=skills|length) }}
+
+{% if skills %}
+  <div class="skill-toolbar">
+    <input id="skill-search" type="search" class="skill-filter" autocomplete="off"
+           placeholder="{{ 'catalog.filter.placeholder' | t }}"
+           aria-label="{{ 'catalog.filter.placeholder' | t }}">
+  </div>
+
+  <div class="skill-table-wrap">
+    <table class="skill-table" role="grid">
+      <thead>
+        <tr>
+          <th>{{ 'catalog.col.skill' | t }}</th>
+          <th class="skill-col-num">{{ 'catalog.calls_7d' | t }}</th>
+          <th>{{ 'catalog.col.depends' | t }}</th>
+          <th>{{ 'catalog.col.chain' | t }}</th>
+          <th>{{ 'catalog.col.refs' | t }}</th>
+          <th>{{ 'catalog.col.source' | t }}</th>
+          {% if mode == 'framework' %}<th aria-label="actions"></th>{% endif %}
+        </tr>
+      </thead>
+      <tbody id="skill-rows">
+        {% for s in skills %}
+          {% set count = skill_counts.get(s.slug, 0) %}
+          <tr class="skill-row" data-skill="{{ s.slug }} {{ s.name|lower }} {{ s.description|lower }}">
+            <td class="skill-name-cell">
+              <strong class="skill-name">{{ s.slug }}</strong>
+              <small class="skill-desc">{{ s.description[:120] }}{% if s.description|length > 120 %}…{% endif %}</small>
+            </td>
+            <td class="skill-col-num skill-calls">{{ count or '—' }}</td>
+            <td class="skill-deps-cell">
+              {% if s.depends_on %}
+                <span class="skill-deps">
+                  {% for d in s.depends_on %}<code class="skill-dep-chip">{{ d }}</code>{% endfor %}
+                </span>
+              {% else %}<span class="skill-empty">—</span>{% endif %}
+            </td>
+            <td>
+              {% if s.chain_next %}<code class="skill-chain">{{ s.chain_next }}</code>
+              {% else %}<span class="skill-empty">—</span>{% endif %}
+            </td>
+            <td><code class="skill-refs">{{ s.inject_refs }}</code></td>
+            <td>{{ source_mark(s.location_label) }}</td>
+            {% if mode == 'framework' %}
+              <td class="skill-actions"><a href="/skills/{{ s.slug }}/edit">{{ 'catalog.edit' | t }}</a></td>
+            {% endif %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div id="skill-empty-msg" class="skill-empty-msg" hidden>
+      {{ 'catalog.filter.no_match' | t }}
+    </div>
+  </div>
+
+  <script>
+    // Pure-vanilla client filter — no framework, ~15 LOC.
+    (function () {
+      var input = document.getElementById('skill-search');
+      var rows  = document.querySelectorAll('#skill-rows .skill-row');
+      var empty = document.getElementById('skill-empty-msg');
+      if (!input) return;
+      input.addEventListener('input', function () {
+        var q = input.value.trim().toLowerCase();
+        var visible = 0;
+        rows.forEach(function (r) {
+          var hit = !q || r.dataset.skill.indexOf(q) !== -1;
+          r.hidden = !hit;
+          if (hit) visible++;
+        });
+        empty.hidden = visible > 0;
+      });
+    })();
+  </script>
+{% else %}
+  <article class="empty-state">
+    <h3>{{ 'catalog.empty.skills.title' | t }}</h3>
+    <p>{{ 'catalog.empty.skills.body' | t }}</p>
+  </article>
+{% endif %}
+
+{% endblock %}

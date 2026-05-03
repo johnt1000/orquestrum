@@ -101,5 +101,20 @@
   "attention.summary": "{total} ativos",
   "attention.score_avg": "score médio · {avg}/100 · p95 · {p95}",
 
-  "top_skills.suffix": "top {n} / {total}"
+  "top_skills.suffix": "top {n} / {total}",
+
+  "catalog.total": "no total",
+  "catalog.calls_7d": "chamadas 7d",
+  "catalog.col.skill": "Habilidade",
+  "catalog.col.depends": "Depende",
+  "catalog.col.chain": "Próximo",
+  "catalog.col.refs": "Refs",
+  "catalog.col.source": "Origem",
+  "catalog.edit": "editar",
+  "catalog.filter.placeholder": "Filtrar habilidades…",
+  "catalog.filter.no_match": "Nenhuma habilidade corresponde ao filtro.",
+  "catalog.empty.agents.title": "Nenhum agente encontrado",
+  "catalog.empty.agents.body": "Rode orquestrum install --tool <tool> --target . pra instalar agentes neste projeto, ou abra o console no diretório do framework pra ver o catálogo completo.",
+  "catalog.empty.skills.title": "Nenhuma habilidade encontrada",
+  "catalog.empty.skills.body": "Rode orquestrum install --tool <tool> --target . pra instalar habilidades neste projeto."
 }

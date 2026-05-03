@@ -1,0 +1,4 @@
+{# tier_badge(tier) — colored pill for a tier id ('deep' | 'balanced' | 'mechanical' | 'sharp' | '?'). #}
+{% macro tier_badge(tier) %}
+<span class="tier-badge tier-{{ tier or 'unknown' }}">{{ tier or '—' }}</span>
+{% endmacro %}

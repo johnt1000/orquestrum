@@ -119,9 +119,11 @@ class TestFrameworkHome:
         r = await fw_client.get('/')
         assert r.status_code == 200
 
-    async def test_catalog_returns_200(self, fw_client: httpx.AsyncClient):
-        r = await fw_client.get('/catalog')
-        assert r.status_code == 200
+    async def test_catalog_redirects(self, fw_client: httpx.AsyncClient):
+        # Onda 3 — /catalog now 303 → /catalog/agents
+        r = await fw_client.get('/catalog', follow_redirects=False)
+        assert r.status_code == 303
+        assert r.headers['location'] == '/catalog/agents'
 
     async def test_audits_returns_200(self, fw_client: httpx.AsyncClient):
         r = await fw_client.get('/audits')

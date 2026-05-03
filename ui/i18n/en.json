@@ -101,5 +101,20 @@
   "attention.summary": "{total} active",
   "attention.score_avg": "avg · {avg}/100 · p95 · {p95}",
 
-  "top_skills.suffix": "top {n} / {total}"
+  "top_skills.suffix": "top {n} / {total}",
+
+  "catalog.total": "total",
+  "catalog.calls_7d": "calls 7d",
+  "catalog.col.skill": "Skill",
+  "catalog.col.depends": "Depends on",
+  "catalog.col.chain": "Next",
+  "catalog.col.refs": "Refs",
+  "catalog.col.source": "Source",
+  "catalog.edit": "edit",
+  "catalog.filter.placeholder": "Filter skills…",
+  "catalog.filter.no_match": "No skills match the filter.",
+  "catalog.empty.agents.title": "No agents found",
+  "catalog.empty.agents.body": "Run orquestrum install --tool <tool> --target . to install agents in this project, or open the console from the framework directory for the full catalog.",
+  "catalog.empty.skills.title": "No skills found",
+  "catalog.empty.skills.body": "Run orquestrum install --tool <tool> --target . to install skills in this project."
 }

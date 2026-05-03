@@ -1,0 +1,34 @@
+{# agent_card(agent, series, edit_enabled=False)
+   `agent` is an AgentRow (uses .name, .slug, .emoji, .tier, .description, .location_label).
+   `series` is an optional AgentSeries from live_metrics.agent_calls_series() — may be None. #}
+{% from "_components/sparkline.html" import sparkline %}
+{% from "_components/tier_badge.html" import tier_badge %}
+{% from "_components/source_mark.html" import source_mark %}
+{% macro agent_card(agent, series=none, edit_enabled=False) %}
+{% set href = ('/agents/' ~ agent.slug ~ '/edit') if edit_enabled else None %}
+{% set tag = 'a' if href else 'div' %}
+<{{ tag }} class="agent-card" {% if href %}href="{{ href }}"{% endif %}>
+  <header class="agent-card-head">
+    <span class="agent-card-emoji" aria-hidden="true">{{ agent.emoji }}</span>
+    <div class="agent-card-title">
+      <span class="agent-card-name">{{ agent.name }}</span>
+      <span class="agent-card-meta">
+        {{ tier_badge(agent.tier) }}
+        {{ source_mark(agent.location_label) }}
+      </span>
+    </div>
+  </header>
+  <p class="agent-card-desc">{{ agent.description }}</p>
+  <footer class="agent-card-foot">
+    <div class="agent-card-spark">
+      {{ sparkline(series.points if series else '', label='calls 7d') }}
+    </div>
+    <div class="agent-card-stats">
+      <span class="agent-card-calls">
+        {% if series %}{{ series.total }}{% else %}0{% endif %}
+        <small>{{ 'catalog.calls_7d' | t }}</small>
+      </span>
+    </div>
+  </footer>
+</{{ tag }}>
+{% endmacro %}

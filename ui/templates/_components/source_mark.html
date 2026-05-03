@@ -1,0 +1,11 @@
+{# source_mark(label) — preserves existing mark.loc-* classes (used since Onda 1).
+   `label` is one of 'local' | 'global' | 'local+global'. #}
+{% macro source_mark(label) %}
+{% if label == 'local+global' %}
+  <mark class="loc-both" title="local + global">local · global</mark>
+{% elif label == 'local' %}
+  <mark class="loc-local" title="instalado neste projeto">local</mark>
+{% else %}
+  <mark class="loc-global" title="canônico no framework">global</mark>
+{% endif %}
+{% endmacro %}

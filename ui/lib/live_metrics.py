@@ -324,3 +324,71 @@ def agent_calls_by_day(events: list[dict[str, Any]],
 
     header_labels = [labels[d.weekday()] for d in bucket_dates]
     return rows, header_labels
+
+
+# ─── catalog metrics (per-agent + per-skill last 7d) ─────────────────────────
+
+@dataclass
+class AgentSeries:
+    short_name: str
+    total:      int
+    values:     list[int]
+    points:     str    # SVG polyline points for sparkline
+
+
+def agent_calls_series(events: list[dict[str, Any]],
+                       short_names: list[str],
+                       days: int = 7,
+                       today: dt.date | None = None) -> dict[str, AgentSeries]:
+    """Per-agent 7-day call counts + sparkline points, keyed by short name."""
+    today = today or dt.datetime.now(dt.timezone.utc).date()
+    bucket_dates = _bucket_dates(days, today)
+    counts: dict[str, dict[dt.date, int]] = {n: {d: 0 for d in bucket_dates} for n in short_names}
+
+    for ev in events:
+        if ev.get('kind') != 'llm_call':
+            continue
+        agent_field = (ev.get('agent') or '').strip()
+        short = agent_field.split(' - ', 1)[0] if agent_field else ''
+        if short not in counts:
+            continue
+        d_at = _parse_ts(ev)
+        if not d_at:
+            continue
+        day = d_at.astimezone(dt.timezone.utc).date()
+        if day in counts[short]:
+            counts[short][day] += 1
+
+    out: dict[str, AgentSeries] = {}
+    for n in short_names:
+        vals = [counts[n][d] for d in bucket_dates]
+        out[n] = AgentSeries(
+            short_name=n,
+            total=sum(vals),
+            values=vals,
+            points=spark_points([float(v) for v in vals]),
+        )
+    return out
+
+
+def skill_calls_period(events: list[dict[str, Any]],
+                        days: int = 7,
+                        today: dt.date | None = None) -> dict[str, int]:
+    """Total calls per skill across the trailing `days` window."""
+    today = today or dt.datetime.now(dt.timezone.utc).date()
+    cutoff = dt.datetime.combine(
+        today - dt.timedelta(days=days - 1),
+        dt.time.min,
+        tzinfo=dt.timezone.utc,
+    )
+    counts: dict[str, int] = {}
+    for ev in events:
+        if ev.get('kind') != 'llm_call':
+            continue
+        d_at = _parse_ts(ev)
+        if not d_at or d_at < cutoff:
+            continue
+        skill = ev.get('skill')
+        if skill:
+            counts[skill] = counts.get(skill, 0) + 1
+    return counts

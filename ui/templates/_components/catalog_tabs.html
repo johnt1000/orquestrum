@@ -1,0 +1,14 @@
+{# catalog_tabs(active) — top nav switching between /catalog/agents and /catalog/skills.
+   `active` is 'agents' or 'skills'. Uses i18n keys nav.agents and nav.skills. #}
+{% macro catalog_tabs(active, agents_count=None, skills_count=None) %}
+<nav class="catalog-tabs" aria-label="catálogo">
+  <a href="/catalog/agents" class="catalog-tab {% if active == 'agents' %}is-active{% endif %}">
+    <span>{{ 'nav.agents' | t }}</span>
+    {% if agents_count is not none %}<span class="catalog-tab-count">{{ agents_count }}</span>{% endif %}
+  </a>
+  <a href="/catalog/skills" class="catalog-tab {% if active == 'skills' %}is-active{% endif %}">
+    <span>{{ 'nav.skills' | t }}</span>
+    {% if skills_count is not none %}<span class="catalog-tab-count">{{ skills_count }}</span>{% endif %}
+  </a>
+</nav>
+{% endmacro %}

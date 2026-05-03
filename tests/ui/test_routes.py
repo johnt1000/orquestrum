@@ -107,12 +107,15 @@ class TestDashboardRoute:
 # ─── /catalog ────────────────────────────────────────────────────────────────
 
 class TestCatalogRoute:
-    async def test_catalog_returns_200(self, client: httpx.AsyncClient):
-        r = await client.get('/catalog')
-        assert r.status_code == 200
+    async def test_catalog_redirects_to_agents(self, client: httpx.AsyncClient):
+        # Onda 3 — /catalog now 303 redirects to /catalog/agents
+        r = await client.get('/catalog', follow_redirects=False)
+        assert r.status_code == 303
+        assert r.headers['location'] == '/catalog/agents'
 
-    async def test_catalog_returns_html(self, client: httpx.AsyncClient):
-        r = await client.get('/catalog')
+    async def test_catalog_followed_returns_html(self, client: httpx.AsyncClient):
+        r = await client.get('/catalog', follow_redirects=True)
+        assert r.status_code == 200
         assert 'text/html' in r.headers['content-type']
 
 

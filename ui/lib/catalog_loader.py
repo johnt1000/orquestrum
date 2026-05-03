@@ -26,6 +26,12 @@ class AgentRow:
     bash:        bool
     body_path:   Path
     sources:     tuple[str, ...] = ()   # ('local',), ('global',), or ('local','global')
+    emoji:       str = '◇'              # frontmatter `emoji:` field; '◇' fallback
+
+    @property
+    def short_name(self) -> str:
+        """First token of the canonical name (e.g. 'Helm - The Architect' → 'Helm')."""
+        return self.name.split(' - ', 1)[0]
 
     @property
     def location_label(self) -> str:
@@ -77,6 +83,15 @@ def list_agents(agents_dir: Path) -> list[AgentRow]:
             cfg = parse_agent(f)
         except Exception:
             continue
+        # `emoji` is a custom frontmatter field not exposed by AgentConfig
+        emoji = '◇'
+        try:
+            import frontmatter as fm
+            raw = fm.load(str(f)).get('emoji')
+            if raw:
+                emoji = str(raw)
+        except Exception:
+            pass
         out.append(AgentRow(
             name=cfg.name,
             slug=_slug_from_name(cfg.name),
@@ -86,6 +101,7 @@ def list_agents(agents_dir: Path) -> list[AgentRow]:
             temperature=cfg.temperature,
             bash=cfg.bash,
             body_path=f,
+            emoji=emoji,
         ))
     return out
 
