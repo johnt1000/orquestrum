@@ -105,7 +105,7 @@ def detect_tools(target: Path) -> list[str]:
     return found
 
 
-def install_tool(tool: str, target: Path) -> bool:
+def install_tool(tool: str, target: Path, *, force: bool = False) -> bool:
     if tool not in VALID_TOOLS:
         err(f'Unknown tool: {tool}')
         if tool == 'claude':
@@ -118,10 +118,7 @@ def install_tool(tool: str, target: Path) -> bool:
         err(f'Run first: orquestrum convert --tool {tool}')
         return False
 
-    # Preflight: catch the double-nesting mistake BEFORE we copy anything.
-    # The integration package for some tools has a top-level dot-dir
-    # (.claude/, .cursor/) and copying it into a target whose basename
-    # is the same dir produces target/.claude/.claude/ — silently broken.
+    # Preflight 1 — target shape sanity (catches `--target ~/.claude` etc.)
     from orquestrum.lib.verify import detect_target_misuse
     misuse = detect_target_misuse(tool, target)
     if misuse:
@@ -131,8 +128,35 @@ def install_tool(tool: str, target: Path) -> bool:
         return False
 
     abs_target = target.expanduser().resolve()
+
+    # Preflight 2 — refuse to clobber a user file at a single-owner path
+    # (aider's CONVENTIONS.md, windsurf's .windsurfrules). Detected via
+    # the marker that adapters embed in orquestrum-generated content.
+    from orquestrum.lib.install_plan import (
+        detect_user_owned_files, render_user_conflict_error,
+        classify_install,
+    )
+    if abs_target.is_dir():
+        conflicts = detect_user_owned_files(tool, abs_target)
+        if conflicts and not force:
+            for line in render_user_conflict_error(tool, conflicts).splitlines():
+                err(line)
+            return False
+        if conflicts and force:
+            warn(f'--force: overwriting {len(conflicts)} user file(s).')
+
     log(f'Installing {tool} → {abs_target}')
     log(f'  Source:  {src}')
+
+    # Preflight 3 — classify what the install will do, print the plan
+    # before any file is touched. Surgical transparency: the user sees
+    # exactly how many files will be created vs. updated vs. unchanged.
+    ignored = {'settings.json'} if tool == 'claude-code' else set()
+    plan = classify_install(src, abs_target, ignore_filenames=ignored)
+    log(f'  Plan:')
+    for line in plan.render().splitlines():
+        print(line)
+
     abs_target.mkdir(parents=True, exist_ok=True)
 
     # Special handling: claude-code settings.json — merge instead of overwrite
@@ -216,6 +240,11 @@ def main(argv: list[str] | None = None) -> None:
                        help='Auto-detect installed tools and install all')
     parser.add_argument('--target', required=True, metavar='PATH',
                         help='Target directory (project root or tool config dir)')
+    parser.add_argument('--force', action='store_true',
+                        help='Overwrite user-owned files at single-owner paths '
+                             '(aider CONVENTIONS.md, windsurf .windsurfrules). '
+                             'By default orquestrum refuses these to keep your '
+                             'project files intact.')
     args = parser.parse_args(argv)
 
     target = Path(args.target).expanduser()
@@ -237,13 +266,13 @@ def main(argv: list[str] | None = None) -> None:
         for idx, tool in enumerate(tools, 1):
             if total > 1:
                 print(f'\033[1m[{idx}/{total}] {tool}\033[0m')
-            if not install_tool(tool, target):
+            if not install_tool(tool, target, force=args.force):
                 sys.exit(1)
             if not verify_install(tool, target):
                 sys.exit(1)
             print()
     else:
-        if not install_tool(args.tool, target):
+        if not install_tool(args.tool, target, force=args.force):
             sys.exit(1)
         if not verify_install(args.tool, target):
             sys.exit(1)
