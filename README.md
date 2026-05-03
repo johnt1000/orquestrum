@@ -66,7 +66,8 @@ Eight orchestrators, each owning one or more pipeline phases:
 | 4          | `learning-aggregator`  | Cross-cutting learning summary (recurrences)  | —                      |
 | 5          | `changelog-manager`    | SemVer changelog + release document           | `runbook-manager`      |
 | 5          | `runbook-manager`      | Operational procedures                        | —                      |
-| 5          | `archive-manager`      | Consolidated task/log summaries               | `runbook-manager`      |
+| 5          | `archive-manager` (release mode) | Consolidate just-released tasks/logs       | `runbook-manager`      |
+| Maint.     | `archive-manager` (prune mode)   | Proactive doc hygiene — superseded versions, empty stubs, stale drafts | — |
 | 5          | `rollback-manager`     | Deterministic rollback procedure per release  | `runbook-manager`      |
 | 3          | `data-migration-manager` | Schema/data migration plan with reversibility | `security-manager`   |
 | 4          | `performance-manager`  | Performance targets + regression report       | `learning-manager`     |

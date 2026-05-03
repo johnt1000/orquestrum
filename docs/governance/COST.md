@@ -55,6 +55,14 @@ Pricing is reference-grade (Anthropic public pricing 2025) and may be stale — 
 
 ---
 
+## Reducing cost — known patterns
+
+**Scan-once cache for big files.** Session analysis showed repeated scans of large files (e.g. 20+ `grep`/`head` Bash calls on a 72 KB seed.sql in a single session) as a dominant cost driver, larger than `Read` tool calls. Convention: skills that need structural info from a file >20 KB write a one-time summary to `## Big-File Summaries` in `CHECKPOINT.md` and consult the cache thereafter. See `docs/agent-context/CONVENTIONS.md` → "Big-File Summary Convention".
+
+**Doc hygiene reduces context loads.** Bloated `docs/` folders (e.g. 7 spec versions when v8 is current; 64 task logs from shipped releases) inflate both human-driven scans and agent context loads at every BOOTSTRAP. Flux can run `archive-manager` in `prune` mode at any time (no release dependency) to consolidate obsolete artifacts and delete the originals. See `skills/archive-manager/SKILL.md`.
+
+---
+
 ## What the budget does NOT cover
 
 - **Wall time / latency**: not budgeted here. See `docs/governance/PERFORMANCE.md` for latency targets.

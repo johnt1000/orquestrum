@@ -84,8 +84,8 @@ Agents and skill assets always use **paths without tool-specific prefixes**:
 | 3 Planning | `Forge - Dev Lead` | epic-manager → task-manager |
 | 3.5 Security | `Cipher - Security Lead` | security-manager |
 | 4 Quality | `Ward - Quality Lead` | review-manager → qa-manager → learning-manager |
-| 5 Release | `Cast - Ship Lead` | changelog-manager → runbook-manager → archive-manager |
-| Maintenance | `Flux - Support Lead` | (triage + routing) |
+| 5 Release | `Cast - Ship Lead` | changelog-manager → runbook-manager → archive-manager (`release` mode) |
+| Maintenance | `Flux - Support Lead` | triage + routing; archive-manager (`prune` mode) for proactive doc hygiene |
 
 `Helm - The Architect` is the meta-orchestrator: classifies the work tier (0/1/2) and decides which agent to invoke and which gates to validate. `Forge - Dev Lead` can also operate as primary for Tier 0 work (fast-path without Helm routing).
 

@@ -29,7 +29,8 @@ Agents use this table to check whether a task requires skill loading before proc
 | Run E2E regression against target environment | `e2e-manager` | ward | 1 | 4 |
 | Generate changelog or release notes | `changelog-manager` | cast | 1 | 5 |
 | Write or update operational runbook | `runbook-manager` | cast | 2 | 5 |
-| Archive completed tasks and logs | `archive-manager` | cast | 1 | 5 |
+| Archive completed tasks/logs after a release | `archive-manager` (release mode) | cast | 1 | 5 |
+| Prune obsolete docs (superseded versions, empty stubs, stale drafts) — any time | `archive-manager` (prune mode) | flux | 0 | maintenance |
 | Document a rollback procedure for a release | `rollback-manager` | cast | 1 | 5 |
 | Plan a data migration (schema, backfill, store move) | `data-migration-manager` | forge | 2 | 3 |
 | Validate performance targets / capture regression | `performance-manager` | ward | 1 | 4 |
@@ -45,3 +46,4 @@ Agents use this table to check whether a task requires skill loading before proc
 - **Tier minimum**: skills marked Tier 1+ are not invoked in Tier 0 (micro) work unless the agent explicitly escalates.
 - **Trace is sequential**: codebase-mapper → reverse-spec → adr-manager → glossary-manager. Order is mandatory.
 - **None match?** Proceed without skill loading.
+- **Big-file scans**: any skill that scans a file >20 KB more than once must consult `## Big-File Summaries` in `CHECKPOINT.md` first (see `docs/agent-context/CONVENTIONS.md` → "Big-File Summary Convention").
