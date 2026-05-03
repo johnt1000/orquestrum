@@ -185,11 +185,19 @@ class ToolAdapter(ABC):
 
 class ClaudeCodeAdapter(ToolAdapter):
     docs_prefix   = '.sdd/docs'
-    skills_prefix = '.sdd/skills'
+    # Skills go where Claude Code looks: ~/.claude/skills/ or
+    # <project>/.claude/skills/. The .sdd/ prefix was OpenCode-style and
+    # made Claude Code's /skills + auto-discovery blind to them.
+    skills_prefix = '.claude/skills'
 
     def _frontmatter(self, agent: AgentConfig, provider: str | None) -> str:
-        # Always resolve model — claude-code is always Anthropic; default to 'claude'
-        model = resolve_model(agent.name, provider or 'claude', agent.model_tier_override)
+        # Always resolve model — claude-code is always Anthropic; default to 'claude'.
+        # `resolve_model` returns OpenCode-style identifiers (`anthropic/claude-…`)
+        # but Claude Code's frontmatter expects the bare model name. Without this
+        # strip, Claude Code rejects the agent at load time ("erro de modelo")
+        # and falls back to the parent session's model.
+        raw_model = resolve_model(agent.name, provider or 'claude', agent.model_tier_override)
+        model = raw_model.split('/', 1)[-1] if '/' in raw_model else raw_model
         lines = ['---',
                  f'name: {_yaml_quote(agent.name)}',
                  f'description: {_yaml_quote(agent.description)}',
@@ -207,6 +215,11 @@ class ClaudeCodeAdapter(ToolAdapter):
         shutil.rmtree(out, ignore_errors=True)
         agents_out = out / '.claude' / 'agents'
         agents_out.mkdir(parents=True)
+        # Skills live under .claude/skills/ so Claude Code's /skills command
+        # and auto-discovery find them. .sdd/ is reserved for orquestrum-
+        # internal docs + scripts that the agents reference by path.
+        skills_out = out / '.claude' / 'skills'
+        skills_out.mkdir(parents=True)
         (out / '.sdd' / 'scripts').mkdir(parents=True)
 
         for agent_file in sorted(AGENTS_DIR.glob('*.md')):
@@ -217,11 +230,11 @@ class ClaudeCodeAdapter(ToolAdapter):
             out_file.write_text(content, encoding='utf-8')
             self._check_canonical(content, out_file.name, provider)
 
-        # docs/ has subdirectories now (agent-context, governance, baselines) —
-        # copytree preserves the full structure
+        # docs/ stays under .sdd/ — orquestrum-internal governance content
+        # referenced by agent bodies via .sdd/docs/<...> paths.
         shutil.copytree(DOCS_DIR, out / '.sdd' / 'docs', dirs_exist_ok=True)
-        shutil.copytree(SKILLS_DIR, out / '.sdd' / 'skills', dirs_exist_ok=True)
-        for bak in (out / '.sdd' / 'skills').rglob('*.bak'):
+        shutil.copytree(SKILLS_DIR, skills_out, dirs_exist_ok=True)
+        for bak in skills_out.rglob('*.bak'):
             bak.unlink()
 
         # Hook + lib copy: metrics hook needs orquestrum/lib/models for estimate_cost
@@ -233,9 +246,10 @@ class ClaudeCodeAdapter(ToolAdapter):
         (out / '.claude' / 'settings.json').write_text(_CLAUDE_SETTINGS_TEMPLATE, encoding='utf-8')
 
         ok(f'claude-code → {out}')
-        print(f'    .claude/agents/        ← copy to your project\'s .claude/agents/')
+        print(f'    .claude/agents/        ← Claude Code subagents (shift+tab picker)')
+        print(f'    .claude/skills/        ← Claude Code skills (/skills, auto-loaded)')
         print(f'    .claude/settings.json  ← merged into your project\'s settings (hooks for metrics)')
-        print(f'    .sdd/                  ← copy to your project root')
+        print(f'    .sdd/                  ← orquestrum docs + hook scripts')
 
 
 class OpenCodeAdapter(ToolAdapter):

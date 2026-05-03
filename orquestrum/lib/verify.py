@@ -173,9 +173,9 @@ def verify_convert_output(tool: str, out_dir: Path,
     if tool == 'claude-code':
         _check_dir(report, '.claude/agents')
         _check_count(report, '.claude/agents', '*.md', EXPECTED_AGENT_COUNT)
+        _check_dir(report, '.claude/skills')
         _check_file(report, '.claude/settings.json', min_bytes=10)
         _check_dir(report, '.sdd/docs')
-        _check_dir(report, '.sdd/skills')
         _check_dir(report, '.sdd/scripts/hooks')
         _check_dir(report, '.sdd/scripts/lib')
         _check_file(report, '.sdd/scripts/archive-cleanup.sh', min_bytes=100)
@@ -245,9 +245,9 @@ def verify_install_target(tool: str, target: Path) -> VerifyReport:
         # tolerant of user-owned agents in the same dir.
         _check_required_files(report, '.claude/agents',
                               _expected_agent_md_filenames())
+        _check_dir(report, '.claude/skills')
         _check_file(report, '.claude/settings.json', min_bytes=10)
         _check_dir(report, '.sdd/docs')
-        _check_dir(report, '.sdd/skills')
         _check_dir(report, '.sdd/scripts/hooks')
 
     elif tool == 'opencode':

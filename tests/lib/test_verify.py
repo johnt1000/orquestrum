@@ -12,7 +12,11 @@ from orquestrum.lib import verify
 
 
 def _build_claude_code(out: Path) -> None:
-    """Build a complete claude-code integration tree under `out`."""
+    """Build a complete claude-code integration tree under `out`.
+
+    Reflects the v0.3 layout: skills under .claude/skills/ (Claude Code's
+    discovery path); docs + hook scripts stay under .sdd/.
+    """
     agents = out / '.claude' / 'agents'
     agents.mkdir(parents=True)
     for n in (
@@ -21,11 +25,11 @@ def _build_claude_code(out: Path) -> None:
         'flux-support-lead', 'trace-onboarding-lead',
     ):
         (agents / f'{n}.md').write_text('---\nname: x\n---\nbody', encoding='utf-8')
+    (out / '.claude' / 'skills').mkdir(parents=True)
     (out / '.claude' / 'settings.json').write_text(
         json.dumps({'hooks': {}}), encoding='utf-8',
     )
     (out / '.sdd' / 'docs').mkdir(parents=True)
-    (out / '.sdd' / 'skills').mkdir(parents=True)
     (out / '.sdd' / 'scripts' / 'hooks').mkdir(parents=True)
     (out / '.sdd' / 'scripts' / 'lib').mkdir(parents=True)
     (out / '.sdd' / 'scripts' / 'archive-cleanup.sh').write_text(
