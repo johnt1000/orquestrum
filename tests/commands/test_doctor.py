@@ -107,35 +107,52 @@ class TestExtrasCheck:
 
 
 class TestIntegrationsCheck:
-    def test_no_canonical_root_skips_silently(self, monkeypatch: pytest.MonkeyPatch):
-        monkeypatch.setattr('orquestrum.lib.paths.canonical_root', lambda: None)
-        r = doctor.Report()
-        doctor._check_integrations(r)
-        assert r.errors == 0 and r.warnings == 0
-        assert any('skipped' in (res.get('detail') or '') for res in r.results)
-
-    def test_missing_integrations_dir_warns(
+    def test_user_mode_reports_bundled_source(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     ):
-        canonical = tmp_path / 'repo'
-        canonical.mkdir()
-        monkeypatch.setattr('orquestrum.lib.paths.canonical_root', lambda: canonical)
+        # No dev repo found → bundled source reported, cache used
+        from orquestrum.lib import paths as paths_mod
+        monkeypatch.setattr(paths_mod, 'find_canonical_root', lambda *a, **kw: None)
+        bundle = tmp_path / 'bundle'
+        bundle.mkdir()
+        from orquestrum.lib import assets as assets_mod
+        monkeypatch.setattr(assets_mod, 'assets_root', lambda: bundle)
+        cache = tmp_path / 'cache'
+        monkeypatch.setenv('ORQUESTRUM_CACHE', str(cache))
+        r = doctor.Report()
+        doctor._check_integrations(r)
+        # Source report present
+        assert any('SDD source' in res['label'] for res in r.results)
+        assert any('bundled' in (res.get('detail') or '') for res in r.results)
+        # Cache missing → warning
+        assert r.warnings == 1
+
+    def test_missing_cache_dir_warns(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    ):
+        from orquestrum.lib import paths as paths_mod
+        monkeypatch.setattr(paths_mod, 'find_canonical_root', lambda *a, **kw: None)
+        cache = tmp_path / 'never-created'
+        monkeypatch.setenv('ORQUESTRUM_CACHE', str(cache))
         r = doctor.Report()
         doctor._check_integrations(r)
         assert r.warnings == 1
         assert any('orquestrum convert' in (res.get('fix') or '') for res in r.results)
 
-    def test_complete_integrations_dir_marks_ok(
+    def test_complete_cache_marks_ok(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
     ):
-        canonical = tmp_path / 'repo'
-        integrations = canonical / 'integrations'
+        from orquestrum.lib import paths as paths_mod
+        monkeypatch.setattr(paths_mod, 'find_canonical_root', lambda *a, **kw: None)
+        cache = tmp_path / 'cache'
         for tool in ('claude-code', 'opencode', 'cursor', 'aider', 'windsurf'):
-            (integrations / tool).mkdir(parents=True)
-        monkeypatch.setattr('orquestrum.lib.paths.canonical_root', lambda: canonical)
+            (cache / tool).mkdir(parents=True)
+        monkeypatch.setenv('ORQUESTRUM_CACHE', str(cache))
         r = doctor.Report()
         doctor._check_integrations(r)
+        # 1 ok for source + 1 ok for cache = 0 warnings
         assert r.errors == 0 and r.warnings == 0
+        assert any('5 tools' in (res.get('detail') or '') for res in r.results)
 
 
 class TestRegistryCheck:

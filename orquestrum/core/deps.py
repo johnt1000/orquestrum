@@ -29,11 +29,14 @@ import tomllib
 from pathlib import Path
 
 from orquestrum.lib.log import log, ok, warn, err, set_prefix
+from orquestrum.lib.paths import is_dev_mode, pinned_refs_path
 
 set_prefix('deps')
 
-ROOT      = Path(__file__).parent.parent.parent
-PINS_FILE = ROOT / 'pinned_refs.toml'
+# Pin file resolution:
+#   dev mode  → <repo>/pinned_refs.toml (writeable; --update-pins target)
+#   wheel mode → orquestrum/_assets/pinned_refs.toml (read-only)
+PINS_FILE = pinned_refs_path()
 
 AGENCY_CATEGORIES = [
     'engineering', 'design', 'sales', 'marketing', 'product',
@@ -179,7 +182,16 @@ def update_pins() -> None:
 
     Preserves the order and structure of the file by overwriting only the
     `sha` and `last_pinned` lines per [[refs]] block.
+
+    Only valid in dev mode — the wheel-bundled copy is read-only and pin
+    rotation requires code review (see docs/governance/HOOKS.md).
     """
+    if not is_dev_mode():
+        err('--update-pins requires the canonical Orquestrum repo.')
+        err('Clone https://github.com/jonatasrodrigues/ia-fluency and run')
+        err('the command from inside it; pin rotation needs code review.')
+        sys.exit(2)
+
     if not PINS_FILE.exists():
         err(f'Pin file missing: {PINS_FILE}')
         sys.exit(1)

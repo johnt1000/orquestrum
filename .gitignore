@@ -1,5 +1,8 @@
 # Generated — never edit manually
 integrations/
+# Wheel-build artefact (hatchling force-include materializes _assets/ during
+# `uv build`; never commit it — assets live in agents/, skills/, docs/, etc.)
+orquestrum/_assets/
 
 # macOS
 .DS_Store

@@ -17,11 +17,15 @@ from pathlib import Path
 
 from orquestrum.lib.log import log, ok, warn, err, set_prefix
 from orquestrum.lib.models import VALID_TOOLS
+from orquestrum.lib.paths import convert_output_root
 
 set_prefix('install')
 
-ROOT         = Path(__file__).parent.parent.parent
-INTEGRATIONS = ROOT / 'integrations'
+# INTEGRATIONS is the directory holding `orquestrum convert`'s output.
+# It's the dev repo's `integrations/` in dev mode and the user cache
+# (`~/.orquestrum/cache/integrations/`) in wheel mode. Stays a module-level
+# attribute because tests/core/test_install.py monkeypatches it.
+INTEGRATIONS = convert_output_root()
 
 
 def _merge_claude_settings(template_path: Path, target_path: Path) -> None:

@@ -1,7 +1,6 @@
 """init_impl — implementation of `orquestrum init`."""
 from __future__ import annotations
 import datetime as dt
-import sys
 from pathlib import Path
 
 from orquestrum.lib import manifest, paths, registry
@@ -80,39 +79,25 @@ def _ensure_metrics_dir(project_root: Path) -> Path:
 
 
 def _run_install(project_root: Path, tool: str, provider: str | None) -> bool:
-    """Invoke orquestrum.core.install main with the canonical source. Returns True on success."""
-    canonical = paths.canonical_root()
-    if canonical is None:
-        print('warning: canonical Orquestrum source not found — install skipped.', file=sys.stderr)
-        print('         (CLI may have been installed from a wheel; clone the repo to install integrations.)',
-              file=sys.stderr)
-        return False
-    # We call the install script with cwd = canonical_root so it finds integrations/.
-    # First ensure integrations/ exists for the chosen tool — auto-run convert if missing.
-    integration_dir = canonical / 'integrations' / tool
+    """Generate the integration package (cached) and install it into the
+    target project. Works in dev mode (repo) and wheel mode (cache) alike —
+    no chdir, no canonical-repo precondition.
+    """
+    from orquestrum.core.convert import main as convert_main
+    from orquestrum.core.install import main as install_main
+
+    # Make sure the cached integration exists for this tool. convert reads
+    # canonical assets from the dev repo OR the bundled `_assets/`, and
+    # writes to `<repo>/integrations/` OR `~/.orquestrum/cache/integrations/`.
+    integration_dir = paths.convert_output_root() / tool
     if not integration_dir.is_dir():
         print(f'  Generating integration package for {tool} (one-time)...')
-        from orquestrum.core.convert import main as convert_main
-        import os
-        prev_cwd = os.getcwd()
-        try:
-            os.chdir(canonical)
-            args = ['--tool', tool]
-            if provider:
-                args += ['--provider', provider]
-            convert_main(args)
-        finally:
-            os.chdir(prev_cwd)
+        args = ['--tool', tool]
+        if provider:
+            args += ['--provider', provider]
+        convert_main(args)
 
-    # Now install
-    from orquestrum.core.install import main as install_main
-    import os
-    prev_cwd = os.getcwd()
-    try:
-        os.chdir(canonical)
-        install_main(['--tool', tool, '--target', str(project_root)])
-    finally:
-        os.chdir(prev_cwd)
+    install_main(['--tool', tool, '--target', str(project_root)])
     return True
 
 

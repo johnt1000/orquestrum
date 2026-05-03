@@ -329,23 +329,15 @@ class TestDetectInstallMode:
 
 
 class TestInstallTool:
-    def test_returns_false_when_canonical_missing(
-        self, project_root: Path, monkeypatch: pytest.MonkeyPatch,
-        capsys: pytest.CaptureFixture,
-    ):
-        monkeypatch.setattr('orquestrum.lib.paths.canonical_root', lambda: None)
-        ok = update_impl._install_tool(project_root, 'cursor', None)
-        assert ok is False
-        err = capsys.readouterr().err
-        assert 'canonical' in err.lower()
-
-    def test_runs_convert_when_integration_dir_missing(
+    def test_runs_convert_when_cache_missing(
         self, project_root: Path, tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ):
-        canonical = tmp_path / 'repo'
-        canonical.mkdir()
-        monkeypatch.setattr('orquestrum.lib.paths.canonical_root', lambda: canonical)
+        # Empty cache → convert must run before install.
+        empty_cache = tmp_path / 'empty-cache'
+        empty_cache.mkdir()
+        monkeypatch.setattr('orquestrum.lib.paths.convert_output_root',
+                            lambda: empty_cache)
         from orquestrum.core import convert as core_convert
         from orquestrum.core import install as core_install
         convert_calls: list = []
@@ -356,6 +348,24 @@ class TestInstallTool:
         assert ok is True
         assert convert_calls == [['--tool', 'cursor', '--provider', 'claude']]
         assert install_calls and install_calls[0][:2] == ['--tool', 'cursor']
+
+    def test_skips_convert_when_cache_already_populated(
+        self, project_root: Path, tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        cache = tmp_path / 'cache'
+        (cache / 'cursor').mkdir(parents=True)
+        monkeypatch.setattr('orquestrum.lib.paths.convert_output_root',
+                            lambda: cache)
+        from orquestrum.core import convert as core_convert
+        from orquestrum.core import install as core_install
+        convert_calls: list = []
+        install_calls: list = []
+        monkeypatch.setattr(core_convert, 'main', lambda argv: convert_calls.append(argv))
+        monkeypatch.setattr(core_install, 'main', lambda argv: install_calls.append(argv))
+        update_impl._install_tool(project_root, 'cursor', None)
+        assert convert_calls == []
+        assert install_calls
 
 
 class TestUpdateAllIntegration:

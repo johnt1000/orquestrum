@@ -1,6 +1,6 @@
 [project]
 name = "orquestrum"
-version = "0.2.0"
+version = "0.3.0"
 description = "Specification-Driven Development framework for multi-agent AI systems (Mac & Linux)."
 requires-python = ">=3.12"
 dependencies = [
@@ -41,3 +41,34 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["orquestrum", "ui"]
+
+# Canonical SDD assets are shipped INSIDE the wheel under orquestrum/_assets/
+# so the CLI works from any cwd after `uv tool install orquestrum`. When the
+# CLI runs from a clone of the canonical repo, paths.py prefers the on-disk
+# tree (dev mode) so contributors keep editing source directly.
+[tool.hatch.build.targets.wheel.force-include]
+"agents"                    = "orquestrum/_assets/agents"
+"skills"                    = "orquestrum/_assets/skills"
+"docs/agent-context"        = "orquestrum/_assets/docs/agent-context"
+"docs/governance"           = "orquestrum/_assets/docs/governance"
+"bundle/archive-cleanup.sh" = "orquestrum/_assets/bundle/archive-cleanup.sh"
+"pinned_refs.toml"          = "orquestrum/_assets/pinned_refs.toml"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "orquestrum",
+    "ui",
+    "agents",
+    "skills",
+    "docs/agent-context",
+    "docs/governance",
+    "bundle",
+    "pinned_refs.toml",
+    "tests",
+    "pyproject.toml",
+    "README.md",
+    "LICENSE",
+    "Makefile",
+    "CLAUDE.md",
+    "CONTRIBUTING.md",
+]

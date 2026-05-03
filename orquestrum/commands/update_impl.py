@@ -184,29 +184,22 @@ def _scrub_claude_settings_hooks(settings_path: Path) -> None:
 
 
 def _install_tool(project_root: Path, tool: str, provider: str | None) -> bool:
-    canonical = paths.canonical_root()
-    if canonical is None:
-        print('warning: canonical Orquestrum source not found — install skipped.', file=sys.stderr)
-        return False
-    integration_dir = canonical / 'integrations' / tool
-    if not integration_dir.is_dir():
-        from orquestrum.core.convert import main as convert_main
-        prev_cwd = os.getcwd()
-        try:
-            os.chdir(canonical)
-            args = ['--tool', tool]
-            if provider:
-                args += ['--provider', provider]
-            convert_main(args)
-        finally:
-            os.chdir(prev_cwd)
+    """Generate (if needed) and install an integration into the target project.
+
+    Works equally in dev mode and wheel mode — convert resolves source/output
+    paths internally, no chdir required.
+    """
+    from orquestrum.core.convert import main as convert_main
     from orquestrum.core.install import main as install_main
-    prev_cwd = os.getcwd()
-    try:
-        os.chdir(canonical)
-        install_main(['--tool', tool, '--target', str(project_root)])
-    finally:
-        os.chdir(prev_cwd)
+
+    integration_dir = paths.convert_output_root() / tool
+    if not integration_dir.is_dir():
+        args = ['--tool', tool]
+        if provider:
+            args += ['--provider', provider]
+        convert_main(args)
+
+    install_main(['--tool', tool, '--target', str(project_root)])
     return True
 
 

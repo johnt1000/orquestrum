@@ -43,23 +43,67 @@ BUNDLE_DIR:   Path | None = None
 
 
 def _init_paths() -> None:
-    """Resolve canonical source paths. Called once at the top of main()."""
+    """Resolve source + output paths. Called once at the top of main().
+
+    SOURCE (canonical SDD content) comes from the dev repo when available,
+    otherwise from the wheel-bundled `_assets/` tree — never None.
+
+    OUT (generated `integrations/<tool>/`) defaults to the dev repo's
+    `integrations/` in dev mode and `~/.orquestrum/cache/integrations/`
+    in wheel mode. Override via `$ORQUESTRUM_CACHE`.
+
+    CORE_DIR/LIB_DIR are always satisfied from the installed `orquestrum`
+    package itself — they live next to this file.
+    """
     global ROOT, INTEGRATIONS, AGENTS_DIR, SKILLS_DIR, DOCS_DIR, CORE_DIR, LIB_DIR, BUNDLE_DIR
-    from orquestrum.lib.paths import canonical_root
-    root = canonical_root()
-    if root is None:
-        err('Cannot locate the Orquestrum canonical source (agents/, skills/, docs/).')
-        err('Run `orquestrum convert` from inside the Orquestrum repository:')
-        err('  cd /path/to/ia-fluency && orquestrum convert --tool ...')
-        sys.exit(2)
-    ROOT         = root
-    INTEGRATIONS = ROOT / 'integrations'
-    AGENTS_DIR   = ROOT / 'agents'
-    SKILLS_DIR   = ROOT / 'skills'
-    DOCS_DIR     = ROOT / 'docs'
-    CORE_DIR     = ROOT / 'orquestrum' / 'core'
-    LIB_DIR      = ROOT / 'orquestrum' / 'lib'
-    BUNDLE_DIR   = ROOT / 'bundle'
+    from orquestrum.lib.paths import canonical_assets_root, convert_output_root
+    import orquestrum
+
+    source = canonical_assets_root()
+    out    = convert_output_root()
+
+    ROOT         = source
+    INTEGRATIONS = out
+    AGENTS_DIR   = source / 'agents'
+    SKILLS_DIR   = source / 'skills'
+    DOCS_DIR     = source / 'docs'
+    BUNDLE_DIR   = source / 'bundle'
+
+    # Hooks + lib are part of the Python package, not the SDD content tree —
+    # always available regardless of dev/wheel mode.
+    pkg_root     = Path(orquestrum.__file__).resolve().parent
+    CORE_DIR     = pkg_root / 'core'
+    LIB_DIR      = pkg_root / 'lib'
+
+    _maybe_invalidate_cache(out)
+
+
+def _maybe_invalidate_cache(out: Path) -> None:
+    """If the cache is stamped for a different orquestrum version, wipe it.
+
+    Avoids silent staleness after `uv tool upgrade orquestrum`. Only fires
+    in user/cache mode — dev mode's `<repo>/integrations/` is the working
+    directory of the contributor and must never be auto-deleted.
+    """
+    from orquestrum.lib.paths import is_dev_mode
+    if is_dev_mode():
+        return
+    from orquestrum import __version__
+    stamp = out / '.version'
+    if out.exists() and stamp.exists():
+        try:
+            existing = stamp.read_text(encoding='utf-8').strip()
+        except OSError:
+            existing = ''
+        if existing == __version__:
+            return
+        # Version mismatch — start fresh.
+        shutil.rmtree(out, ignore_errors=True)
+    out.mkdir(parents=True, exist_ok=True)
+    try:
+        stamp.write_text(__version__ + '\n', encoding='utf-8')
+    except OSError:
+        pass
 
 # Settings.json template for Claude Code with metrics hook installed
 _CLAUDE_SETTINGS_TEMPLATE = '''{
@@ -556,7 +600,18 @@ def main(argv: list[str] | None = None) -> None:
         print()
 
     if args.all:
-        ok(f'All {total} integrations generated in integrations/')
+        ok(f'All {total} integrations generated in {INTEGRATIONS}')
+
+    # In wheel/cache mode the user almost always wants `orquestrum install`
+    # next — point the way.
+    from orquestrum.lib.paths import is_dev_mode
+    if not is_dev_mode():
+        print()
+        print(f'  Cached at {INTEGRATIONS}')
+        if len(tools) == 1:
+            print(f'  Next: orquestrum install --tool {tools[0]} --target /your/project')
+        else:
+            print(f'  Next: orquestrum install --tool <tool> --target /your/project')
 
 
 if __name__ == '__main__':

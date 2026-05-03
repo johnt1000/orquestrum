@@ -15,9 +15,12 @@ import sys
 from pathlib import Path
 
 from orquestrum.lib.frontmatter import parse_skill
+from orquestrum.lib.paths import canonical_assets_root
 from orquestrum.lib.rewrite import extract_inject_blocks
 
-ROOT       = Path(__file__).parent.parent.parent.parent
+# Audit is read-only against canonical SDD content; works in dev and wheel
+# modes alike. The --output flag is user-controlled.
+ROOT       = canonical_assets_root()
 SKILLS_DIR = ROOT / 'skills'
 
 

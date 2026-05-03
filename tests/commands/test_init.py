@@ -110,16 +110,46 @@ class TestReinit:
         assert 'provider  = "claude"' in cfg_text
 
 
-class TestRunInstallSafety:
-    def test_returns_false_when_canonical_missing(
+class TestRunInstall:
+    def test_runs_convert_then_install(
         self, project_root: Path, isolated_home: Path,
-        monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture,
+        monkeypatch: pytest.MonkeyPatch,
     ):
-        monkeypatch.setattr('orquestrum.lib.paths.canonical_root', lambda: None)
-        ok = init_impl._run_install(project_root, 'claude-code', None)
-        assert ok is False
-        err = capsys.readouterr().err
-        assert 'canonical' in err.lower()
+        # _run_install no longer requires the canonical repo — convert and
+        # install resolve their own paths (bundled assets in wheel mode,
+        # repo in dev mode). The function only orchestrates the two calls.
+        from orquestrum.core import convert as core_convert
+        from orquestrum.core import install as core_install
+        convert_calls: list = []
+        install_calls: list = []
+        monkeypatch.setattr(core_convert, 'main', lambda argv: convert_calls.append(argv))
+        monkeypatch.setattr(core_install, 'main', lambda argv: install_calls.append(argv))
+        # Simulate user mode: cache directory missing for the requested tool
+        # so convert is invoked.
+        monkeypatch.setattr('orquestrum.lib.paths.convert_output_root',
+                            lambda: project_root / '_no_cache_yet')
+        ok = init_impl._run_install(project_root, 'claude-code', 'claude')
+        assert ok is True
+        assert convert_calls == [['--tool', 'claude-code', '--provider', 'claude']]
+        assert install_calls and install_calls[0][:2] == ['--tool', 'claude-code']
+
+    def test_skips_convert_when_cache_already_present(
+        self, project_root: Path, isolated_home: Path, tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        from orquestrum.core import convert as core_convert
+        from orquestrum.core import install as core_install
+        # Simulate cache already populated for the chosen tool
+        cache = tmp_path / 'cache'
+        (cache / 'cursor').mkdir(parents=True)
+        monkeypatch.setattr('orquestrum.lib.paths.convert_output_root', lambda: cache)
+        convert_calls: list = []
+        install_calls: list = []
+        monkeypatch.setattr(core_convert, 'main', lambda argv: convert_calls.append(argv))
+        monkeypatch.setattr(core_install, 'main', lambda argv: install_calls.append(argv))
+        init_impl._run_install(project_root, 'cursor', None)
+        assert convert_calls == []  # convert skipped — cache hit
+        assert install_calls  # install still runs
 
 
 class TestRegister:

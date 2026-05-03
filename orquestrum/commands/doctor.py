@@ -123,24 +123,29 @@ def _check_extras(r: Report) -> None:
 
 
 def _check_integrations(r: Report) -> None:
-    from orquestrum.lib.paths import canonical_root
-    croot = canonical_root()
-    if croot is None:
-        r.ok('integrations/ directory', detail='canonical repo not found (skipped)')
-        return
-    integrations_dir = croot / 'integrations'
+    from orquestrum.lib.paths import (
+        canonical_assets_root, convert_output_root, is_dev_mode,
+    )
+
+    # Surface which source the CLI is reading from — bundled vs. dev repo.
+    source = canonical_assets_root()
+    mode = 'dev repo' if is_dev_mode() else 'bundled (wheel)'
+    r.ok('SDD source assets', detail=f'{mode} — {source}')
+
+    integrations_dir = convert_output_root()
     if not integrations_dir.is_dir():
-        r.warn('integrations/ directory', detail='missing',
+        r.warn('integration cache', detail=f'missing — {integrations_dir}',
                fix='orquestrum convert --all')
         return
     expected = {'claude-code', 'opencode', 'cursor', 'aider', 'windsurf'}
     found = {p.name for p in integrations_dir.iterdir() if p.is_dir()}
     missing = expected - found
+    label = f'integration cache ({integrations_dir})'
     if missing:
-        r.warn('integrations generated', detail=f'missing: {sorted(missing)}',
+        r.warn(label, detail=f'missing: {sorted(missing)}',
                fix='orquestrum convert --all')
     else:
-        r.ok('integrations generated', detail=f'{len(found)} tools')
+        r.ok(label, detail=f'{len(found)} tools')
 
 
 def _check_registry(r: Report) -> None:

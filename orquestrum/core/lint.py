@@ -19,8 +19,12 @@ from pathlib import Path
 
 from orquestrum.lib.log import ok, warn, err
 from orquestrum.lib.frontmatter import parse_agent, parse_skill
+from orquestrum.lib.paths import canonical_assets_root
 
-ROOT       = Path(__file__).parent.parent.parent
+# Read canonical SDD content from the dev repo (when available) or the
+# wheel-bundled `_assets/` tree. lint never writes anything, so it works
+# identically in both modes.
+ROOT       = canonical_assets_root()
 AGENTS_DIR = ROOT / 'agents'
 SKILLS_DIR = ROOT / 'skills'
 DOCS_DIR   = ROOT / 'docs'
