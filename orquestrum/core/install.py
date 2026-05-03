@@ -120,6 +120,7 @@ def install_tool(tool: str, target: Path) -> bool:
 
     abs_target = target.expanduser().resolve()
     log(f'Installing {tool} → {abs_target}')
+    log(f'  Source:  {src}')
     abs_target.mkdir(parents=True, exist_ok=True)
 
     # Special handling: claude-code settings.json — merge instead of overwrite
@@ -165,6 +166,20 @@ def install_tool(tool: str, target: Path) -> bool:
     return True
 
 
+def verify_install(tool: str, target: Path) -> bool:
+    """Verify a completed install. Prints a per-check report and returns
+    True if every check passed. Kept separate from `install_tool` so unit
+    tests of copy mechanics don't have to provide a complete fixture."""
+    from orquestrum.lib.verify import verify_install_target
+    report = verify_install_target(tool, target.expanduser().resolve())
+    print(report.render())
+    if not report.passed:
+        err(f'{tool}: install verification failed — '
+            f'{report.fail_count} check(s) did not pass.')
+        return False
+    return True
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         prog='orquestrum install',
@@ -207,8 +222,13 @@ def main(argv: list[str] | None = None) -> None:
                 print(f'\033[1m[{idx}/{total}] {tool}\033[0m')
             if not install_tool(tool, target):
                 sys.exit(1)
+            if not verify_install(tool, target):
+                sys.exit(1)
+            print()
     else:
         if not install_tool(args.tool, target):
+            sys.exit(1)
+        if not verify_install(args.tool, target):
             sys.exit(1)
 
     print()

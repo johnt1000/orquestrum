@@ -160,7 +160,16 @@ def run_init(*, tool: str | None = None, provider: str | None = None,
         print(f'Installing {tool} integration...')
         ok = _run_install(project_root, tool, provider)
         if ok:
-            print(f'  Run `orquestrum web` to open the dashboard.')
+            print()
+            print(f'✓ Project ready. {project_name} is now an Orquestrum project.')
+            print(f'  Try: orquestrum doctor   (verify environment)')
+            print(f'       orquestrum web      (open dashboard)')
+        else:
+            print()
+            print(f'✗ Integration install reported errors above. Re-run with:')
+            print(f'    orquestrum init --tool {tool}')
+            print(f'  or check `orquestrum doctor` for environment problems.')
+            return 1
     else:
         print()
         print('Next: run `orquestrum init --tool <claude-code|opencode|cursor|aider|windsurf>`')

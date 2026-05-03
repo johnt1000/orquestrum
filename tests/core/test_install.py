@@ -216,11 +216,17 @@ class TestMain:
         target = tmp_path / 'target'
         target.mkdir()
         installed: list = []
+        verified: list = []
         monkeypatch.setattr(core_install, 'detect_tools', lambda t: ['cursor', 'opencode'])
         monkeypatch.setattr(core_install, 'install_tool',
                             lambda tool, t: installed.append(tool) or True)
+        # Verification is exercised separately in tests/lib/test_verify.py;
+        # here we just confirm main() iterates each detected tool.
+        monkeypatch.setattr(core_install, 'verify_install',
+                            lambda tool, t: verified.append(tool) or True)
         core_install.main(['--auto', '--target', str(target)])
         assert installed == ['cursor', 'opencode']
+        assert verified == ['cursor', 'opencode']
 
     def test_explicit_tool_failure_exits_1(
         self, tmp_path: Path, fake_integrations: Path,
@@ -232,3 +238,40 @@ class TestMain:
         with pytest.raises(SystemExit) as exc:
             core_install.main(['--tool', 'cursor', '--target', str(target)])
         assert exc.value.code == 1
+
+    def test_install_failure_when_verification_fails(
+        self, tmp_path: Path, fake_integrations: Path,
+        monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture,
+    ):
+        # Copy succeeds but verify rejects (e.g., placeholder unresolved or
+        # critical file missing). main() must exit 1.
+        target = tmp_path / 'target'
+        target.mkdir()
+        monkeypatch.setattr(core_install, 'install_tool', lambda *a, **kw: True)
+        monkeypatch.setattr(core_install, 'verify_install', lambda *a, **kw: False)
+        with pytest.raises(SystemExit) as exc:
+            core_install.main(['--tool', 'cursor', '--target', str(target)])
+        assert exc.value.code == 1
+
+
+class TestVerifyInstall:
+    def test_returns_true_on_complete_install(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture,
+    ):
+        # Build the cursor integration in-place at the target
+        target = tmp_path / 'target'
+        rules = target / '.cursor' / 'rules'
+        rules.mkdir(parents=True)
+        for i in range(8):
+            (rules / f'agent-{i}.mdc').write_text('rules', encoding='utf-8')
+        assert core_install.verify_install('cursor', target) is True
+        out = capsys.readouterr().out
+        assert 'verify: install:cursor' in out
+
+    def test_returns_false_when_target_missing(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture,
+    ):
+        target = tmp_path / 'never-created'
+        assert core_install.verify_install('cursor', target) is False
+        err = capsys.readouterr().err
+        assert 'verification failed' in err

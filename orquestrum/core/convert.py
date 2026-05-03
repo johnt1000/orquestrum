@@ -590,21 +590,50 @@ def main(argv: list[str] | None = None) -> None:
     else:
         log('Provider: none (model not set — user chooses at runtime; claude-code defaults to claude)')
 
+    # Friendly preflight banner — tells the user where reads come from and
+    # where output is going BEFORE we start writing files.
+    from orquestrum.lib.paths import is_dev_mode
+    source_label = 'dev repo' if is_dev_mode() else 'bundled (wheel)'
+    log(f'Source: {source_label} — {ROOT}')
+    log(f'Output: {INTEGRATIONS}')
     print()
 
     total = len(tools)
+    skill_count = sum(1 for d in SKILLS_DIR.iterdir()
+                      if d.is_dir() and (d / 'SKILL.md').exists())
+
+    from orquestrum.lib.verify import (
+        verify_convert_output, render_summary, VerifyReport,
+    )
+    reports: list[VerifyReport] = []
+
     for idx, tool in enumerate(tools, 1):
         if total > 1:
             print(f'\033[1m[{idx}/{total}] {tool}\033[0m')
         ADAPTERS[tool].convert(provider)
+
+        # Verify the tool's output before moving on. A failed verification
+        # surfaces immediately so users see the specific check that failed
+        # rather than a "works on my machine" surprise later.
+        report = verify_convert_output(tool, INTEGRATIONS / tool,
+                                       expected_skill_count=skill_count)
+        print(report.render())
+        reports.append(report)
         print()
 
+    # Aggregate summary — one line per tool
+    print(render_summary(reports))
+
+    failed = [r for r in reports if not r.passed]
+    if failed:
+        err(f'{len(failed)} tool(s) failed verification — output may be incomplete.')
+        sys.exit(1)
+
     if args.all:
-        ok(f'All {total} integrations generated in {INTEGRATIONS}')
+        ok(f'All {total} integrations generated and verified in {INTEGRATIONS}')
 
     # In wheel/cache mode the user almost always wants `orquestrum install`
     # next — point the way.
-    from orquestrum.lib.paths import is_dev_mode
     if not is_dev_mode():
         print()
         print(f'  Cached at {INTEGRATIONS}')
