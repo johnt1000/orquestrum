@@ -131,8 +131,19 @@ flowchart TD
 |-------|----------|---------|------------|
 | [changelog-manager](../skills/changelog-manager/SKILL.md) | `CHANGELOG.md` + `RELEASE-vX.Y.Z.md` | QA(s) with status `Passed` | qa-manager |
 | [runbook-manager](../skills/runbook-manager/SKILL.md) | `RUNBOOK.md` | New release created or infrastructure change | architecture-manager, changelog-manager |
+| [archive-manager](../skills/archive-manager/SKILL.md) (`release` mode) | `ARCHIVE-vX.Y.Z.md` | After release confirmed | changelog-manager |
 
 **Rule:** No release without QA Passed. No deploy without updated Runbook. The changelog connects software versions to delivered epics and tasks.
+
+---
+
+### Maintenance — Doc hygiene (no phase — owned by Flux)
+
+| Skill | Artifact | Trigger | Depends on |
+|-------|----------|---------|------------|
+| [archive-manager](../skills/archive-manager/SKILL.md) (`prune` mode) | Updated `ARCHIVE-*.md` files + deleted obsolete originals | User asks to prune docs, OR `docs/` exceeds 150 files / >5 superseded versions / >10 empty stubs | none — runs independent of release state |
+
+**Rule:** Prune mode is **not** part of the release pipeline. Flux can invoke it at any moment, gated by an explicit user confirmation when total Tier 1+2 size exceeds 500 KB. Prune respects the same preserve-always list as release mode (ADRs, glossary, active spec/architecture, learnings, CHANGELOG, RUNBOOK, current-major releases).
 
 ---
 
@@ -245,7 +256,7 @@ Always use the `References` section of templates to keep this chain intact.
 | [Cipher — Security Lead](../agents/cipher.md) | 3.5 | security-manager | `agents/cipher.md` |
 | [Ward — Quality Lead](../agents/ward.md) | 4 | review-manager, qa-manager, learning-manager, learning-aggregator | `agents/ward.md` |
 | [Cast — Ship Lead](../agents/cast.md) | 5 | changelog-manager, runbook-manager, archive-manager | `agents/cast.md` |
-| [Flux — Support Lead](../agents/flux.md) | maintenance | checkpoint-manager (read + triage) | `agents/flux.md` |
+| [Flux — Support Lead](../agents/flux.md) | maintenance | checkpoint-manager (read + triage), archive-manager (`prune` mode — proactive doc hygiene, no release dependency) | `agents/flux.md` |
 
 ---
 
@@ -271,7 +282,7 @@ Always use the `References` section of templates to keep this chain intact.
 | 3–4 | e2e-manager | E2E scenario map + regression report — invoked pre-implementation (Flow G) or pre-release (Flow H) |
 | 5 | changelog-manager | Versioned and documented release |
 | 5 | runbook-manager | Operational procedures |
-| 5 | archive-manager | Release consolidation — reduces repository clutter |
+| 5 / maintenance | archive-manager | Two modes: `release` (consolidates a just-released version, default for Cast) + `prune` (proactive hygiene any time, default for Flux). |
 
 ---
 

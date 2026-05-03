@@ -135,6 +135,52 @@ This section is consumed by Ward's review-manager for cross-artifact consistency
 
 ---
 
+## Big-File Summary Convention
+
+Skills frequently need structural information from large files (`seed.sql`, schema dumps, large migration files, exported configs). Re-scanning the same file across many turns is the single biggest source of wasted tokens observed in practice — much larger than the actual `Read` tool calls.
+
+The convention: **scan once, cache in `CHECKPOINT.md`, read from cache thereafter.**
+
+### When this applies
+
+A skill MUST use the cache when:
+
+- The target file is **>20 KB**, AND
+- The skill needs structural info (sections, symbol/table list, counts, line ranges) — not the full content for editing
+
+A skill MAY skip the cache when reading the file *once* for content (e.g., an Edit operation). The cache is for repeated structural lookups, not one-shot reads.
+
+### The cache section
+
+`docs/CHECKPOINT.md` has a `## Big-File Summaries` section (added by `checkpoint-manager`'s template). Each cached file is one block:
+
+```yaml
+path:         {path/to/big-file}
+size_bytes:   {N}
+hash:         {12-char sha256 prefix}
+recorded_at:  {YYYY-MM-DDTHH:mm:ssZ}
+recorded_by:  {agent or skill name}
+```
+
+Followed by a free-form structured summary (sections, key symbols, counts, line ranges) — under ~50 lines.
+
+### Protocol
+
+1. **Before scanning a big file:** read `## Big-File Summaries` in CHECKPOINT.md.
+2. **If a matching block exists with the same `hash` (compute via `sha256sum {path} | cut -c1-12`):** use the cached summary. Skip re-scanning.
+3. **If no block exists, OR the hash mismatches (file changed):** scan once, write or update the block, proceed.
+4. **Never** put secrets, raw SQL, raw code, or full content in the summary. Index-level info only.
+
+### What this is NOT
+
+- Not a substitute for reading the actual file when you need to edit it.
+- Not a long-term knowledge base — `CHECKPOINT.md` resets per major project phase shift.
+- Not a project-wide grep replacement — for ad-hoc one-off searches, use `Bash` directly.
+
+The convention exists because session analysis showed agents performing 20+ `grep` invocations on the same 72 KB file in a single session, each starting from scratch. One scan + one cached summary collapses that to one read of the summary.
+
+---
+
 ## Cache Segmentation Markers
 
 Canonical agent and skill prompts may declare which body regions are **stable** (rarely change between runs) versus **volatile** (change per session). Adapters that support segmented prompt caching (e.g. Anthropic's `cache_control: ephemeral`) translate these markers into native cache directives. Adapters that do not support caching strip the markers without behavior change.

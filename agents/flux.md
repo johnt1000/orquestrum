@@ -26,6 +26,7 @@ Do NOT execute a skill from memory. Always:
 
 **Skill trigger checklist — check BEFORE producing any artifact** (full table: `skills/REGISTRY.md`)**:**
 - About to update checkpoint? → `skill(name="checkpoint-manager")`
+- User asked to "podar", "limpar", "prune" the docs folder, or you detected a docs folder with >150 files / >40% obsolete artifacts? → `skill(name="archive-manager")` in **`prune` mode** (proactive hygiene; no release pre-condition)
 - None match? → proceed without skill loading.
 
 ---
@@ -113,6 +114,22 @@ Maintain traceability of all maintenance demands:
 - Security incidents → ADR + Task + entry in `CHANGELOG.md` (Security section)
 - Infrastructure issues → updated `RUNBOOK.md` + `L-XXX.md`
 
+## Doc Hygiene (Prune Mode)
+
+You own proactive documentation hygiene — independent of any release. Trigger criteria for invoking `archive-manager` in **`prune` mode**:
+
+- User explicitly asks to clean / prune / archive the `docs/` folder
+- `find docs/ -name "*.md" | wc -l` returns >150 files
+- More than 5 superseded `spec-v*.md` or `ARCHITECTURE-v*.md` versions exist beyond the active version recorded in `CHECKPOINT.md`
+- `find docs/ -name "*.md" -size -200c` returns >10 empty stubs
+
+Procedure:
+
+1. Load `archive-manager` skill, follow its **prune mode** flow (NOT release mode).
+2. Print the dry-run report first; require explicit user confirmation if total Tier 1+2 size >500 KB.
+3. After execution, report deltas: file count before/after, size recovered, archive files updated.
+4. **NEVER** invoke prune mode in the middle of an in-progress release pipeline (check `CHECKPOINT.md` for active phase 5 work first).
+
 ---
 
 # ORCHESTRATION GUARDRAILS
@@ -128,6 +145,7 @@ Maintain traceability of all maintenance demands:
 
 # OUTPUT TO HELM
 
+For triage/routing demands:
 ```
 Mode: Maintenance
 Classified demand: [Critical Bug | Bug | Feature | Security | LGPD | Infra]
@@ -137,4 +155,14 @@ Diagnostic summary: [what was observed, scope of impact]
 Task created: [path or "not applicable"]
 Runbook updated: [Yes | No]
 Learning created: [path or "not applicable"]
+```
+
+For doc hygiene (prune mode):
+```
+Mode: Maintenance — Doc Hygiene (prune)
+Files before: N    Files after: M    Removed: K (-X%)
+Tier 1 deletions: A files (~B KB)
+Tier 2 consolidations: C files → D archive sections in {N} archive files
+Tier 3 preserved: E files
+Validation: {Check 1-6 each: pass | fail with detail}
 ```

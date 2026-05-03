@@ -75,13 +75,14 @@ Read: `docs/03-quality/qa/` (Passed QAs) + `docs/04-release/CHANGELOG.md` (curre
 
 After release is confirmed:
 
-1. Execute `archive-manager` to consolidate completed tasks/logs into summary files
-2. Run the cleanup script to physically delete archived files:
+1. Execute `archive-manager` in **`release` mode** (the default for Cast). This consolidates Completed tasks/logs that belong to the just-released version into `ARCHIVE-vX.Y.Z.md`.
+2. The skill calls the cleanup script internally with the appropriate scope:
    ```
    bundle/archive-cleanup.sh --project . --dry-run    # preview
    bundle/archive-cleanup.sh --project .               # execute
    ```
-3. **Never run archive before the release is confirmed and pushed**
+3. **Never run archive before the release is confirmed and pushed.**
+4. **Do NOT use prune mode here** — that's Flux's domain (proactive hygiene independent of release). Release mode is narrower and tied to the just-released version's scope.
 
 ---
 

@@ -71,6 +71,23 @@ Any orchestrator may update specific sections of `docs/CHECKPOINT.md` without re
 - **Lore** must update `Active Artifacts` after producing a Spec or ADR.
 - Any orchestrator may add items to `Pending Work` when it discovers work that needs to happen but is out of its current scope.
 
+### Big-File Summaries (scan-once cache)
+
+Any skill that needs to **repeatedly scan** a large file (>20 KB) — typically `seed.sql`, consolidated migration dumps, schema exports, large config files — must use the `## Big-File Summaries` section as a cache:
+
+1. **Before scanning the file:** read the section. Find a block whose `path` matches.
+2. **If a block exists AND `hash` matches the current file's `sha256` (first 12 chars):** use the cached summary. Do NOT re-scan the file for structural info.
+3. **If no block exists, OR the hash mismatches:** scan the file once, write a summary block (using the template format below), then proceed.
+4. **Summary content:** structured info skills are likely to want repeatedly — section/table list, symbol map, counts, line ranges of interest. Keep under ~50 lines per block.
+5. **Never** include raw file content, secrets, or full SQL/code in the summary — that defeats the cache benefit and may leak credentials.
+
+Computing the hash:
+```bash
+sha256sum {path} | cut -c1-12
+```
+
+This convention is documented at `docs/agent-context/CONVENTIONS.md` → "Big-File Summary Convention". Skills that ignore the cache and re-scan unnecessarily waste tokens and trigger budget warnings.
+
 ## Template Usage
 
 Use `./assets/checkpoint-template.md` as the base structure. Do not change the section names — they are parsed by Helm.

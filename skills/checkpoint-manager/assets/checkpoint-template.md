@@ -84,3 +84,29 @@ orchestrator: "{lore | forge | ward | cast | trace | —}"
 > Context that does not fit above but is needed for continuity.
 
 {free text}
+
+---
+
+## Big-File Summaries
+
+> Cache for repeated scans of large files (>20 KB). When a skill needs structural info from a big file (schema, list of sections, symbol map), it consults this section FIRST. If absent or stale (hash mismatch), the skill regenerates the entry once and writes it here. Subsequent skills/agents read the summary instead of re-scanning the file.
+>
+> Format: one block per file. `hash` is the first 12 chars of `sha256` of the file. `recorded_at` is UTC ISO-8601.
+
+### `{path/to/big-file}`
+
+```yaml
+path:         {path/to/big-file}
+size_bytes:   {N}
+hash:         {12-char sha256 prefix}
+recorded_at:  {YYYY-MM-DDTHH:mm:ssZ}
+recorded_by:  {agent or skill name}
+```
+
+**Summary:**
+
+{Structured summary — table of sections, key symbols, counts. Stays under ~50 lines. Goal: any skill should be able to answer "what's in this file" without opening it.}
+
+---
+
+> Add one block per big file. Remove blocks whose underlying file no longer exists. See `docs/agent-context/CONVENTIONS.md` → "Big-File Summary Convention" for full rules.
