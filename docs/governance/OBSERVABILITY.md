@@ -2,7 +2,13 @@
 
 How Orquestrum tracks token usage, cost, and skill performance per session, and how the operator reads it.
 
-Companion to `docs/governance/COST.md` (budget thresholds) and `docs/governance/MODELS.md` (which models cost what).
+Companion to `docs/governance/COST.md` (budget thresholds), `docs/governance/MODELS.md` (which models cost what), and `docs/governance/MCP.md` (the MCP server that exposes this data to LLM agents at runtime).
+
+Two writers feed `events.jsonl`:
+1. **Stop / SubagentStop hook** (`orquestrum/core/hooks/emit_metrics.py`) — canonical token-count source from Claude Code's API counters
+2. **MCP server** (`orquestrum mcp`) — rich domain events the hook can't see (`skill_completion` with gates/artifacts/confidence) plus real-time read tools
+
+Both append to the same JSONL; consumers (`dashboard render`, web UI) don't distinguish — they just read the file.
 
 ---
 

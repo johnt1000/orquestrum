@@ -130,8 +130,12 @@ orquestrum init --tool claude-code              # creates .orquestrum/, ORQUESTR
 # Open the web dashboard
 orquestrum web                                   # auto-detects mode, opens browser
 
-# Use Claude Code normally — the metrics hook collects events automatically.
-# Refresh the dashboard at http://127.0.0.1:7700/dashboard
+# Use Claude Code normally:
+#   - The Stop hook records token usage in .orquestrum/metrics/events.jsonl
+#   - The MCP server (registered automatically) lets agents query state
+#     mid-turn via mcp__orquestrum__orq_* tools (session_summary,
+#     budget_status, recent_events, cost_today, etc.).
+#   - Refresh the dashboard at http://127.0.0.1:7700/dashboard
 
 # When you want to know what happened
 orquestrum dashboard                             # terminal summary
@@ -160,6 +164,7 @@ orquestrum update --tool opencode                # cleanup + reinstall + history
 | `orquestrum deps --target PATH [--only agency,skills]` | Install external agent/skill dependencies (pinned via `pinned_refs.toml`). |
 | `orquestrum audit {payload,parity,attention}` | Run an audit. `payload` = reference size; `parity` = provider equivalence; `attention` = attention-score distribution. |
 | `orquestrum dashboard [--metrics-dir PATH] [--tier T] [--html]` | Render a static metrics dashboard. |
+| `orquestrum mcp` | Start the MCP server on stdio. Spawned automatically by Claude Code; agents call `orq_*` tools to query session/budget/cost or emit rich domain events. See [`docs/governance/MCP.md`](docs/governance/MCP.md). |
 | `orquestrum compact [--threshold-kb N] [--skill X] [--dry-run]` | Compress oversized skill references deterministically. |
 | `orquestrum version` | Print version info. |
 
@@ -209,6 +214,7 @@ Beyond the canonical pipeline, Orquestrum ships explicit policies for cost, obse
 |-------|-----|----------------|
 | Token budgets per tier | [`docs/governance/COST.md`](docs/governance/COST.md) | Soft thresholds, dominant-cost-driver attribution |
 | Metrics emission protocol | [`docs/governance/OBSERVABILITY.md`](docs/governance/OBSERVABILITY.md) | `.orquestrum/metrics/events.jsonl` schema, dashboard, privacy |
+| MCP server (`orq_*` tools) | [`docs/governance/MCP.md`](docs/governance/MCP.md) | Tool catalog, validation contract, allowlist policy, hybrid arch w/ Stop hook |
 | Cache markers | [`docs/agent-context/CONVENTIONS.md`](docs/agent-context/CONVENTIONS.md) (§ Cache Segmentation) | `<!-- cache:stable -->` convention, adapter behavior |
 | Human attention scoring | [`docs/agent-context/CONVENTIONS.md`](docs/agent-context/CONVENTIONS.md) (§ Human Attention Mediation) | Deterministic 0–100 score, propagation cap, MEDIATION.md |
 | Performance methodology | [`docs/governance/PERFORMANCE.md`](docs/governance/PERFORMANCE.md) | Statistical hygiene, regression classification |
