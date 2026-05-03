@@ -1,0 +1,53 @@
+{# event_tail — HTMX swap target for the /live/session event list.
+   Polls every 2s; preserves filter values via hx-include="#filters". #}
+<div id="event-tail"
+     class="event-tail"
+     hx-get="/live/session/partial"
+     hx-trigger="every 2s"
+     hx-swap="outerHTML"
+     hx-include="#filters">
+
+  <div class="event-tail-meta">
+    <span class="meta">{{ events | length }} {{ 'live.event_tail.shown' | t(limit=limit) }}</span>
+  </div>
+
+  {% if events %}
+    <div class="event-list" role="list">
+      {% for ev in events %}
+        {% set agent_short = (ev.agent or '').split(' - ', 1)[0] %}
+        {% set in_t  = ev.get('in_tokens',  0) | int %}
+        {% set out_t = ev.get('out_tokens', 0) | int %}
+        {% set cost  = ev.get('cost_usd', 0) | float %}
+        <details class="event-row" role="listitem">
+          <summary>
+            <span class="event-time">{{ (ev.ts or '')[11:19] }}</span>
+            <span class="event-agent">{{ agent_short }}</span>
+            <span class="event-skill">{{ ev.skill or '—' }}</span>
+            <span class="event-tokens">
+              <span class="event-tokens-in">{{ '%.1fk' | format(in_t/1000) if in_t >= 1000 else in_t }}</span>
+              <span class="event-tokens-arrow" aria-hidden="true">→</span>
+              <span class="event-tokens-out">{{ '%.1fk' | format(out_t/1000) if out_t >= 1000 else out_t }}</span>
+            </span>
+            <span class="event-cost">${{ '%.4f' | format(cost) }}</span>
+            <span class="event-toggle" aria-hidden="true">▸</span>
+          </summary>
+          <pre class="event-payload">{{ ev | tojson(indent=2) }}</pre>
+        </details>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="meta event-tail-empty">{{ 'live.event_tail.empty' | t }}</p>
+  {% endif %}
+
+  {# mini timeline at the bottom #}
+  {% if density %}
+    {% set max_d = density | max %}
+    <div class="event-density" aria-label="{{ 'live.event_tail.density_alt' | t(buckets=density|length) }}">
+      {% for d in density %}
+        <span class="event-density-cell"
+              style="height: {{ ((d / max_d * 100) if max_d else 4) | round | int }}%"
+              title="{{ d }}"></span>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>

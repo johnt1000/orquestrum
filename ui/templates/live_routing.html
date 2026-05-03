@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ 'nav.live_routing' | t }}{% endblock %}
+{% block content %}
+
+<header class="page-head">
+  <div class="page-head-row">
+    <h1>{{ 'nav.live_routing' | t }}</h1>
+    <div class="page-head-meta">{{ 'period.last_7d' | t }} · {{ rows | length }} {{ 'live.routing.pairs' | t }}</div>
+  </div>
+</header>
+
+{% if rows %}
+  <article class="dash-card">
+    <div class="routing-grid" role="img" aria-label="{{ 'live.routing.alt' | t }}">
+      {% for r in rows %}
+        <div class="routing-row">
+          <span class="routing-agent">
+            <span class="tier-badge tier-{{ r.agent_tier }}" aria-hidden="true">{{ r.agent_tier }}</span>
+            <span class="routing-agent-name">{{ r.agent }}</span>
+          </span>
+          <span class="routing-bar-wrap" aria-hidden="true">
+            <span class="routing-bar tier-bar-{{ r.agent_tier }}" style="width: {{ r.pct }}%"></span>
+          </span>
+          <span class="routing-skill"><code>{{ r.skill }}</code></span>
+          <span class="routing-count">{{ r.count }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </article>
+{% else %}
+  <article class="empty-state">
+    <h3>{{ 'live.routing.empty.title' | t }}</h3>
+    <p>{{ 'live.routing.empty.body' | t }}</p>
+  </article>
+{% endif %}
+
+{% endblock %}

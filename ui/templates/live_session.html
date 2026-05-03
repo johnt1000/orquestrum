@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}{{ 'nav.live_session' | t }}{% endblock %}
+{% block content %}
+
+<header class="page-head">
+  <div class="page-head-row">
+    <h1>{{ 'nav.live_session' | t }}</h1>
+    <div class="page-head-meta">
+      <span class="live-indicator" aria-hidden="true"></span>
+      {{ 'live.session.updating' | t }}
+    </div>
+  </div>
+</header>
+
+<form id="filters" class="filter-chips"
+      hx-get="/live/session/partial"
+      hx-target="#event-tail"
+      hx-swap="outerHTML"
+      hx-trigger="change">
+  <label class="filter-chip">
+    <span>{{ 'live.filter.agent' | t }}</span>
+    <select name="agent" class="filter-chip-select">
+      <option value="">{{ 'live.filter.any' | t }}</option>
+      {% for a in facets.agents %}
+        <option value="{{ a }}" {% if a == agent %}selected{% endif %}>{{ a }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="filter-chip">
+    <span>{{ 'live.filter.skill' | t }}</span>
+    <select name="skill" class="filter-chip-select">
+      <option value="">{{ 'live.filter.any' | t }}</option>
+      {% for s in facets.skills %}
+        <option value="{{ s }}" {% if s == skill %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="filter-chip">
+    <span>{{ 'live.filter.kind' | t }}</span>
+    <select name="kind" class="filter-chip-select">
+      <option value="">{{ 'live.filter.any' | t }}</option>
+      {% for k in facets.kinds %}
+        <option value="{{ k }}" {% if k == kind %}selected{% endif %}>{{ k }}</option>
+      {% endfor %}
+    </select>
+  </label>
+</form>
+
+{% include "_components/event_tail.html" %}
+
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}{{ 'nav.live_attention' | t }}{% endblock %}
+{% block content %}
+
+<header class="page-head">
+  <div class="page-head-row">
+    <h1>{{ 'nav.live_attention' | t }}</h1>
+    <div class="page-head-meta">
+      {{ days }} {{ 'live.attention.days_window' | t }} · {{ items | length }} {{ 'attention.summary' | t(total=items|length)|replace((items|length)|string ~ ' ', '') }}
+    </div>
+  </div>
+</header>
+
+{% if points %}
+  <article class="dash-card">
+    <div class="attention-canvas">
+      <svg class="attention-svg" viewBox="0 0 {{ svg_width }} {{ svg_height }}"
+           preserveAspectRatio="xMidYMid meet"
+           role="img" aria-label="{{ 'live.attention.alt' | t }}">
+
+        {# horizontal bands: green ≥66, yellow 33–65, red <33 #}
+        {% set y_top    = svg_padding %}
+        {% set y_bot    = svg_height - svg_padding %}
+        {% set inner_h  = y_bot - y_top %}
+        {% set y_66     = y_top + inner_h * (1 - 0.66) %}
+        {% set y_33     = y_top + inner_h * (1 - 0.33) %}
+        {% set x_left   = svg_padding %}
+        {% set x_right  = svg_width - svg_padding %}
+
+        <line x1="{{ x_left }}" y1="{{ y_66 }}" x2="{{ x_right }}" y2="{{ y_66 }}"
+              stroke="var(--ok)" stroke-width="0.5" stroke-dasharray="3 4" opacity="0.6"/>
+        <line x1="{{ x_left }}" y1="{{ y_33 }}" x2="{{ x_right }}" y2="{{ y_33 }}"
+              stroke="var(--crit)" stroke-width="0.5" stroke-dasharray="3 4" opacity="0.6"/>
+
+        {# y-axis ticks (100, 66, 33, 0) #}
+        {% for tick, y in [(100, y_top), (66, y_66), (33, y_33), (0, y_bot)] %}
+          <text x="{{ x_left - 6 }}" y="{{ y + 3 }}" text-anchor="end"
+                fill="var(--fg-3)" font-size="9" font-family="JetBrains Mono, monospace">{{ tick }}</text>
+        {% endfor %}
+
+        {# data points #}
+        {% for p in points %}
+          {% set color = 'var(--ok)' if p.band == 'green' else ('var(--warn)' if p.band == 'yellow' else 'var(--crit)') %}
+          <circle cx="{{ p.cx }}" cy="{{ p.cy }}" r="3.5"
+                  fill="{{ color }}" stroke="var(--l1)" stroke-width="1">
+            <title>{{ p.skill }} · {{ p.score }}/100 · {{ p.band }}{% if p.drift_risk %} · drift {{ p.drift_risk }}{% endif %}</title>
+          </circle>
+        {% endfor %}
+
+      </svg>
+
+      <div class="attention-bands-summary">
+        <span class="legend-dot is-green"  aria-hidden="true"></span><span>{{ 'attention.green'  | t }}</span><span class="legend-count">{{ bands.green }}</span>
+        <span class="legend-dot is-yellow" aria-hidden="true"></span><span>{{ 'attention.yellow' | t }}</span><span class="legend-count">{{ bands.yellow }}</span>
+        <span class="legend-dot is-red"    aria-hidden="true"></span><span>{{ 'attention.red'    | t }}</span><span class="legend-count">{{ bands.red }}</span>
+      </div>
+    </div>
+  </article>
+
+  {# table fallback for screen readers + a quick scan of recent items #}
+  <details class="attention-list">
+    <summary>{{ 'live.attention.list_open' | t }}</summary>
+    <table class="skill-table" role="grid">
+      <thead><tr>
+        <th>{{ 'live.attention.col.when'  | t }}</th>
+        <th>{{ 'live.attention.col.skill' | t }}</th>
+        <th class="skill-col-num">{{ 'live.attention.col.score' | t }}</th>
+        <th>{{ 'live.attention.col.band'  | t }}</th>
+        <th>{{ 'live.attention.col.drift' | t }}</th>
+      </tr></thead>
+      <tbody>
+      {% for it in items | reverse %}
+        <tr>
+          <td><code>{{ it.ts.strftime('%Y-%m-%d %H:%M') }}</code></td>
+          <td><code>{{ it.skill }}</code></td>
+          <td class="skill-col-num">{{ it.score }}</td>
+          <td>
+            <span class="legend-dot is-{{ it.band }}" aria-hidden="true"></span>
+            <span class="meta">{{ ('attention.' ~ it.band) | t }}</span>
+          </td>
+          <td><span class="meta">{{ it.drift_risk or '—' }}</span></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </details>
+
+{% else %}
+  <article class="empty-state">
+    <h3>{{ 'live.attention.empty.title' | t }}</h3>
+    <p>{{ 'live.attention.empty.body' | t }}</p>
+  </article>
+{% endif %}
+
+{% endblock %}

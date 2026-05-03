@@ -392,3 +392,148 @@ def skill_calls_period(events: list[dict[str, Any]],
         if skill:
             counts[skill] = counts.get(skill, 0) + 1
     return counts
+
+
+# ─── live page helpers (Onda 4) ──────────────────────────────────────────────
+
+def recent_events(events: list[dict[str, Any]],
+                  *,
+                  limit: int = 50,
+                  agent: str | None = None,
+                  skill: str | None = None,
+                  kind:  str | None = None) -> list[dict[str, Any]]:
+    """Return events filtered + sorted newest first, capped to `limit`.
+
+    `agent` matches the short prefix (before ' - '). Empty filter values
+    (None or '') mean 'no filter'.
+    """
+    out: list[dict[str, Any]] = []
+    for ev in events:
+        if agent:
+            short = (ev.get('agent') or '').split(' - ', 1)[0]
+            if short != agent:
+                continue
+        if skill and ev.get('skill') != skill:
+            continue
+        if kind and ev.get('kind') != kind:
+            continue
+        out.append(ev)
+    out.sort(key=lambda e: e.get('ts') or '', reverse=True)
+    return out[:limit]
+
+
+def event_facets(events: list[dict[str, Any]]) -> dict[str, list[str]]:
+    """Unique values for the filter dropdowns. Empty lists if no events."""
+    agents: set[str] = set()
+    skills: set[str] = set()
+    kinds:  set[str] = set()
+    for ev in events:
+        a = (ev.get('agent') or '').split(' - ', 1)[0]
+        if a:
+            agents.add(a)
+        s = ev.get('skill')
+        if s:
+            skills.add(s)
+        k = ev.get('kind')
+        if k:
+            kinds.add(k)
+    return {
+        'agents': sorted(agents),
+        'skills': sorted(skills),
+        'kinds':  sorted(kinds),
+    }
+
+
+@dataclass
+class RoutingRow:
+    agent:      str          # short name (e.g. 'Forge')
+    skill:      str
+    count:      int
+    pct:        int          # 0..100 — width of the bar relative to busiest pair
+    agent_tier: str          # for color hinting; '?' if unknown
+
+
+# Map canonical agent short name → tier id used for the routing bar color.
+# Mirrors AGENT_TIERS in orquestrum.lib.models but indexed by short name.
+_AGENT_SHORT_TIER: dict[str, str] = {
+    'Helm':   'deep',
+    'Trace':  'balanced',
+    'Lore':   'balanced',
+    'Forge':  'balanced',
+    'Cipher': 'balanced',
+    'Ward':   'balanced',
+    'Cast':   'mechanical',
+    'Flux':   'balanced',
+}
+
+
+def routing_matrix(events: list[dict[str, Any]],
+                   days: int = 7,
+                   today: dt.date | None = None,
+                   limit: int = 30) -> list[RoutingRow]:
+    """Per-(agent, skill) call counts over the trailing window.
+
+    Returns rows sorted by count desc, capped to `limit` (so the page stays
+    readable even when many pairs exist).
+    """
+    today = today or dt.datetime.now(dt.timezone.utc).date()
+    cutoff = dt.datetime.combine(
+        today - dt.timedelta(days=days - 1),
+        dt.time.min,
+        tzinfo=dt.timezone.utc,
+    )
+    counts: dict[tuple[str, str], int] = {}
+    for ev in events:
+        if ev.get('kind') != 'llm_call':
+            continue
+        d_at = _parse_ts(ev)
+        if not d_at or d_at < cutoff:
+            continue
+        agent_field = (ev.get('agent') or '').strip()
+        short = agent_field.split(' - ', 1)[0] if agent_field else ''
+        skill = ev.get('skill') or ''
+        if not short or not skill:
+            continue
+        counts[(short, skill)] = counts.get((short, skill), 0) + 1
+
+    if not counts:
+        return []
+
+    pairs = sorted(counts.items(), key=lambda kv: kv[1], reverse=True)[:limit]
+    cap   = pairs[0][1]
+    return [
+        RoutingRow(
+            agent=a,
+            skill=s,
+            count=c,
+            pct=int(round(c / cap * 100)) if cap else 0,
+            agent_tier=_AGENT_SHORT_TIER.get(a, '?'),
+        )
+        for (a, s), c in pairs
+    ]
+
+
+def event_density(events: list[dict[str, Any]],
+                  *,
+                  buckets: int = 30,
+                  bucket_minutes: int = 2,
+                  now: dt.datetime | None = None) -> list[int]:
+    """Density of events per `bucket_minutes` slots, oldest→newest, len=`buckets`.
+
+    Used to render the mini timeline at the bottom of /live/session
+    (default: 30 buckets × 2 min = trailing 60 minutes).
+    """
+    now = now or dt.datetime.now(dt.timezone.utc)
+    bucket_s = bucket_minutes * 60
+    starts = [now - dt.timedelta(minutes=bucket_minutes * (buckets - i)) for i in range(buckets)]
+    counts = [0] * buckets
+    earliest = starts[0]
+    for ev in events:
+        d_at = _parse_ts(ev)
+        if not d_at or d_at < earliest:
+            continue
+        delta = (d_at - earliest).total_seconds()
+        idx = int(delta // bucket_s)
+        if 0 <= idx < buckets:
+            counts[idx] += 1
+    return counts

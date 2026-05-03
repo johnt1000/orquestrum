@@ -116,5 +116,30 @@
   "catalog.empty.agents.title": "Nenhum agente encontrado",
   "catalog.empty.agents.body": "Rode orquestrum install --tool <tool> --target . pra instalar agentes neste projeto, ou abra o console no diretório do framework pra ver o catálogo completo.",
   "catalog.empty.skills.title": "Nenhuma habilidade encontrada",
-  "catalog.empty.skills.body": "Rode orquestrum install --tool <tool> --target . pra instalar habilidades neste projeto."
+  "catalog.empty.skills.body": "Rode orquestrum install --tool <tool> --target . pra instalar habilidades neste projeto.",
+
+  "live.session.updating": "atualizando a cada 2s",
+  "live.event_tail.shown": "exibindo · cap {limit}",
+  "live.event_tail.empty": "Nenhum evento corresponde aos filtros.",
+  "live.event_tail.density_alt": "densidade de eventos nos últimos {buckets} buckets",
+  "live.filter.agent": "Agente",
+  "live.filter.skill": "Habilidade",
+  "live.filter.kind": "Tipo",
+  "live.filter.any": "qualquer",
+
+  "live.routing.pairs": "pares ativos",
+  "live.routing.alt": "Distribuição de chamadas por par agente → habilidade",
+  "live.routing.empty.title": "Sem dados de roteamento",
+  "live.routing.empty.body": "Eventos de chamada do tipo llm_call são necessários pra montar a matriz de roteamento. Use os agentes em um projeto e recarregue.",
+
+  "live.attention.days_window": "dias",
+  "live.attention.alt": "Linha do tempo dos scores de atenção",
+  "live.attention.list_open": "Ver lista detalhada",
+  "live.attention.col.when": "Quando",
+  "live.attention.col.skill": "Habilidade",
+  "live.attention.col.score": "Score",
+  "live.attention.col.band": "Banda",
+  "live.attention.col.drift": "Drift",
+  "live.attention.empty.title": "Sem scores de atenção registrados",
+  "live.attention.empty.body": "Artefatos em docs/03-quality/ com attention_score no frontmatter alimentam essa visualização."
 }

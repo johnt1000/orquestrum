@@ -97,18 +97,21 @@
 
         <div class="nav-group">
           <span class="nav-group-label">{{ 'nav.group.live' | t }}</span>
-          <span class="nav-item is-disabled" aria-disabled="true" title="em breve">
-            <span class="nav-item-icon" aria-hidden="true">○</span>
+          <a href="/live/session" class="nav-item"
+             {% if p.startswith('/live/session') %}aria-current="page"{% endif %}>
+            <span class="nav-item-icon" aria-hidden="true">◉</span>
             <span class="nav-item-label">{{ 'nav.live_session' | t }}</span>
-          </span>
-          <span class="nav-item is-disabled" aria-disabled="true" title="em breve">
-            <span class="nav-item-icon" aria-hidden="true">○</span>
+          </a>
+          <a href="/live/routing" class="nav-item"
+             {% if p.startswith('/live/routing') %}aria-current="page"{% endif %}>
+            <span class="nav-item-icon" aria-hidden="true">⇆</span>
             <span class="nav-item-label">{{ 'nav.live_routing' | t }}</span>
-          </span>
-          <span class="nav-item is-disabled" aria-disabled="true" title="em breve">
-            <span class="nav-item-icon" aria-hidden="true">○</span>
+          </a>
+          <a href="/live/attention" class="nav-item"
+             {% if p.startswith('/live/attention') %}aria-current="page"{% endif %}>
+            <span class="nav-item-icon" aria-hidden="true">◐</span>
             <span class="nav-item-label">{{ 'nav.live_attention' | t }}</span>
-          </span>
+          </a>
         </div>
 
         <div class="nav-group">

@@ -116,5 +116,30 @@
   "catalog.empty.agents.title": "No agents found",
   "catalog.empty.agents.body": "Run orquestrum install --tool <tool> --target . to install agents in this project, or open the console from the framework directory for the full catalog.",
   "catalog.empty.skills.title": "No skills found",
-  "catalog.empty.skills.body": "Run orquestrum install --tool <tool> --target . to install skills in this project."
+  "catalog.empty.skills.body": "Run orquestrum install --tool <tool> --target . to install skills in this project.",
+
+  "live.session.updating": "updating every 2s",
+  "live.event_tail.shown": "showing · cap {limit}",
+  "live.event_tail.empty": "No events match the current filters.",
+  "live.event_tail.density_alt": "event density across the last {buckets} buckets",
+  "live.filter.agent": "Agent",
+  "live.filter.skill": "Skill",
+  "live.filter.kind": "Kind",
+  "live.filter.any": "any",
+
+  "live.routing.pairs": "active pairs",
+  "live.routing.alt": "Call distribution per agent → skill pair",
+  "live.routing.empty.title": "No routing data",
+  "live.routing.empty.body": "llm_call events are required to compute the routing matrix. Use the agents in a project and reload.",
+
+  "live.attention.days_window": "days",
+  "live.attention.alt": "Attention score timeline",
+  "live.attention.list_open": "Show detailed list",
+  "live.attention.col.when": "When",
+  "live.attention.col.skill": "Skill",
+  "live.attention.col.score": "Score",
+  "live.attention.col.band": "Band",
+  "live.attention.col.drift": "Drift",
+  "live.attention.empty.title": "No attention scores recorded",
+  "live.attention.empty.body": "Artifacts in docs/03-quality/ with attention_score in their frontmatter populate this view."
 }
