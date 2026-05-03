@@ -118,6 +118,18 @@ def install_tool(tool: str, target: Path) -> bool:
         err(f'Run first: orquestrum convert --tool {tool}')
         return False
 
+    # Preflight: catch the double-nesting mistake BEFORE we copy anything.
+    # The integration package for some tools has a top-level dot-dir
+    # (.claude/, .cursor/) and copying it into a target whose basename
+    # is the same dir produces target/.claude/.claude/ — silently broken.
+    from orquestrum.lib.verify import detect_target_misuse
+    misuse = detect_target_misuse(tool, target)
+    if misuse:
+        err(f'{tool}: target path looks wrong.')
+        for line in misuse.splitlines():
+            err(f'  {line}')
+        return False
+
     abs_target = target.expanduser().resolve()
     log(f'Installing {tool} → {abs_target}')
     log(f'  Source:  {src}')
@@ -170,9 +182,14 @@ def verify_install(tool: str, target: Path) -> bool:
     """Verify a completed install. Prints a per-check report and returns
     True if every check passed. Kept separate from `install_tool` so unit
     tests of copy mechanics don't have to provide a complete fixture."""
-    from orquestrum.lib.verify import verify_install_target
-    report = verify_install_target(tool, target.expanduser().resolve())
+    from orquestrum.lib.verify import verify_install_target, render_listing
+    abs_target = target.expanduser().resolve()
+    report = verify_install_target(tool, abs_target)
     print(report.render())
+    # Surface what landed in the target — especially valuable for claude-code
+    # and cursor whose integration is entirely under dot-dirs that `ls`
+    # without -a hides.
+    print(render_listing(abs_target))
     if not report.passed:
         err(f'{tool}: install verification failed — '
             f'{report.fail_count} check(s) did not pass.')

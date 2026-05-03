@@ -265,3 +265,80 @@ class TestReportProperties:
         r.add('two', False, 'missing')
         assert not r.passed
         assert r.fail_count == 1
+
+
+# ─── target shape detection (preflight) ─────────────────────────────────────
+
+
+class TestDetectTargetMisuse:
+    def test_claude_code_with_target_dot_claude_is_rejected(self, tmp_path: Path):
+        """Catch the canonical user mistake: `--target ~/.claude` for claude-code.
+        Without this guard the install creates ~/.claude/.claude/agents/ —
+        files are written but in the wrong place."""
+        target = tmp_path / '.claude'
+        target.mkdir()
+        msg = verify.detect_target_misuse('claude-code', target)
+        assert msg is not None
+        assert 'double-nested' in msg
+        # The error must suggest the parent path as the right answer
+        assert str(tmp_path) in msg
+
+    def test_cursor_with_target_dot_cursor_is_rejected(self, tmp_path: Path):
+        target = tmp_path / '.cursor'
+        target.mkdir()
+        msg = verify.detect_target_misuse('cursor', target)
+        assert msg is not None
+        assert '.cursor' in msg
+
+    def test_claude_code_with_project_root_is_ok(self, tmp_path: Path):
+        target = tmp_path / 'myproject'
+        target.mkdir()
+        assert verify.detect_target_misuse('claude-code', target) is None
+
+    def test_claude_code_with_home_is_ok(self, tmp_path: Path):
+        # --target ~ is valid: it creates ~/.claude/agents/ (global install)
+        # because basename is the home dir name, not '.claude'
+        target = tmp_path / 'home'
+        target.mkdir()
+        assert verify.detect_target_misuse('claude-code', target) is None
+
+    def test_opencode_no_nesting_check(self, tmp_path: Path):
+        # opencode integration has no top-level dot-dir; --target opencode
+        # is the canonical install path.
+        target = tmp_path / 'opencode'
+        target.mkdir()
+        assert verify.detect_target_misuse('opencode', target) is None
+
+    def test_unknown_tool_returns_none(self, tmp_path: Path):
+        assert verify.detect_target_misuse('made-up', tmp_path) is None
+
+
+# ─── render_listing ─────────────────────────────────────────────────────────
+
+
+class TestRenderListing:
+    def test_lists_top_level_dirs_and_files(self, tmp_path: Path):
+        out = tmp_path / 'cache' / 'claude-code'
+        _build_claude_code(out)
+        rendered = verify.render_listing(out)
+        # Top-level dot-dirs and files surface in the listing
+        assert '.claude/' in rendered
+        assert '.sdd/' in rendered
+        # Sub-entries shown with count
+        assert 'items' in rendered
+
+    def test_handles_missing_directory(self, tmp_path: Path):
+        out = tmp_path / 'never-created'
+        rendered = verify.render_listing(out)
+        assert 'not present' in rendered
+
+    def test_truncates_long_listings(self, tmp_path: Path):
+        out = tmp_path / 'big'
+        out.mkdir()
+        sub = out / 'huge'
+        sub.mkdir()
+        for i in range(50):
+            (sub / f'file-{i:02d}.md').write_text('x', encoding='utf-8')
+        rendered = verify.render_listing(out, max_per_dir=5)
+        # Truncation marker visible
+        assert '+45 more' in rendered or '… +' in rendered

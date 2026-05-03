@@ -110,6 +110,32 @@ class TestInstallTool:
         err = capsys.readouterr().err
         assert 'Unknown tool' in err
 
+    def test_rejects_dot_claude_target_for_claude_code(
+        self, tmp_path: Path, fake_integrations: Path,
+        capsys: pytest.CaptureFixture,
+    ):
+        """User mistake: `--target ~/.claude` causes ~/.claude/.claude/.
+        Refuse before copying anything."""
+        target = tmp_path / '.claude'
+        target.mkdir()
+        ok = core_install.install_tool('claude-code', target)
+        assert ok is False
+        err = capsys.readouterr().err
+        assert 'double-nested' in err
+        # Files must NOT have been written into the bad target
+        assert not (target / '.claude').exists()
+
+    def test_rejects_dot_cursor_target_for_cursor(
+        self, tmp_path: Path, fake_integrations: Path,
+        capsys: pytest.CaptureFixture,
+    ):
+        target = tmp_path / '.cursor'
+        target.mkdir()
+        ok = core_install.install_tool('cursor', target)
+        assert ok is False
+        err = capsys.readouterr().err
+        assert 'double-nested' in err
+
     def test_suggests_claude_code_on_typo(
         self, tmp_path: Path, fake_integrations: Path,
         capsys: pytest.CaptureFixture,

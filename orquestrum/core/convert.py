@@ -603,7 +603,7 @@ def main(argv: list[str] | None = None) -> None:
                       if d.is_dir() and (d / 'SKILL.md').exists())
 
     from orquestrum.lib.verify import (
-        verify_convert_output, render_summary, VerifyReport,
+        verify_convert_output, render_summary, render_listing, VerifyReport,
     )
     reports: list[VerifyReport] = []
 
@@ -618,6 +618,10 @@ def main(argv: list[str] | None = None) -> None:
         report = verify_convert_output(tool, INTEGRATIONS / tool,
                                        expected_skill_count=skill_count)
         print(report.render())
+        # Show what's actually on disk — particularly important for tools
+        # whose integration consists entirely of dot-dirs (claude-code, cursor)
+        # which a plain `ls` won't surface.
+        print(render_listing(INTEGRATIONS / tool))
         reports.append(report)
         print()
 

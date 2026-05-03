@@ -86,8 +86,11 @@ def _check_dir(report: VerifyReport, rel_path: str, root: Path | None = None) ->
     base = root or report.root
     p = base / rel_path
     exists = p.is_dir()
-    report.add(f'{rel_path}/ exists', exists,
-               '' if exists else 'directory missing')
+    # Absolute path in the detail so users see exactly where files landed —
+    # double-nesting like /home/x/.claude/.claude/agents/ becomes obvious.
+    report.add(f'{rel_path}/ exists',
+               exists,
+               str(p) if exists else f'missing — {p}')
     return exists
 
 
@@ -96,13 +99,14 @@ def _check_file(report: VerifyReport, rel_path: str,
     base = root or report.root
     p = base / rel_path
     if not p.is_file():
-        report.add(f'{rel_path}', False, 'file missing')
+        report.add(f'{rel_path}', False, f'missing — {p}')
         return False
     size = p.stat().st_size
     if size < min_bytes:
-        report.add(f'{rel_path}', False, f'only {size} bytes (expected >= {min_bytes})')
+        report.add(f'{rel_path}', False,
+                   f'only {size} bytes — {p}')
         return False
-    report.add(f'{rel_path}', True, f'{size:,} bytes')
+    report.add(f'{rel_path}', True, f'{size:,} bytes — {p}')
     return True
 
 
@@ -114,10 +118,10 @@ def _check_count(report: VerifyReport, rel_path: str, glob: str,
     n = _count_files(p, glob)
     if exact:
         ok = n == expected
-        detail = f'{n} found' if ok else f'expected {expected}, found {n}'
+        detail = f'{n} found in {p}' if ok else f'expected {expected}, found {n} in {p}'
     else:
         ok = n >= expected
-        detail = f'{n} found' if ok else f'expected ≥ {expected}, found {n}'
+        detail = f'{n} found in {p}' if ok else f'expected ≥ {expected}, found {n} in {p}'
     report.add(f'{rel_path}/{glob}', ok, detail)
     return n
 
@@ -246,6 +250,45 @@ def _count_placeholders(root: Path, marker: str) -> int:
     return n
 
 
+# ── target sanity checks (preflight, before any file is copied) ────────────
+#
+# Each integration package has a top-level layout that is meant to MATERIALIZE
+# at the target. Mismatched targets cause double-nesting that "works" mechanically
+# (files do get written) but is wrong (e.g. ~/.claude/.claude/agents/). The
+# verify rules can't catch this AFTER the copy because they only check relative
+# paths. So we validate the target shape BEFORE copying.
+
+
+# Map: tool → top-level directory the integration package contains. If the
+# user passes --target whose basename equals this dir, we'd nest it twice.
+_TOOL_ROOTS_THAT_MUST_NOT_NEST = {
+    'claude-code': '.claude',
+    'cursor':      '.cursor',
+}
+
+
+def detect_target_misuse(tool: str, target: Path) -> str | None:
+    """Return a clear error message if --target shape is wrong for this tool,
+    or None if it looks ok.
+
+    Catches the canonical mistake: passing --target ~/.claude for claude-code
+    (would create ~/.claude/.claude/agents/) or --target ~/proj/.cursor for
+    cursor.
+    """
+    target = target.expanduser().resolve()
+    nest_dir = _TOOL_ROOTS_THAT_MUST_NOT_NEST.get(tool)
+    if nest_dir and target.name == nest_dir:
+        # Suggest the parent path as the right --target.
+        parent = target.parent
+        return (
+            f'--target {target} would create {target / nest_dir}/ (double-nested).\n'
+            f'  • For a project install:  --target {parent}\n'
+            f'  • For a global install:   --target {parent}    '
+            f'(creates {nest_dir}/ inside it)'
+        )
+    return None
+
+
 def render_summary(reports: list[VerifyReport]) -> str:
     """Render a compact one-line-per-report tally + grand total."""
     lines = []
@@ -264,4 +307,33 @@ def render_summary(reports: list[VerifyReport]) -> str:
     icon = '✓' if total_fail == 0 else '✗'
     lines.append('')
     lines.append(f'{summary_color}{icon} {total_ok}/{len(reports)} verifications passed{_NC}')
+    return '\n'.join(lines)
+
+
+def render_listing(out_dir: Path, max_per_dir: int = 12) -> str:
+    """Walk a 1-2 level deep listing of `out_dir` so dot-dirs and per-tool
+    top-level entries are visible at a glance.
+
+    Designed for the convert/install final summary so users can confirm
+    files materialized — particularly important for claude-code whose
+    integration is entirely under .claude/ + .sdd/ (invisible to plain `ls`).
+    """
+    if not out_dir.is_dir():
+        return f'  (directory not present: {out_dir})'
+    lines = [f'  {out_dir}/']
+    entries = sorted(out_dir.iterdir(), key=lambda p: (not p.is_dir(), p.name))
+    for entry in entries:
+        if entry.is_dir():
+            children = sorted(entry.iterdir())
+            count = len(children)
+            preview = ', '.join(c.name for c in children[:max_per_dir])
+            if count > max_per_dir:
+                preview += f', … +{count - max_per_dir} more'
+            lines.append(f'    {entry.name}/   {_DIM}({count} items: {preview}){_NC}')
+        else:
+            try:
+                size = entry.stat().st_size
+                lines.append(f'    {entry.name}   {_DIM}({size:,} bytes){_NC}')
+            except OSError:
+                lines.append(f'    {entry.name}')
     return '\n'.join(lines)
