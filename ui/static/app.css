@@ -1803,3 +1803,186 @@ a.agent-card:hover {
 #preview-pane { transition: opacity var(--motion-swap); }
 #preview-pane.htmx-swapping { opacity: .5; }
 
+/* ─────────────────────────────────────────────────────────────────────────
+   Onda 6 — Polish: jobs board + command palette
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* topbar search now a button (was disabled <input>) */
+.topbar-search-trigger {
+  cursor: pointer;
+  font: inherit;
+  color: var(--fg-3);
+  text-align: left;
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--l1);
+}
+.topbar-search-trigger .topbar-search-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--fg-3);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* jobs board (3 columns) */
+.jobs-board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.jobs-col { display: flex; flex-direction: column; gap: 12px; }
+
+@media (max-width: 1100px) { .jobs-board { grid-template-columns: 1fr; } }
+
+/* command palette */
+.palette-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: start center;
+  padding-top: 12vh;
+}
+.palette-scrim {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--l0) 70%, transparent);
+  backdrop-filter: blur(4px);
+}
+.palette-card {
+  position: relative;
+  width: min(560px, calc(100% - 32px));
+  max-height: calc(100vh - 24vh);
+  background: var(--l1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-3);
+  box-shadow: var(--shadow-l2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: palette-rise 160ms ease-out;
+}
+@keyframes palette-rise {
+  from { transform: translateY(8px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+.palette-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.palette-search-icon { color: var(--fg-3); font-size: 16px; }
+.palette-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--fg-1);
+  font: 16px var(--font-sans);
+}
+.palette-input::placeholder { color: var(--fg-3); }
+.palette-search-kbd {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--fg-3);
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-1);
+  cursor: pointer;
+}
+
+.palette-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  flex: 1;
+  scrollbar-width: thin;
+}
+.palette-item {
+  display: grid;
+  grid-template-columns: 64px 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: var(--r-1);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--fg-2);
+  user-select: none;
+}
+.palette-item.is-active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.palette-item:hover { background: var(--l2); }
+.palette-cat {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--fg-3);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.palette-item.is-active .palette-cat { color: var(--accent); }
+.palette-label {
+  color: var(--fg-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.palette-item.is-active .palette-label { color: var(--accent); font-weight: 500; }
+.palette-hint {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-3);
+}
+.palette-go {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg-3);
+  opacity: 0;
+  transition: opacity var(--motion-fast);
+}
+.palette-item.is-active .palette-go { opacity: 1; color: var(--accent); }
+
+.palette-empty {
+  margin: 0;
+  padding: 24px;
+  text-align: center;
+  color: var(--fg-3);
+  font-size: 13px;
+}
+
+.palette-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 18px;
+  border-top: 1px solid var(--border);
+  background: var(--l0);
+  font-size: 11px;
+  color: var(--fg-3);
+}
+.palette-footer kbd {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  background: var(--l2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 5px;
+  margin-right: 2px;
+}
+
+@media (max-width: 720px) {
+  .palette-modal { padding-top: 6vh; }
+  .palette-item { grid-template-columns: 56px 1fr auto; }
+  .palette-go { display: none; }
+}
+

@@ -5,6 +5,7 @@ the file system is the source of truth.
 """
 from __future__ import annotations
 import datetime as dt
+from importlib import metadata as importlib_metadata
 from pathlib import Path
 
 import jinja2
@@ -16,6 +17,14 @@ from fastapi.templating import Jinja2Templates
 from ui.config import UIConfig
 from ui.i18n import DEFAULT as DEFAULT_LOCALE, SUPPORTED as SUPPORTED_LOCALES, translate
 from ui.lib.sidebar import sidebar_counts
+
+
+def _resolve_app_version() -> str:
+    """Read installed package version from importlib.metadata; 'dev' fallback."""
+    try:
+        return importlib_metadata.version('orquestrum')
+    except importlib_metadata.PackageNotFoundError:
+        return 'dev'
 
 
 def _time_ago(value: dt.datetime | None, locale: str = DEFAULT_LOCALE) -> str:
@@ -43,7 +52,7 @@ _HERE = Path(__file__).resolve().parent
 TEMPLATES_DIR = _HERE / 'templates'
 STATIC_DIR    = _HERE / 'static'
 
-APP_VERSION = '0.4.2'  # surfaced in the brand subtitle; reconciliation #9 will read from pyproject
+APP_VERSION = _resolve_app_version()  # surfaced in the brand subtitle
 LOCALE_COOKIE = 'orq_lang'
 
 
@@ -138,7 +147,7 @@ def create_app(config: UIConfig) -> FastAPI:
         app.mount('/static', StaticFiles(directory=str(STATIC_DIR)), name='static')
 
     # Routes
-    from ui.routes import health, dashboard, docs, catalog, coverage, audits, convert, install, edit_agent, edit_skill, compact, jobs, i18n, live
+    from ui.routes import health, dashboard, docs, catalog, coverage, audits, convert, install, edit_agent, edit_skill, compact, jobs, i18n, live, palette
     app.include_router(health.router)
     app.include_router(i18n.router)
     app.include_router(dashboard.router)
@@ -153,6 +162,7 @@ def create_app(config: UIConfig) -> FastAPI:
     app.include_router(compact.router)
     app.include_router(jobs.router)
     app.include_router(live.router)
+    app.include_router(palette.router)
 
     @app.get('/', response_class=HTMLResponse)
     async def index(request: Request) -> HTMLResponse:

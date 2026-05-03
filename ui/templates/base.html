@@ -126,11 +126,12 @@
             <span class="nav-item-icon" aria-hidden="true">▤</span>
             <span class="nav-item-label">{{ 'nav.docs' | t }}</span>
           </a>
-          <span class="nav-item is-disabled" aria-disabled="true" title="em breve">
+          <a href="/jobs" class="nav-item"
+             {% if p == '/jobs' or (p.startswith('/jobs/') and p != '/jobs/' ) %}aria-current="page"{% endif %}>
             <span class="nav-item-icon" aria-hidden="true">▶</span>
             <span class="nav-item-label">{{ 'nav.jobs' | t }}</span>
             {% if _counts.jobs_running %}<span class="nav-item-count">{{ _counts.jobs_running }}</span>{% endif %}
-          </span>
+          </a>
         </div>
 
       </nav>
@@ -178,11 +179,13 @@
         <span class="topbar-project-caret" aria-hidden="true">▾</span>
       </span>
 
-      <label class="topbar-search" aria-label="busca global">
+      <button type="button" class="topbar-search topbar-search-trigger"
+              aria-label="{{ 'topbar.search.placeholder' | t }}"
+              data-open-palette>
         <span aria-hidden="true">⌕</span>
-        <input class="topbar-search-input" type="search" placeholder="{{ 'topbar.search.placeholder' | t }}" disabled>
+        <span class="topbar-search-input">{{ 'topbar.search.placeholder' | t }}</span>
         <kbd class="topbar-search-kbd">⌘K</kbd>
-      </label>
+      </button>
 
       <span class="topbar-spacer"></span>
 
@@ -235,6 +238,46 @@
           if ((localStorage.getItem('orq-theme') || 'auto') === 'auto') apply('auto');
         });
       }
+    })();
+
+    // ── Command palette (⌘K / Ctrl+K) ──────────────────────────────────
+    (function () {
+      function openPalette() {
+        if (document.getElementById('palette-modal')) return;
+        fetch('/palette', { headers: { 'Accept': 'text/html' } })
+          .then(function (r) { return r.text(); })
+          .then(function (html) {
+            // Insert + force inline <script> execution by re-creating the script tag.
+            var tpl = document.createElement('template');
+            tpl.innerHTML = html.trim();
+            var node = tpl.content.firstChild;
+            document.body.appendChild(node);
+            node.querySelectorAll('script').forEach(function (oldScript) {
+              var s = document.createElement('script');
+              s.textContent = oldScript.textContent;
+              oldScript.replaceWith(s);
+            });
+          });
+      }
+      function closePalette() {
+        var m = document.getElementById('palette-modal');
+        if (m) m.remove();
+      }
+      document.addEventListener('keydown', function (e) {
+        var isMeta = e.metaKey || e.ctrlKey;
+        if (isMeta && (e.key === 'k' || e.key === 'K')) {
+          e.preventDefault();
+          openPalette();
+        } else if (e.key === 'Escape') {
+          closePalette();
+        }
+      });
+      document.addEventListener('click', function (e) {
+        if (e.target.closest('[data-open-palette]')) {
+          e.preventDefault();
+          openPalette();
+        }
+      });
     })();
 
     // ── Form helpers preservados das ondas anteriores (1.10 + 1.11) ────

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% from "_components/job_chip.html" import job_chip %}
+{% block title %}{{ 'nav.jobs' | t }}{% endblock %}
+{% block content %}
+
+<header class="page-head">
+  <div class="page-head-row">
+    <h1>{{ 'nav.jobs' | t }}</h1>
+    <div class="page-head-meta">
+      {{ running | length }} {{ 'jobs.running' | t }} ·
+      {{ recent_done | length }} {{ 'jobs.recent' | t }} ·
+      {{ failed | length }} {{ 'jobs.failed' | t }}
+    </div>
+  </div>
+</header>
+
+{% set total = (running | length) + (recent_done | length) + (failed | length) %}
+{% if total == 0 %}
+  <article class="empty-state">
+    <h3>{{ 'jobs.empty.title' | t }}</h3>
+    <p>{{ 'jobs.empty.body' | t }}</p>
+  </article>
+{% else %}
+  <section class="jobs-board">
+
+    <article class="dash-card jobs-col">
+      <header class="dash-card-head">
+        <h2>{{ 'jobs.col.running' | t }}</h2>
+        <span class="dash-card-meta">{{ running | length }}</span>
+      </header>
+      {% if running %}
+        <div class="job-list">
+          {% for j in running %}{{ job_chip(j) }}{% endfor %}
+        </div>
+      {% else %}
+        <p class="meta">{{ 'jobs.col.empty' | t }}</p>
+      {% endif %}
+    </article>
+
+    <article class="dash-card jobs-col">
+      <header class="dash-card-head">
+        <h2>{{ 'jobs.col.recent' | t }}</h2>
+        <span class="dash-card-meta">{{ recent_done | length }} · 24h</span>
+      </header>
+      {% if recent_done %}
+        <div class="job-list">
+          {% for j in recent_done %}{{ job_chip(j) }}{% endfor %}
+        </div>
+      {% else %}
+        <p class="meta">{{ 'jobs.col.empty' | t }}</p>
+      {% endif %}
+    </article>
+
+    <article class="dash-card jobs-col">
+      <header class="dash-card-head">
+        <h2>{{ 'jobs.col.failed' | t }}</h2>
+        <span class="dash-card-meta">{{ failed | length }}</span>
+      </header>
+      {% if failed %}
+        <div class="job-list">
+          {% for j in failed %}{{ job_chip(j) }}{% endfor %}
+        </div>
+      {% else %}
+        <p class="meta">{{ 'jobs.col.empty' | t }}</p>
+      {% endif %}
+    </article>
+
+  </section>
+{% endif %}
+
+{% endblock %}

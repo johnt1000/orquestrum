@@ -176,5 +176,32 @@
   "edit.skill.field.chain": "Encadeamento",
   "edit.skill.field.chain_next": "próxima skill",
   "edit.skill.field.chain_condition": "condição",
-  "edit.skill.field.emits_confidence": "Emite score de confiança"
+  "edit.skill.field.emits_confidence": "Emite score de confiança",
+
+  "palette.placeholder": "Buscar página, agente, habilidade, doc, ação…",
+  "palette.empty": "Nenhum resultado.",
+  "palette.category.page": "página",
+  "palette.category.agent": "agente",
+  "palette.category.skill": "habilidade",
+  "palette.category.doc": "doc",
+  "palette.category.action": "ação",
+  "palette.action.convert": "Converter integrações",
+  "palette.action.install": "Instalar em projeto",
+  "palette.action.compact": "Compactar referências",
+  "palette.action.audits": "Rodar auditorias",
+  "palette.action.health": "Status de saúde",
+  "palette.hint.nav": "navegar",
+  "palette.hint.open": "abrir",
+  "palette.hint.close": "fechar",
+
+  "jobs.title": "Jobs",
+  "jobs.running": "em execução",
+  "jobs.recent": "recentes",
+  "jobs.failed": "com falha",
+  "jobs.col.running": "Em execução",
+  "jobs.col.recent": "Concluídos",
+  "jobs.col.failed": "Falha · timeout",
+  "jobs.col.empty": "—",
+  "jobs.empty.title": "Nenhum job na memória",
+  "jobs.empty.body": "Jobs aparecem aqui ao rodar Convert, Install, Compact ou Auditorias. O ring guarda os últimos 50."
 }

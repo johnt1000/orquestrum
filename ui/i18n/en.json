@@ -176,5 +176,32 @@
   "edit.skill.field.chain": "Chain",
   "edit.skill.field.chain_next": "next skill",
   "edit.skill.field.chain_condition": "condition",
-  "edit.skill.field.emits_confidence": "Emits confidence score"
+  "edit.skill.field.emits_confidence": "Emits confidence score",
+
+  "palette.placeholder": "Search page, agent, skill, doc, action…",
+  "palette.empty": "No results.",
+  "palette.category.page": "page",
+  "palette.category.agent": "agent",
+  "palette.category.skill": "skill",
+  "palette.category.doc": "doc",
+  "palette.category.action": "action",
+  "palette.action.convert": "Convert integrations",
+  "palette.action.install": "Install into project",
+  "palette.action.compact": "Compact references",
+  "palette.action.audits": "Run audits",
+  "palette.action.health": "Health status",
+  "palette.hint.nav": "navigate",
+  "palette.hint.open": "open",
+  "palette.hint.close": "close",
+
+  "jobs.title": "Jobs",
+  "jobs.running": "running",
+  "jobs.recent": "recent",
+  "jobs.failed": "failed",
+  "jobs.col.running": "Running",
+  "jobs.col.recent": "Done",
+  "jobs.col.failed": "Failed · timeout",
+  "jobs.col.empty": "—",
+  "jobs.empty.title": "No jobs in memory",
+  "jobs.empty.body": "Jobs appear here when you run Convert, Install, Compact or Audits. The ring keeps the last 50."
 }
