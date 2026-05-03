@@ -88,7 +88,7 @@ PKGBUILD scripts maintained alongside the main repo under `packaging/aur/`.
 ```bash
 nix profile install github:johnt1000/orquestrum
 # or
-nix run github:johnt1000/orquestrum -- init --tool claude-code
+nix run github:johnt1000/orquestrum -- init --yes
 ```
 
 `flake.nix` at repo root exposes `packages.orquestrum` and `apps.orquestrum`.

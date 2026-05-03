@@ -6,4 +6,4 @@ the CLI and library layer on top of the canonical framework source.
 
 Mac and Linux only. See docs/governance/DISTRIBUTION.md.
 """
-__version__ = "0.4.0"
+__version__ = "0.5.0"

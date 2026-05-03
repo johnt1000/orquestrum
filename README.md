@@ -125,17 +125,29 @@ Contributing? See [CONTRIBUTING.md](CONTRIBUTING.md).
 ```bash
 # In your project directory
 cd /path/to/your/project
-orquestrum init --tool claude-code              # creates .orquestrum/, ORQUESTRUM.md, registers globally
+
+# Bootstrap orquestrum locally — creates ONLY <project>/.orquestrum/
+# (config + manifest + metrics dir). Asks 3 prompts about optional
+# integrations; --yes accepts the safe defaults silently.
+orquestrum init --yes                # ←  creates .orquestrum/, registers globally,
+                                     #     installs metrics hook + MCP server
+                                     #     into ~/.claude/settings.json (global).
+                                     #     Agents are NOT installed by default.
+
+# Install the 8 subagents globally (optional — skip if you only want
+# the metrics + MCP integration). Always lands at ~/.claude/agents/,
+# never inside the project.
+orquestrum install --tool claude-code --target ~
 
 # Open the web dashboard
 orquestrum web                                   # auto-detects mode, opens browser
 
 # Use Claude Code normally:
-#   - The Stop hook records token usage in .orquestrum/metrics/events.jsonl
-#   - The MCP server (registered automatically) lets agents query state
-#     mid-turn via mcp__orquestrum__orq_* tools (session_summary,
-#     budget_status, recent_events, cost_today, etc.).
-#   - Refresh the dashboard at http://127.0.0.1:7700/dashboard
+#   - Stop hook records tokens/cost in <project>/.orquestrum/metrics/events.jsonl
+#   - MCP server (orquestrum) lets agents query state mid-turn via
+#     mcp__orquestrum__orq_* tools (session_summary, budget_status,
+#     recent_events, cost_today, …).
+#   - Dashboard refresh: http://127.0.0.1:7700/dashboard
 
 # When you want to know what happened
 orquestrum dashboard                             # terminal summary
@@ -154,7 +166,7 @@ orquestrum update --tool opencode                # cleanup + reinstall + history
 
 | Command | What it does |
 |---------|--------------|
-| `orquestrum init [--tool X --provider Y]` | Initialize Orquestrum in cwd. Creates `.orquestrum/`, `ORQUESTRUM.md`, registers globally. With `--tool` also installs the integration. |
+| `orquestrum init [--name N] [--yes]` | Bootstrap `<project>/.orquestrum/` (config, manifest, gitignore, metrics dir) and register globally. Asks 3 interactive prompts about optional integrations (metrics hook, MCP server, agents). `--yes` accepts defaults silently. Tool installs are SEPARATE — see `orquestrum install`. |
 | `orquestrum update [--tool X] [--all] [--check] [--self]` | Re-sync this project (or all). `--tool` switches integrations with cleanup of the old one. `--self` prints the upgrade command for the CLI itself. |
 | `orquestrum web [--mode {project,framework,auto}] [--port N] [--no-browser]` | Launch the local console. Auto-detects mode from cwd. |
 | `orquestrum repos {list,add,remove}` | Manage the global registry at `~/.orquestrum/registry.toml`. |
@@ -215,6 +227,7 @@ Beyond the canonical pipeline, Orquestrum ships explicit policies for cost, obse
 | Token budgets per tier | [`docs/governance/COST.md`](docs/governance/COST.md) | Soft thresholds, dominant-cost-driver attribution |
 | Metrics emission protocol | [`docs/governance/OBSERVABILITY.md`](docs/governance/OBSERVABILITY.md) | `.orquestrum/metrics/events.jsonl` schema, dashboard, privacy |
 | MCP server (`orq_*` tools) | [`docs/governance/MCP.md`](docs/governance/MCP.md) | Tool catalog, validation contract, allowlist policy, hybrid arch w/ Stop hook |
+| Project init contract | [`docs/governance/INIT.md`](docs/governance/INIT.md) | What `init` writes (only `.orquestrum/`), the 3 prompts, default scopes, legacy migration |
 | Cache markers | [`docs/agent-context/CONVENTIONS.md`](docs/agent-context/CONVENTIONS.md) (§ Cache Segmentation) | `<!-- cache:stable -->` convention, adapter behavior |
 | Human attention scoring | [`docs/agent-context/CONVENTIONS.md`](docs/agent-context/CONVENTIONS.md) (§ Human Attention Mediation) | Deterministic 0–100 score, propagation cap, MEDIATION.md |
 | Performance methodology | [`docs/governance/PERFORMANCE.md`](docs/governance/PERFORMANCE.md) | Statistical hygiene, regression classification |
