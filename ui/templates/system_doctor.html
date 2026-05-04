@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ 'system.doctor.title' | t }}{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <h1>{{ 'system.doctor.title' | t }}</h1>
+  <p class="page-subtitle">{{ 'system.doctor.subtitle' | t }}</p>
+</header>
+
+<section class="kpi-grid" aria-label="{{ 'system.doctor.summary' | t }}">
+  <div class="kpi-card">
+    <span class="kpi-label">{{ 'system.doctor.errors' | t }}</span>
+    <span class="kpi-value {% if errors %}kpi-error{% else %}kpi-ok{% endif %}">{{ errors }}</span>
+  </div>
+  <div class="kpi-card">
+    <span class="kpi-label">{{ 'system.doctor.warnings' | t }}</span>
+    <span class="kpi-value {% if warnings %}kpi-warn{% else %}kpi-ok{% endif %}">{{ warnings }}</span>
+  </div>
+  <div class="kpi-card">
+    <span class="kpi-label">{{ 'system.doctor.checks' | t }}</span>
+    <span class="kpi-value">{{ results | length }}</span>
+  </div>
+</section>
+
+<form action="/system/doctor" method="get" class="action-bar">
+  <button type="submit" class="btn">{{ 'system.doctor.rerun' | t }}</button>
+  <span class="action-bar-hint">{{ 'system.doctor.fresh_each_load' | t }}</span>
+</form>
+
+{% if results %}
+<table class="data-table" aria-label="{{ 'system.doctor.checks' | t }}">
+  <thead>
+    <tr>
+      <th></th>
+      <th>{{ 'system.doctor.col.label' | t }}</th>
+      <th>{{ 'system.doctor.col.detail' | t }}</th>
+      <th>{{ 'system.doctor.col.fix' | t }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in results %}
+    {% set status = r.status or 'ok' %}
+    {% set mark = '✓' if status == 'ok' else ('!' if status == 'warn' else '✗') %}
+    <tr class="row-{{ status }}">
+      <td class="row-mark" aria-hidden="true">{{ mark }}</td>
+      <td><strong>{{ r.label }}</strong></td>
+      <td class="muted">{{ r.detail or '' }}</td>
+      <td>
+        {% if r.fix %}<code class="fix-cmd">{{ r.fix }}</code>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty-state">{{ 'system.doctor.empty' | t }}</p>
+{% endif %}
+
+<aside class="page-footer-hint">
+  <strong>CLI:</strong> <code>orquestrum doctor</code>,
+  <code>orquestrum doctor --json</code>
+</aside>
+{% endblock %}

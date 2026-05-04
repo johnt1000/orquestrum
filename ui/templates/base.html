@@ -116,6 +116,21 @@
 
         <div class="nav-group">
           <span class="nav-group-label">{{ 'nav.group.system' | t }}</span>
+          <a href="/system/doctor" class="nav-item"
+             {% if p.startswith('/system/doctor') %}aria-current="page"{% endif %}>
+            <span class="nav-item-icon" aria-hidden="true">⚕</span>
+            <span class="nav-item-label">{{ 'nav.doctor' | t }}</span>
+          </a>
+          <a href="/system/installs" class="nav-item"
+             {% if p.startswith('/system/installs') %}aria-current="page"{% endif %}>
+            <span class="nav-item-icon" aria-hidden="true">⊞</span>
+            <span class="nav-item-label">{{ 'nav.installs' | t }}</span>
+          </a>
+          <a href="/system/mcp" class="nav-item"
+             {% if p.startswith('/system/mcp') %}aria-current="page"{% endif %}>
+            <span class="nav-item-icon" aria-hidden="true">⚛</span>
+            <span class="nav-item-label">{{ 'nav.mcp' | t }}</span>
+          </a>
           <a href="/audits" class="nav-item"
              {% if p.startswith('/audits') or p.startswith('/convert') or p.startswith('/install') or p.startswith('/compact') %}aria-current="page"{% endif %}>
             <span class="nav-item-icon" aria-hidden="true">⚙</span>

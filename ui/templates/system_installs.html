@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ 'system.installs.title' | t }}{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <h1>{{ 'system.installs.title' | t }}</h1>
+  <p class="page-subtitle">{{ 'system.installs.subtitle' | t }}</p>
+</header>
+
+<section class="kpi-grid" aria-label="{{ 'system.installs.summary' | t }}">
+  <div class="kpi-card">
+    <span class="kpi-label">{{ 'system.installs.total' | t }}</span>
+    <span class="kpi-value">{{ total }}</span>
+  </div>
+  <div class="kpi-card">
+    <span class="kpi-label">{{ 'system.installs.valid' | t }}</span>
+    <span class="kpi-value kpi-ok">{{ valid }}</span>
+  </div>
+  <div class="kpi-card">
+    <span class="kpi-label">{{ 'system.installs.stale' | t }}</span>
+    <span class="kpi-value {% if stale %}kpi-warn{% endif %}">{{ stale }}</span>
+  </div>
+  <div class="kpi-card">
+    <span class="kpi-label">{{ 'system.installs.retired' | t }}</span>
+    <span class="kpi-value {% if retired %}kpi-warn{% endif %}">{{ retired }}</span>
+  </div>
+</section>
+
+{% if has_dead %}
+<form action="/system/installs/prune" method="post" class="action-bar">
+  <button type="submit" class="btn btn-primary">
+    {{ 'system.installs.prune_button' | t(n=stale + retired) }}
+  </button>
+  <span class="action-bar-hint">{{ 'system.installs.prune_hint' | t }}</span>
+</form>
+{% else %}
+<p class="empty-state">{{ 'system.installs.clean' | t }}</p>
+{% endif %}
+
+{% if rows %}
+<table class="data-table" aria-label="{{ 'system.installs.records' | t }}">
+  <thead>
+    <tr>
+      <th></th>
+      <th>{{ 'system.installs.col.tool' | t }}</th>
+      <th>{{ 'system.installs.col.files' | t }}</th>
+      <th>{{ 'system.installs.col.date' | t }}</th>
+      <th>{{ 'system.installs.col.target' | t }}</th>
+      <th>{{ 'system.installs.col.note' | t }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr class="{% if row.note %}row-{{ row.note }}{% endif %}">
+      <td class="row-mark" aria-hidden="true">{{ row.mark }}</td>
+      <td><code>{{ row.tool }}</code></td>
+      <td class="num">{{ row.files }}</td>
+      <td class="muted">{{ row.date }}</td>
+      <td class="path">{{ row.target }}</td>
+      <td>{% if row.note %}<span class="badge badge-{{ row.note }}">{{ row.note }}</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty-state">{{ 'system.installs.empty' | t }}</p>
+{% endif %}
+
+<aside class="page-footer-hint">
+  <strong>CLI:</strong>
+  <code>orquestrum installs list</code>,
+  <code>orquestrum installs prune --dry-run</code>
+</aside>
+{% endblock %}

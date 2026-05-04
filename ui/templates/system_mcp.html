@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ 'system.mcp.title' | t }}{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <h1>{{ 'system.mcp.title' | t }}</h1>
+  <p class="page-subtitle">{{ 'system.mcp.subtitle' | t(path=settings_path) }}</p>
+</header>
+
+{% if not settings_exists %}
+<p class="empty-state">
+  {{ 'system.mcp.no_settings' | t(path=settings_path) }}
+  <br>
+  <strong>{{ 'system.mcp.run_setup_first' | t }}</strong>
+</p>
+{% else %}
+
+<section aria-labelledby="mcp-servers-h">
+  <h2 id="mcp-servers-h">{{ 'system.mcp.servers' | t }} ({{ server_count }})</h2>
+
+  {% if server_rows %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>{{ 'system.mcp.col.name' | t }}</th>
+        <th>{{ 'system.mcp.col.command' | t }}</th>
+        <th>{{ 'system.mcp.col.type' | t }}</th>
+        <th>{{ 'system.mcp.col.owner' | t }}</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in server_rows %}
+      <tr>
+        <td><code>{{ s.name }}</code></td>
+        <td class="path">{{ s.command }}</td>
+        <td class="muted">{{ s.type }}</td>
+        <td>
+          <span class="badge badge-{{ s.owner }}">{{ s.owner }}</span>
+        </td>
+        <td>
+          {% if not s.protected %}
+          <form action="/system/mcp/remove" method="post" class="inline-form">
+            <input type="hidden" name="name" value="{{ s.name }}">
+            <button type="submit" class="btn btn-small btn-danger"
+                    onclick="return confirm('{{ 'system.mcp.confirm_remove' | t(name=s.name) }}')">
+              {{ 'system.mcp.remove' | t }}
+            </button>
+          </form>
+          {% else %}
+          <span class="muted">{{ 'system.mcp.protected' | t }}</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty-state">{{ 'system.mcp.no_servers' | t }}</p>
+  {% endif %}
+
+  <form action="/system/mcp/validate" method="post" class="action-bar">
+    <button type="submit" class="btn">{{ 'system.mcp.validate' | t }}</button>
+    <span class="action-bar-hint">{{ 'system.mcp.validate_hint' | t }}</span>
+  </form>
+</section>
+
+<section aria-labelledby="mcp-add-h">
+  <h2 id="mcp-add-h">{{ 'system.mcp.add' | t }}</h2>
+  <form action="/system/mcp/add" method="post" class="form-grid">
+    <label>
+      <span>{{ 'system.mcp.add.name' | t }}</span>
+      <input type="text" name="name" required placeholder="filesystem">
+    </label>
+    <label>
+      <span>{{ 'system.mcp.add.command' | t }}</span>
+      <input type="text" name="command" required placeholder="npx">
+    </label>
+    <label class="form-grid-wide">
+      <span>{{ 'system.mcp.add.args' | t }}</span>
+      <input type="text" name="args"
+             placeholder="-y @modelcontextprotocol/server-filesystem /tmp">
+      <small class="muted">{{ 'system.mcp.add.args_hint' | t }}</small>
+    </label>
+    <label>
+      <span>{{ 'system.mcp.add.type' | t }}</span>
+      <select name="server_type">
+        <option value="stdio">stdio</option>
+        <option value="http">http</option>
+      </select>
+    </label>
+    <div class="form-grid-actions">
+      <button type="submit" class="btn btn-primary">{{ 'system.mcp.add.button' | t }}</button>
+    </div>
+  </form>
+</section>
+
+<section aria-labelledby="mcp-tools-h">
+  <h2 id="mcp-tools-h">{{ 'system.mcp.tools' | t }}</h2>
+  <p class="page-subtitle">{{ 'system.mcp.tools_subtitle' | t }}</p>
+
+  <h3>{{ 'system.mcp.tools_readonly' | t }} ({{ read_only_tools | length }})</h3>
+  <ul class="tool-list">
+    {% for t in read_only_tools %}
+    <li><code>{{ t.name }}</code> — <span class="muted">{{ t.description }}</span></li>
+    {% endfor %}
+  </ul>
+
+  <h3>{{ 'system.mcp.tools_write' | t }} ({{ write_tools | length }})</h3>
+  <ul class="tool-list">
+    {% for t in write_tools %}
+    <li><code>{{ t.name }}</code> — <span class="muted">{{ t.description }}</span></li>
+    {% endfor %}
+  </ul>
+
+  {% if resources %}
+  <h3>{{ 'system.mcp.resources' | t }} ({{ resources | length }})</h3>
+  <ul class="tool-list">
+    {% for r in resources %}
+    <li><code>{{ r.uri }}</code> — <span class="muted">{{ r.description }}</span></li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</section>
+
+{% endif %}
+
+<aside class="page-footer-hint">
+  <strong>CLI:</strong>
+  <code>orquestrum mcp list</code>,
+  <code>orquestrum mcp tools</code>,
+  <code>orquestrum mcp add NAME --command CMD --args …</code>,
+  <code>orquestrum mcp validate</code>
+</aside>
+{% endblock %}

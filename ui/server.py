@@ -57,7 +57,14 @@ LOCALE_COOKIE = 'orq_lang'
 
 
 def _home_stats(config: UIConfig) -> dict:
-    """Return small dict with agent/skill counts and metric summary for the home page."""
+    """Return small dict with agent/skill counts and metric summary for the home page.
+
+    Counts mirror `sidebar_counts()` in `ui/lib/sidebar.py` — in project mode,
+    the count is the union of project-local + globally-installed (framework)
+    agents/skills, since the project sees both. Without the merge, fresh v0.5
+    projects always showed 0/0 (agents live globally; project dir has none),
+    which read as "nothing works" to first-time users.
+    """
     stats: dict = {
         'agents': 0, 'skills': 0, 'event_count': 0, 'last_event': None,
         'linked_project_root': str(config.linked_project_root) if config.linked_project_root else None,
@@ -67,14 +74,27 @@ def _home_stats(config: UIConfig) -> dict:
             stats['agents'] = sum(1 for _ in (config.root / 'agents').glob('*.md'))
             stats['skills'] = sum(1 for _ in (config.root / 'skills').glob('*/SKILL.md'))
         elif config.linked_project_root:
-            for sub in ('.claude/agents', '.opencode/agents'):
+            # Use sets so project-local + framework counts dedupe by name —
+            # a project that pinned its own copy of `helm` doesn't double-count.
+            local_agents: set[str] = set()
+            local_skills: set[str] = set()
+            for sub in ('.claude/agents', '.opencode/agents', '.sdd/agents'):
                 d = config.linked_project_root / sub
                 if d.is_dir():
-                    stats['agents'] += sum(1 for _ in d.glob('*.md'))
+                    local_agents.update(p.stem for p in d.glob('*.md'))
             for sub in ('.sdd/skills', '.opencode/skills'):
                 d = config.linked_project_root / sub
                 if d.is_dir():
-                    stats['skills'] += sum(1 for _ in d.glob('*/SKILL.md'))
+                    local_skills.update(p.parent.name for p in d.glob('*/SKILL.md'))
+            if config.framework_root:
+                fw_a = config.framework_root / 'agents'
+                fw_s = config.framework_root / 'skills'
+                if fw_a.is_dir():
+                    local_agents.update(p.stem for p in fw_a.glob('*.md'))
+                if fw_s.is_dir():
+                    local_skills.update(p.parent.name for p in fw_s.glob('*/SKILL.md'))
+            stats['agents'] = len(local_agents)
+            stats['skills'] = len(local_skills)
         elif config.framework_root:
             stats['agents'] = sum(1 for _ in (config.framework_root / 'agents').glob('*.md'))
             stats['skills'] = sum(1 for _ in (config.framework_root / 'skills').glob('*/SKILL.md'))
@@ -147,7 +167,13 @@ def create_app(config: UIConfig) -> FastAPI:
         app.mount('/static', StaticFiles(directory=str(STATIC_DIR)), name='static')
 
     # Routes
-    from ui.routes import health, dashboard, docs, catalog, coverage, audits, convert, install, edit_agent, edit_skill, compact, jobs, i18n, live, palette
+    from ui.routes import (
+        health, dashboard, docs, catalog, coverage, audits, convert, install,
+        edit_agent, edit_skill, compact, jobs, i18n, live, palette,
+        installs as system_installs,
+        doctor as system_doctor,
+        mcp as system_mcp,
+    )
     app.include_router(health.router)
     app.include_router(i18n.router)
     app.include_router(dashboard.router)
@@ -163,6 +189,9 @@ def create_app(config: UIConfig) -> FastAPI:
     app.include_router(jobs.router)
     app.include_router(live.router)
     app.include_router(palette.router)
+    app.include_router(system_installs.router)
+    app.include_router(system_doctor.router)
+    app.include_router(system_mcp.router)
 
     @app.get('/', response_class=HTMLResponse)
     async def index(request: Request) -> HTMLResponse:
