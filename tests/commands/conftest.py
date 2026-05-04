@@ -41,12 +41,12 @@ def project_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 @pytest.fixture()
 def initialized_project(project_root: Path, isolated_home: Path) -> Path:
-    """A project_root that already has .orquestrum/ + ORQUESTRUM.md."""
+    """A project_root with the v0.5 layout: `.orquestrum/{config.toml, manifest.md}`."""
     (project_root / '.orquestrum').mkdir()
     (project_root / '.orquestrum' / 'config.toml').write_text(
         '[project]\nname = "sample-project"\n', encoding='utf-8',
     )
-    (project_root / 'ORQUESTRUM.md').write_text(
+    (project_root / '.orquestrum' / 'manifest.md').write_text(
         '# Orquestrum — Project Manifest\n\n'
         '## Configuration\n\n'
         '| Field | Value |\n|-------|-------|\n'

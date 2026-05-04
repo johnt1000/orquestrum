@@ -4,10 +4,18 @@ import argparse
 import subprocess
 import sys
 
+# Each extra lists the PyPI packages it installs AND the actual import names
+# used to verify the install. Package name ≠ import name (`python-multipart`
+# imports as `multipart`; `uvicorn[standard]` is just `uvicorn`), so we keep
+# both lists explicit. `check_modules` MUST cover every runtime-required
+# import — partial installs (e.g. fastapi present but jinja2 missing after
+# a failed install) are detected because ALL modules must import.
 _EXTRAS: dict[str, dict] = {
     'ui': {
         'description': 'Web console (FastAPI, Uvicorn, Jinja2, Mistune)',
-        'check': 'fastapi',
+        'check_modules': [
+            'fastapi', 'uvicorn', 'jinja2', 'mistune', 'watchfiles', 'multipart',
+        ],
         'packages': [
             'fastapi>=0.115',
             'uvicorn[standard]>=0.32',
@@ -20,7 +28,7 @@ _EXTRAS: dict[str, dict] = {
     },
     'webview': {
         'description': 'App window mode (pywebview — WKWebView / WebView2 / WebKit2GTK)',
-        'check': 'webview',
+        'check_modules': ['webview'],
         'packages': ['pywebview>=5.0'],
         'system_hint': {
             'linux': (
@@ -30,6 +38,24 @@ _EXTRAS: dict[str, dict] = {
         },
     },
 }
+
+# Friendly aliases. Users naturally call the web dashboard extra `web`
+# (because the command is `orquestrum web`). Resolve aliases at the entry
+# point so the rest of the module operates on canonical names.
+_ALIASES: dict[str, str] = {
+    'web': 'ui',
+}
+
+
+def _resolve(name: str) -> str:
+    """Return the canonical extra name for a possibly-aliased input.
+    Returns the input unchanged when no alias matches."""
+    return _ALIASES.get(name, name)
+
+
+def _all_choices() -> list[str]:
+    """Choices argparse accepts: canonical names + aliases."""
+    return list(_EXTRAS) + list(_ALIASES)
 
 
 def register(sub: argparse._SubParsersAction) -> None:
@@ -41,10 +67,10 @@ def register(sub: argparse._SubParsersAction) -> None:
             'enable additional orquestrum features without bloating the '
             'core install.\n\n'
             'Available extras:\n'
-            '  ui        Web dashboard (FastAPI + Uvicorn + Jinja2 + Mistune)\n'
-            '            Required by: `orquestrum web`\n'
-            '  webview   Native window (pywebview — WKWebView / WebView2 / WebKit2GTK)\n'
-            '            Required by: `orquestrum web` in window mode\n\n'
+            '  ui (alias: web)  Web dashboard (FastAPI + Uvicorn + Jinja2 + Mistune)\n'
+            '                   Required by: `orquestrum web`\n'
+            '  webview          Native window (pywebview — WKWebView / WebView2 / WebKit2GTK)\n'
+            '                   Required by: `orquestrum web` in window mode\n\n'
             'No subcommand → list state of all extras (installed/missing).\n'
             'Auto-detects install method (uv tool / venv / pip) and runs '
             'the matching command. Linux webview prints apt/dnf system-package '
@@ -53,7 +79,8 @@ def register(sub: argparse._SubParsersAction) -> None:
         epilog=(
             'Examples:\n'
             '  orquestrum extras                          # list state of all extras\n'
-            '  orquestrum extras install ui               # web dashboard\n'
+            '  orquestrum extras install ui               # web dashboard (canonical)\n'
+            '  orquestrum extras install web              # same — `web` is an alias for `ui`\n'
             '  orquestrum extras install webview          # native window\n'
             '  orquestrum extras install ui webview       # both at once\n'
             '\n'
@@ -66,36 +93,67 @@ def register(sub: argparse._SubParsersAction) -> None:
     sub2 = p.add_subparsers(dest='extras_cmd')
     install_p = sub2.add_parser(
         'install',
-        help='Install one or more extras (ui, webview).',
-        description='Install the named extras into the active orquestrum install.',
+        help='Install one or more extras (ui, web, webview).',
+        description=(
+            'Install the named extras into the active orquestrum install. '
+            '`web` resolves to `ui` (alias).'
+        ),
         epilog=f'Example: orquestrum extras install {" ".join(_EXTRAS)}',
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    install_p.add_argument('names', nargs='+', choices=list(_EXTRAS),
-                           metavar='EXTRA', help=f'Extra(s) to install: {", ".join(_EXTRAS)}')
+    install_p.add_argument(
+        'names', nargs='+', choices=_all_choices(),
+        metavar='EXTRA',
+        help=f'Extra(s) to install: {", ".join(_EXTRAS)} '
+             f'(aliases: {", ".join(_ALIASES)})',
+    )
     p.set_defaults(handler=_handler)
 
 
 def _handler(args: argparse.Namespace) -> int:
     if args.extras_cmd == 'install':
-        return _install(args.names)
+        # Resolve aliases before downstream lookup
+        resolved = [_resolve(n) for n in args.names]
+        # Dedup while preserving order (user could type `ui web` → just `ui`)
+        seen: set[str] = set()
+        canonical: list[str] = []
+        for n in resolved:
+            if n not in seen:
+                seen.add(n)
+                canonical.append(n)
+        return _install(canonical)
     return _list()
 
 
 def _is_installed(extra: str) -> bool:
-    check = _EXTRAS[extra]['check']
-    try:
-        __import__(check)
-        return True
-    except ImportError:
-        return False
+    """True iff EVERY module listed in `check_modules` for this extra is
+    importable. Catches partial installs where one of the deps failed
+    silently and downstream features (e.g. `orquestrum web`) still
+    crash on the missing one."""
+    meta = _EXTRAS[extra]
+    # Backward compat: older defs used a single `check` string. Prefer
+    # `check_modules` but fall back to `check` if present.
+    modules = meta.get('check_modules') or [meta.get('check')]
+    for mod in modules:
+        if not mod:
+            continue
+        try:
+            __import__(mod)
+        except ImportError:
+            return False
+    return True
 
 
 def _list() -> int:
     print('Available extras:')
     for name, meta in _EXTRAS.items():
         status = 'installed' if _is_installed(name) else 'missing '
-        print(f'  {name:<10} [{status}]   {meta["description"]}')
+        alias_note = ''
+        # Show aliases inline so users know `web` works
+        aliases = [a for a, target in _ALIASES.items() if target == name]
+        if aliases:
+            alias_note = f'  (alias: {", ".join(aliases)})'
+        print(f'  {name:<10} [{status}]   {meta["description"]}{alias_note}')
     print()
     missing = [n for n in _EXTRAS if not _is_installed(n)]
     if missing:

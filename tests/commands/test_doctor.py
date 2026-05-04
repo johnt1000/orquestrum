@@ -190,13 +190,32 @@ class TestCurrentProjectCheck:
         doctor._check_current_project(r)
         assert r.errors == 0 and r.warnings == 0
 
-    def test_partial_project_warns(self, project_root: Path):
-        # Has ORQUESTRUM.md but no .orquestrum/
+    def test_legacy_v04_layout_recommends_migration(self, project_root: Path):
+        """ORQUESTRUM.md at the project root + no `.orquestrum/` is the
+        v0.4 layout. Doctor should warn and recommend `init --yes` which
+        migrates to the v0.5 location."""
         (project_root / 'ORQUESTRUM.md').write_text('# Manifest', encoding='utf-8')
         r = doctor.Report()
         doctor._check_current_project(r)
         assert r.warnings == 1
-        assert any('incomplete' in (res.get('detail') or '') for res in r.results)
+        assert any('legacy v0.4' in (res.get('detail') or '') for res in r.results)
+        # Fix instruction must use the v0.5 command form (no --tool)
+        assert any('orquestrum init --yes' in (res.get('fix') or '')
+                   for res in r.results)
+
+    def test_partial_v05_warns(self, project_root: Path):
+        """`.orquestrum/` exists but `manifest.md` missing — partial v0.5
+        layout. Doctor should warn but not call it legacy."""
+        (project_root / '.orquestrum').mkdir()
+        (project_root / '.orquestrum' / 'config.toml').write_text(
+            '[project]\nname = "x"\n', encoding='utf-8',
+        )
+        r = doctor.Report()
+        doctor._check_current_project(r)
+        assert r.warnings == 1
+        details = ' '.join(res.get('detail') or '' for res in r.results)
+        assert 'incomplete' in details
+        assert 'legacy' not in details
 
 
 class TestHandler:

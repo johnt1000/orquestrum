@@ -185,23 +185,40 @@ def _check_registry(r: Report) -> None:
 
 
 def _check_current_project(r: Report) -> None:
-    """If cwd looks like an Orquestrum-linked project, validate basic markers."""
+    """If cwd looks like an Orquestrum-linked project, validate v0.5 markers
+    (`.orquestrum/manifest.md`). Also detects the legacy v0.4 layout
+    (`ORQUESTRUM.md` at the project root) and recommends migration."""
     cwd = Path.cwd()
     orq_dir = cwd / '.orquestrum'
-    manifest = cwd / 'ORQUESTRUM.md'
-    if not orq_dir.is_dir() and not manifest.exists():
+    manifest = orq_dir / 'manifest.md'
+    legacy_manifest = cwd / 'ORQUESTRUM.md'
+
+    # Not an orquestrum project — skip silently
+    if not orq_dir.is_dir() and not legacy_manifest.exists():
         r.ok('current directory', detail='not an Orquestrum project (skipped)')
         return
+
+    # Legacy v0.4 layout: ORQUESTRUM.md exists at root → recommend migration
+    if legacy_manifest.exists() and not manifest.exists():
+        r.warn('current Orquestrum project',
+               detail='legacy v0.4 layout (ORQUESTRUM.md at root)',
+               fix='orquestrum init --yes  (migrates ORQUESTRUM.md → .orquestrum/manifest.md)')
+        return
+
+    # v0.5 layout — both must exist
     if orq_dir.is_dir() and manifest.exists():
         r.ok('current Orquestrum project', detail=str(cwd))
-    else:
-        missing = []
-        if not orq_dir.is_dir():
-            missing.append('.orquestrum/')
-        if not manifest.exists():
-            missing.append('ORQUESTRUM.md')
-        r.warn('current Orquestrum project', detail=f'incomplete (missing {", ".join(missing)})',
-               fix='orquestrum init --tool <claude-code|opencode|...>')
+        return
+
+    # Partial layout — `.orquestrum/` exists but no manifest, or vice versa
+    missing = []
+    if not orq_dir.is_dir():
+        missing.append('.orquestrum/')
+    if not manifest.exists():
+        missing.append('.orquestrum/manifest.md')
+    r.warn('current Orquestrum project',
+           detail=f'incomplete (missing {", ".join(missing)})',
+           fix='orquestrum init --yes')
 
 
 # ─── handler ──────────────────────────────────────────────────────────────────

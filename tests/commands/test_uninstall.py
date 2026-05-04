@@ -24,9 +24,17 @@ class TestDescribeRemoval:
 
         items = uninstall._describe_removal(initialized_project, 'claude-code')
         assert any('.sdd/' in item for item in items)
+        # v0.5 fixture: manifest lives at .orquestrum/manifest.md, not at root
         assert any('.orquestrum/' in item for item in items)
-        assert any('ORQUESTRUM.md' in item for item in items)
         assert any('registry entry' in item for item in items)
+
+    def test_lists_legacy_orquestrum_md_when_present(self, initialized_project: Path):
+        """Legacy v0.4 projects had ORQUESTRUM.md at the root. Uninstall
+        must still surface it for removal so old projects clean up cleanly."""
+        # Add the legacy file alongside the v0.5 layout
+        (initialized_project / 'ORQUESTRUM.md').write_text('# legacy', encoding='utf-8')
+        items = uninstall._describe_removal(initialized_project, 'claude-code')
+        assert any('ORQUESTRUM.md' in item for item in items)
 
     def test_lists_files_for_opencode(self, initialized_project: Path):
         agents_dir = initialized_project / '.opencode' / 'agents'

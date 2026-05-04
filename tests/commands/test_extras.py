@@ -68,6 +68,90 @@ class TestIsInstalledHelper:
         finally:
             del extras._EXTRAS['fake-missing']
 
+    def test_check_modules_all_present_returns_true(self, monkeypatch: pytest.MonkeyPatch):
+        """New schema: `check_modules` lists every required import name.
+        All present → True."""
+        monkeypatch.setitem(extras._EXTRAS, 'multi-real', {
+            'description': 'Multi-module extra (all real)',
+            'check_modules': ['sys', 'os', 'json'],
+            'packages': [],
+            'system_hint': {},
+        })
+        try:
+            assert extras._is_installed('multi-real') is True
+        finally:
+            del extras._EXTRAS['multi-real']
+
+    def test_check_modules_one_missing_returns_false(
+        self, monkeypatch: pytest.MonkeyPatch,
+    ):
+        """Partial install scenario: one of N modules is missing — extra
+        must be reported as missing, not installed. This is the bug the
+        screenshot revealed (jinja2 missing while fastapi present)."""
+        monkeypatch.setitem(extras._EXTRAS, 'partial', {
+            'description': 'Has sys + missing module',
+            'check_modules': ['sys', 'orquestrum_definitely_not_real_xyz'],
+            'packages': [],
+            'system_hint': {},
+        })
+        try:
+            assert extras._is_installed('partial') is False
+        finally:
+            del extras._EXTRAS['partial']
+
+    def test_ui_extra_actually_uses_check_modules(self):
+        """Sanity-check: the real `ui` extra entry uses the new schema
+        and lists every runtime-required module the web server imports."""
+        meta = extras._EXTRAS['ui']
+        assert 'check_modules' in meta
+        # All these are imported transitively when `orquestrum web` starts;
+        # if any is omitted, partial-install detection breaks.
+        for required in ('fastapi', 'uvicorn', 'jinja2', 'mistune', 'multipart'):
+            assert required in meta['check_modules'], (
+                f'ui extra is missing {required!r} from check_modules — '
+                f'partial installs without it would falsely report ui as installed'
+            )
+
+
+class TestAliases:
+    def test_resolve_known_alias(self):
+        assert extras._resolve('web') == 'ui'
+
+    def test_resolve_unknown_returns_input(self):
+        # Non-aliased names (canonical or invalid) pass through unchanged
+        assert extras._resolve('ui') == 'ui'
+        assert extras._resolve('webview') == 'webview'
+        assert extras._resolve('made-up') == 'made-up'
+
+    def test_all_choices_includes_aliases(self):
+        choices = extras._all_choices()
+        assert 'ui' in choices
+        assert 'web' in choices
+        assert 'webview' in choices
+
+    def test_install_handler_resolves_web_to_ui(
+        self, monkeypatch: pytest.MonkeyPatch,
+    ):
+        """`extras install web` should drive the same install as `ui`
+        — that's the whole point of the alias (user expectation: command
+        is `orquestrum web` so the extra should be installable as `web`)."""
+        called: list[list[str]] = []
+        monkeypatch.setattr(extras, '_install', lambda names: called.append(names) or 0)
+        ns = argparse.Namespace(extras_cmd='install', names=['web'])
+        rc = extras._handler(ns)
+        assert rc == 0
+        assert called == [['ui']]   # alias resolved before _install
+
+    def test_install_handler_dedups_alias_and_canonical(
+        self, monkeypatch: pytest.MonkeyPatch,
+    ):
+        """If the user types both `web` and `ui`, install once."""
+        called: list[list[str]] = []
+        monkeypatch.setattr(extras, '_install', lambda names: called.append(names) or 0)
+        ns = argparse.Namespace(extras_cmd='install', names=['web', 'ui'])
+        extras._handler(ns)
+        assert called == [['ui']]   # deduped to single entry
+
 
 class TestDetectEnv:
     def test_detects_venv_when_pyvenv_cfg_exists(
