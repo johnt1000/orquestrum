@@ -173,10 +173,14 @@ class TestSelfUpgrade:
         out = capsys.readouterr().out
         assert 'uv tool upgrade orquestrum' in out
 
-    def test_uv_tool_runs_upgrade_command(
+    def test_uv_tool_pypi_install_runs_upgrade_command(
         self, monkeypatch: pytest.MonkeyPatch,
     ):
+        """Pure PyPI / git URL install: receipt has no `directory =`,
+        so we use `uv tool upgrade orquestrum` (the standard path)."""
         monkeypatch.setattr(update_impl, '_detect_install_mode', lambda: 'uv-tool')
+        # Force receipt absent / not-a-directory-install
+        monkeypatch.setattr(update_impl, '_read_uv_tool_receipt', lambda: None)
         captured: dict = {}
 
         def fake_run(cmd, **kw):
@@ -189,6 +193,56 @@ class TestSelfUpgrade:
         rc = update_impl._run_self_upgrade()
         assert rc == 0
         assert captured['cmd'] == ['uv', 'tool', 'upgrade', 'orquestrum']
+
+    def test_uv_tool_local_directory_runs_reinstall_with_extras(
+        self, monkeypatch: pytest.MonkeyPatch,
+    ):
+        """Local-directory install: `uv tool upgrade` is a no-op, so we
+        run `uv tool install --reinstall --with X --with Y <dir>` to
+        rebuild from the local source AND preserve --with extras."""
+        monkeypatch.setattr(update_impl, '_detect_install_mode', lambda: 'uv-tool')
+        monkeypatch.setattr(update_impl, '_read_uv_tool_receipt', lambda: {
+            'directory':   '/Users/me/dev/orquestrum',
+            'with_extras': ['fastapi', 'uvicorn[standard]', 'jinja2'],
+        })
+        captured: dict = {}
+        def _fake_run(cmd, **kw):
+            captured['cmd'] = cmd
+            return type('R', (), {'returncode': 0})()
+        monkeypatch.setattr(subprocess, 'run', _fake_run)
+
+        rc = update_impl._run_self_upgrade()
+        assert rc == 0
+        cmd = captured['cmd']
+        assert cmd[:4] == ['uv', 'tool', 'install', '--reinstall']
+        # All --with packages preserved
+        assert '--with' in cmd
+        assert 'fastapi' in cmd
+        assert 'uvicorn[standard]' in cmd
+        assert 'jinja2' in cmd
+        # Last element is the directory (positional arg)
+        assert cmd[-1] == '/Users/me/dev/orquestrum'
+
+    def test_uv_tool_local_directory_no_extras(
+        self, monkeypatch: pytest.MonkeyPatch,
+    ):
+        """Local-directory install with no extras: still works, just no
+        `--with` flags. Edge case for minimal installs."""
+        monkeypatch.setattr(update_impl, '_detect_install_mode', lambda: 'uv-tool')
+        monkeypatch.setattr(update_impl, '_read_uv_tool_receipt', lambda: {
+            'directory':   '/path/to/dir',
+            'with_extras': [],
+        })
+        captured: dict = {}
+        def _fake_run(cmd, **kw):
+            captured['cmd'] = cmd
+            return type('R', (), {'returncode': 0})()
+        monkeypatch.setattr(subprocess, 'run', _fake_run)
+
+        update_impl._run_self_upgrade()
+        cmd = captured['cmd']
+        assert cmd == ['uv', 'tool', 'install', '--reinstall', '/path/to/dir']
+        assert '--with' not in cmd
 
 
 class TestScrubClaudeSettingsHooks:

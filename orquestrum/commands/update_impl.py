@@ -150,6 +150,50 @@ def _detect_install_mode() -> str:
     return 'unknown'
 
 
+def _read_uv_tool_receipt() -> dict | None:
+    """Parse `~/.local/share/uv/tools/orquestrum/uv-receipt.toml` and return
+    {'directory': '/abs/path' | None, 'with_extras': ['fastapi', ...]}.
+
+    Returns None if no uv-tool install receipt is found. The receipt
+    documents how the tool was installed; we use it to (a) detect
+    local-directory installs (where `uv tool upgrade` is a no-op since
+    the version on disk is already "the latest" PyPI thinks exists), and
+    (b) preserve the `--with` extras across `--reinstall`.
+    """
+    candidates = [
+        Path.home() / '.local' / 'share' / 'uv' / 'tools' / 'orquestrum' / 'uv-receipt.toml',
+        Path.home() / 'Library' / 'Application Support' / 'uv' / 'tools' / 'orquestrum' / 'uv-receipt.toml',
+    ]
+    receipt = next((p for p in candidates if p.exists()), None)
+    if receipt is None:
+        return None
+    try:
+        try:
+            import tomllib
+        except ImportError:  # py<3.11 — vendor fallback
+            import tomli as tomllib  # type: ignore[no-redef]
+        data = tomllib.loads(receipt.read_text(encoding='utf-8'))
+    except Exception:
+        return None
+    requirements = (data.get('tool') or {}).get('requirements') or []
+    directory = None
+    with_extras: list[str] = []
+    for req in requirements:
+        name = req.get('name')
+        if name == 'orquestrum':
+            directory = req.get('directory')  # None for git/PyPI installs
+            continue
+        if not name:
+            continue
+        # Reconstruct the --with form, preserving [extras] when present
+        extras = req.get('extras') or []
+        if extras:
+            with_extras.append(f'{name}[{",".join(extras)}]')
+        else:
+            with_extras.append(name)
+    return {'directory': directory, 'with_extras': with_extras}
+
+
 def _run_self_upgrade() -> int:
     import subprocess
     mode = _detect_install_mode()
@@ -173,6 +217,28 @@ def _run_self_upgrade() -> int:
         return 0
 
     if mode == 'uv-tool':
+        # `uv tool upgrade orquestrum` is a no-op when the install came
+        # from a LOCAL DIRECTORY (uv only knows how to upgrade from PyPI
+        # / git URLs, not from re-reading a directory). Detect that case
+        # via the install receipt and use `uv tool install --reinstall`
+        # against the original directory, preserving --with extras.
+        receipt = _read_uv_tool_receipt()
+        if receipt and receipt['directory']:
+            directory = receipt['directory']
+            with_extras = receipt['with_extras']
+            print('uv tool install detected (source: local directory).')
+            print(f'  Source: {directory}')
+            if with_extras:
+                print(f'  Preserving extras: {", ".join(with_extras)}')
+            cmd = ['uv', 'tool', 'install', '--reinstall']
+            for pkg in with_extras:
+                cmd += ['--with', pkg]
+            cmd.append(directory)
+            print(f"  Running: {' '.join(cmd)}")
+            result = subprocess.run(cmd)
+            return result.returncode
+
+        # PyPI / git URL install: regular upgrade works.
         print('uv tool install detected.')
         print('Running: uv tool upgrade orquestrum ...')
         result = subprocess.run(['uv', 'tool', 'upgrade', 'orquestrum'])
