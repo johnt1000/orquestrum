@@ -51,6 +51,26 @@ Do NOT execute a skill from memory. Always:
 
 ---
 
+# ⛔ SCOPE CONFIRMATION GATE (read before any prune / cleanup)
+
+Maintenance tasks often arrive vaguely worded ("clean up the docs",
+"prune what's stale", "remove old hooks"). Before invoking
+`archive-manager prune` OR touching settings.json OR deleting any
+file not explicitly named in the task:
+
+| Trigger | What to do |
+|---|---|
+| Task says "prune docs" without a project root | Ask: "Confirm target dir (current cwd?) and dry-run output before commit" |
+| Task says "clean up settings.json" | List the exact keys you will remove + ack |
+| Task says "fix the hooks" | Read the current state first, output the diff you propose, get ack |
+| Total Tier 1+2 prune size >500 KB | Always require explicit human ack regardless of interactive mode |
+
+**If the user is interactive:** ask. **If non-interactive (CI/scheduled):**
+print the planned actions, exit "awaiting confirmation", do NOT
+mutate. Better to no-op than to delete the wrong thing.
+
+---
+
 # BOOTSTRAP
 
 Read: `docs/04-release/RUNBOOK.md` + `docs/03-quality/learning/` (previous incidents) + `docs/04-release/CHANGELOG.md` (latest version)

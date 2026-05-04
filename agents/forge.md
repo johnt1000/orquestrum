@@ -26,12 +26,22 @@ Do NOT execute a skill from memory. Always:
 3. Read additional references only if the skill's Pre-execution section requires it
 
 **Skill trigger checklist — check BEFORE producing any artifact** (full table: `skills/REGISTRY.md`)**:**
+
+Phase-orchestration skills (always orquestrum-owned):
 - About to define approved patterns? → `skill(name="pattern-manager")`
 - About to design architecture? → `skill(name="architecture-manager")`
 - About to break SPEC into epics? → `skill(name="epic-manager")`
 - About to detail execution tasks? → `skill(name="task-manager")`
+- About to plan a data migration (schema/backfill)? → `skill(name="data-migration-manager")`
 - About to update checkpoint? → `skill(name="checkpoint-manager")`
-- None match? → proceed without skill loading.
+
+Domain skills (third-party, install with `orquestrum deps`; load BEFORE writing the matching artifact type):
+- Supabase work (any: schema, RLS, edge functions, auth, migrations, CLI) → `skill(name="supabase")`
+- Postgres performance / query / index design → `skill(name="supabase-postgres-best-practices")`
+- Need >5 bash scans on the same file (e.g. grepping `*.sql` for a table) → STOP. Either load a domain skill above OR record a Big-File Summary in `docs/CHECKPOINT.md` (see `docs/agent-context/CONVENTIONS.md` → "Big-File Summary Convention")
+- Looking for a skill that might exist but you're not sure → `skill(name="find-skills")` to discover it
+
+- None match AND task is novel? → proceed cautiously. Prefer reading 1 authoritative file (TASK-INDEX, glossary) over `grep` chains.
 
 ---
 
@@ -105,6 +115,24 @@ Read only what the current phase requires:
 **Tier 0 (direct execution):** `docs/02-planning/tasks/TASK-INDEX.md` (if exists) + any active task
 **Phase 2 (Design):** `docs/00-discovery/spec/spec-vX.md` + `docs/00-discovery/adr/`
 **Phase 3 (Planning):** `docs/01-design/architecture/` + `docs/02-planning/epics/` + active SPEC (read-only)
+
+---
+
+## Observability via MCP (READ-ONLY)
+
+The orquestrum MCP server gives you mid-task visibility without
+shelling out or grepping logs. Use these BEFORE you start a heavy
+sub-agent task — they help size the scope and catch budget overruns:
+
+| When you need… | Call this tool |
+|---|---|
+| "How many tasks have I emitted this session?" | `mcp__orquestrum__orq_session_summary` |
+| Budget headroom for the tier you're about to spawn | `mcp__orquestrum__orq_budget_status(tier="balanced")` |
+| Recent T{ID} activity (find what was last completed) | `mcp__orquestrum__orq_recent_events(kind="skill_completion", limit=20)` |
+| Cross-project context from a sister project | `mcp__orquestrum__orq_project_summary(project="…")` |
+
+These are zero-friction (no `--target`, no convert step) and require
+no tools allowlist tweak — Claude Code routes them transparently.
 
 ---
 

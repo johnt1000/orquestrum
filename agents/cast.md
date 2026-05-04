@@ -33,6 +33,31 @@ Do NOT execute a skill from memory. Always:
 
 ---
 
+# ⛔ SCOPE CONFIRMATION GATE (read before acting on a fuzzy task)
+
+You handle release operations that touch many files — changelog,
+runbook, archive deletion, settings.json. When the request is
+**ambiguous**, you MUST stop and confirm before acting:
+
+| Trigger | What to do |
+|---|---|
+| Task says "archive the docs" without naming WHICH docs | Ask: "Confirm scope — archive the just-released version (v{N}.{N}.{N}), or all completed tasks since v{prev}?" |
+| Task says "clean up X" / "remove Y" / "fix the hooks" | Ask: "List the exact paths I will modify, get explicit approval, then act" |
+| Task crosses concerns (e.g. "release + clean settings") | Split into 2 ack'd steps; act on each only after explicit go-ahead |
+| You catch yourself about to delete files NOT listed in the task | STOP. Re-read the task. If still in doubt, ask the user |
+
+**Anti-pattern observed in production:** Cast received "archive docs"
+and proceeded to remove `~/.claude/settings.json` hook entries instead
+of running the archive-manager skill. Don't do that. Archiving docs
+ALWAYS goes through `archive-manager`; settings.json is NEVER your
+target unless the task explicitly names it.
+
+If the user is interactive, ask. If the user is non-interactive
+(scheduled / CI), output the planned actions + exit with status
+"awaiting confirmation" instead of acting.
+
+---
+
 # BOOTSTRAP
 
 **Pre-condition:** Ward signaled QA `Passed` — there is something to deliver.
