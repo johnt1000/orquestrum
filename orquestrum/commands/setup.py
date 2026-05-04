@@ -36,19 +36,26 @@ _NC    = '\033[0m'
 def register(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser(
         'setup',
-        help=('First-time wizard. Installs orquestrum integrations '
-              '(agents, skills, hooks, MCP server) globally on the system. '
-              'Asks before each action; --yes accepts safe defaults silently.'),
+        help='First-time wizard — installs framework globally on the system.',
+        description=(
+            'Install the orquestrum framework globally on your system: '
+            'agents + skills land at `~/.claude/` (Claude Code) or '
+            '`~/.config/opencode/` (OpenCode); the metrics hook + MCP '
+            'server get registered in the matching settings.json.\n\n'
+            'Distinct from `init`: `setup` is global and one-time per '
+            'machine; `init` is per-project and optional. The wizard '
+            'detects what is already installed and only asks about gaps.'
+        ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             'Examples:\n'
             '  orquestrum setup           # interactive wizard\n'
-            '  orquestrum setup --yes     # accept defaults (install claude-code, '
-            'skip opencode)\n'
+            '  orquestrum setup --yes     # accept defaults (install claude-code, skip opencode)\n'
             '\n'
-            'Global installs land at ~/.claude/ (Claude Code) and '
-            '~/.config/opencode/ (OpenCode). Project-specific config is '
-            'separate — see `orquestrum init`.'
+            'See also:\n'
+            '  orquestrum init --help         Per-project bootstrap (run after setup)\n'
+            '  orquestrum extras --help       Manage optional UI / webview extras\n'
+            '  orquestrum doctor --help       Verify the install is healthy'
         ),
     )
     p.add_argument('-y', '--yes', '--non-interactive',

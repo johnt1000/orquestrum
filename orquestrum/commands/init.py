@@ -16,14 +16,35 @@ import sys
 def register(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser(
         'init',
-        help=('Initialize Orquestrum in the current project. Creates '
-              '.orquestrum/{config.toml, manifest.md, .gitignore, metrics/}, '
-              'registers in ~/.orquestrum/registry.toml. Asks 3 prompts about '
-              'optional integrations (metrics hook, MCP, agents) — pass '
-              '--yes to accept defaults silently.'),
+        help='Initialize Orquestrum in the current project (writes only .orquestrum/).',
+        description=(
+            'Bootstrap Orquestrum in the current project. Creates '
+            '`.orquestrum/{config.toml, manifest.md, .gitignore, metrics/}` '
+            'and registers the project in `~/.orquestrum/registry.toml`.\n\n'
+            'Distinct from `setup`: `init` is project-scoped and OPTIONAL. '
+            'Projects that do not want orquestrum metrics/MCP linkage simply '
+            'skip running it. The framework itself (agents/skills) lives '
+            'globally at `~/.claude/` — never inside this project.\n\n'
+            'Asks 3 prompts about optional integrations (metrics hook, MCP '
+            'server, agents). Pass `--yes` to accept defaults silently. '
+            'Detects v0.4 layout and migrates `ORQUESTRUM.md` → '
+            '`.orquestrum/manifest.md` automatically.'
+        ),
+        epilog=(
+            'Examples:\n'
+            '  orquestrum init                    # interactive wizard (3 prompts)\n'
+            '  orquestrum init --yes              # silent, accept defaults\n'
+            '  orquestrum init --name my-app      # override project name\n'
+            '\n'
+            'See also:\n'
+            '  orquestrum setup --help        # Global wizard (framework install, runs once)\n'
+            '  orquestrum repos list          # Show all registered projects\n'
+            '  orquestrum update --help       # Re-sync after framework update'
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     p.add_argument('--name', metavar='NAME',
-                   help='Project name (default: cwd directory basename)')
+                   help='Project name (default: current directory basename)')
     p.add_argument('-y', '--yes', '--non-interactive',
                    dest='non_interactive', action='store_true',
                    help='Accept defaults for every prompt without asking. '

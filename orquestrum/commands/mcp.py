@@ -14,15 +14,27 @@ import argparse
 def register(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser(
         'mcp',
-        help='Start the orquestrum MCP server on stdio (for use by '
-             'Claude Code / opencode / any MCP client).',
+        help='Start the orquestrum MCP server on stdio (for Claude Code / opencode).',
         description=(
             'Run the orquestrum MCP server. Communicates over stdio, so '
             'this command is meant to be spawned by an MCP client (e.g. '
-            'Claude Code reads ~/.claude/settings.json mcpServers entry '
-            'and starts this process). Manual run: pipe an MCP request '
-            'on stdin to test, or use `npx @modelcontextprotocol/inspector '
-            'orquestrum mcp`.'
+            'Claude Code reads `~/.claude/settings.json` `mcpServers` entry '
+            'and starts this process automatically — you do not need to run '
+            'it by hand).\n\n'
+            'The server exposes 8 `orq_*` tools (session_summary, budget_status, '
+            'recent_events, list_projects, project_summary, cost_today, '
+            'record_event, skill_completed) + 2 resources (orq://session/current, '
+            'orq://projects). Agents call these via MCP to query metrics and '
+            'record events without touching the file system directly.'
+        ),
+        epilog=(
+            'Examples:\n'
+            '  orquestrum mcp                                    # spawn the server (used by clients)\n'
+            '  npx @modelcontextprotocol/inspector orquestrum mcp # interactive inspector\n'
+            '\n'
+            'See also:\n'
+            '  orquestrum setup --help        # Registers the MCP server in settings.json\n'
+            '  docs/governance/MCP.md         # Tool reference and protocol details'
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )

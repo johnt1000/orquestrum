@@ -23,11 +23,27 @@ def register(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser(
         'doctor',
         help='Diagnose the local environment (python, uv, extras, integrations).',
+        description=(
+            'Run a battery of read-only health checks and print a colored '
+            'report. Five sections:\n\n'
+            '  Runtime         — python ≥ 3.10, uv, install method\n'
+            '  Optional extras — ui, webview\n'
+            '  Framework       — SDD source assets, integration cache, registry\n'
+            '  Current dir     — whether cwd is a linked orquestrum project\n\n'
+            'Exit code 0 = green; exit 1 = at least one error. Warnings '
+            'never affect the exit code. Use --json for a machine-readable '
+            'summary that CI / scripts can parse.'
+        ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             'Examples:\n'
-            '  orquestrum doctor              # full check\n'
-            '  orquestrum doctor --json       # machine-readable summary'
+            '  orquestrum doctor              # full check (colored output)\n'
+            '  orquestrum doctor --json       # machine-readable JSON summary\n'
+            '  orquestrum doctor || echo failed   # use exit code in scripts\n'
+            '\n'
+            'See also:\n'
+            '  orquestrum extras --help       Install missing extras\n'
+            '  orquestrum repos list          Inspect registered projects'
         ),
     )
     p.add_argument('--json', action='store_true', dest='as_json',

@@ -21,16 +21,26 @@ import sys
 def register(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser(
         'hook',
-        help=('Stop / SubagentStop hook entry point for Claude Code. '
-              'Reads event JSON on stdin and appends one line to the '
-              'project metrics log. Always exits 0.'),
+        help='Stop/SubagentStop hook handler for Claude Code (spawned by client).',
         description=(
             'Hook handler invoked by Claude Code on every Stop / '
             'SubagentStop event. Settings.json registers this as '
             "`{\"command\": \"orquestrum hook\"}` — no path resolution, "
             'just PATH lookup, so it works regardless of which directory '
             'Claude Code was launched from. Never blocks the user: any '
-            'error is logged to stderr and exit code is always 0.'
+            'error is logged to stderr and the exit code is always 0.\n\n'
+            'You should NOT invoke this command manually. It is meant to '
+            'be spawned by Claude Code as a hook — see `orquestrum setup` '
+            'which registers it for you in `~/.claude/settings.json`.'
+        ),
+        epilog=(
+            'Examples (manual smoke-test only):\n'
+            '  echo "{}" | orquestrum hook                # no-op (empty payload, exit 0)\n'
+            '  orquestrum hook < /tmp/sample-event.json   # process a captured event\n'
+            '\n'
+            'See also:\n'
+            '  orquestrum setup --help        # Registers this hook in settings.json\n'
+            '  docs/governance/OBSERVABILITY.md  # Event schema + metrics rebuild'
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )

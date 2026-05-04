@@ -33,9 +33,44 @@ _EXTRAS: dict[str, dict] = {
 
 
 def register(sub: argparse._SubParsersAction) -> None:
-    p = sub.add_parser('extras', help='List and install optional extras (ui, webview).')
+    p = sub.add_parser(
+        'extras',
+        help='List and install optional dependency groups (ui, webview).',
+        description=(
+            'Manage optional dependency groups (a.k.a. "extras") that '
+            'enable additional orquestrum features without bloating the '
+            'core install.\n\n'
+            'Available extras:\n'
+            '  ui        Web dashboard (FastAPI + Uvicorn + Jinja2 + Mistune)\n'
+            '            Required by: `orquestrum web`\n'
+            '  webview   Native window (pywebview — WKWebView / WebView2 / WebKit2GTK)\n'
+            '            Required by: `orquestrum web` in window mode\n\n'
+            'No subcommand → list state of all extras (installed/missing).\n'
+            'Auto-detects install method (uv tool / venv / pip) and runs '
+            'the matching command. Linux webview prints apt/dnf system-package '
+            'hints since pywebview needs WebKit2GTK.'
+        ),
+        epilog=(
+            'Examples:\n'
+            '  orquestrum extras                          # list state of all extras\n'
+            '  orquestrum extras install ui               # web dashboard\n'
+            '  orquestrum extras install webview          # native window\n'
+            '  orquestrum extras install ui webview       # both at once\n'
+            '\n'
+            'See also:\n'
+            '  orquestrum web --help          Uses the `ui` extra\n'
+            '  orquestrum doctor --help       Reports which extras are missing'
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     sub2 = p.add_subparsers(dest='extras_cmd')
-    install_p = sub2.add_parser('install', help='Install one or more extras.')
+    install_p = sub2.add_parser(
+        'install',
+        help='Install one or more extras (ui, webview).',
+        description='Install the named extras into the active orquestrum install.',
+        epilog=f'Example: orquestrum extras install {" ".join(_EXTRAS)}',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     install_p.add_argument('names', nargs='+', choices=list(_EXTRAS),
                            metavar='EXTRA', help=f'Extra(s) to install: {", ".join(_EXTRAS)}')
     p.set_defaults(handler=_handler)

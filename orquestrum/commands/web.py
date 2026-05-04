@@ -8,7 +8,35 @@ from pathlib import Path
 
 
 def register(sub: argparse._SubParsersAction) -> None:
-    p = sub.add_parser('web', help='Launch the local web console.')
+    p = sub.add_parser(
+        'web',
+        help='Launch the local web console (live metrics + project state).',
+        description=(
+            'Start the local FastAPI + Uvicorn dashboard. Auto-detects '
+            'whether you are in a project (shows live session/cost/budget '
+            'for that project) or in the framework repo (shows registry of '
+            'all projects + global stats). Use --mode to force one or the '
+            'other.\n\n'
+            'Requires the `ui` extra. If missing, the command fails with '
+            'an actionable hint to run `orquestrum extras install ui`. '
+            'For a windowed (native) experience instead of browser, also '
+            'install the `webview` extra.'
+        ),
+        epilog=(
+            'Examples:\n'
+            '  orquestrum web                             # auto-detect, open browser\n'
+            '  orquestrum web --mode project              # force project view\n'
+            '  orquestrum web --mode framework            # force framework view\n'
+            '  orquestrum web --port 7700                 # custom port\n'
+            '  orquestrum web --no-browser                # server-only (curl/HTTPie)\n'
+            '  orquestrum web --target /path/to/project   # web for a different project\n'
+            '\n'
+            'See also:\n'
+            '  orquestrum dashboard --help    Static markdown/HTML snapshot\n'
+            '  orquestrum extras install ui   Install the required extras'
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     p.add_argument('--target', default=None,
                    help='Project / framework root (default: cwd or $ORQ_ROOT)')
     p.add_argument('--mode', choices=['project', 'framework', 'auto'], default='auto',

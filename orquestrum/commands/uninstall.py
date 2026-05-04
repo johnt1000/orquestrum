@@ -10,14 +10,34 @@ from pathlib import Path
 def register(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser(
         'uninstall',
-        help='Remove Orquestrum from a project, or uninstall the CLI itself.',
+        help='Surgically remove Orquestrum from project(s) or uninstall the CLI.',
+        description=(
+            'Three modes:\n\n'
+            '  • DEFAULT: surgically remove orquestrum-installed files from '
+            'the CURRENT project. Reads `~/.orquestrum/installs.json` to '
+            'know exactly which files were installed; never touches user '
+            'files. Removes orquestrum entries from `.claude/settings.json` '
+            'while preserving every other key. Empty directories are '
+            'removed deepest-first.\n\n'
+            '  • --all: same as default, but iterates every project in '
+            '`~/.orquestrum/registry.toml`.\n\n'
+            '  • --self: uninstall the orquestrum CLI itself globally. '
+            'Auto-detects install method (uv tool / venv / pip).\n\n'
+            'Always pass --dry-run first to preview. Never deletes user '
+            'data — only files orquestrum created.'
+        ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             'Examples:\n'
             '  orquestrum uninstall --dry-run        # preview what would be removed\n'
             '  orquestrum uninstall                  # remove from current project\n'
             '  orquestrum uninstall --all            # remove from every registered project\n'
-            '  orquestrum uninstall --self           # uninstall the CLI itself'
+            '  orquestrum uninstall --self           # uninstall the CLI itself\n'
+            '  orquestrum uninstall --self --dry-run # preview self-uninstall\n'
+            '\n'
+            'See also:\n'
+            '  orquestrum repos list          List projects --all would touch\n'
+            '  orquestrum repos remove        Unregister without deleting files'
         ),
     )
     p.add_argument('-y', '--yes', action='store_true',
