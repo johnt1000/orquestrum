@@ -124,18 +124,25 @@ def _check_orquestrum_install(r: Report) -> None:
 
 
 def _check_extras(r: Report) -> None:
+    """Report ui/webview extras state.
+
+    Common pitfall: every `uv tool install --reinstall .` blows away
+    `--with` packages, so users who reinstall the CLI lose their extras
+    silently. Doctor surfaces the recovery command in the fix line —
+    one shot recovers both extras at once."""
     from orquestrum.commands.extras import _EXTRAS, _is_installed
+    missing = [name for name in _EXTRAS if not _is_installed(name)]
     for name in _EXTRAS:
         if _is_installed(name):
             r.ok(f'extra: {name}', detail='installed')
         else:
-            # webview is opt-in; ui is needed for `orquestrum web`
             if name == 'ui':
                 r.warn(f'extra: {name}', detail='missing (needed for `orquestrum web`)',
-                       fix=f'orquestrum extras install {name}')
+                       fix='orquestrum extras install ' + ' '.join(missing)
+                           + '   # one shot recovers all missing extras')
             else:
                 r.warn(f'extra: {name}', detail='missing (optional)',
-                       fix=f'orquestrum extras install {name}')
+                       fix='orquestrum extras install ' + ' '.join(missing))
 
 
 def _check_integrations(r: Report) -> None:

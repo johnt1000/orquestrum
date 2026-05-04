@@ -106,17 +106,20 @@ class TestHomeStats:
 # ─── Framework mode routes ────────────────────────────────────────────────────
 
 class TestFrameworkHome:
-    async def test_home_returns_200(self, fw_client: httpx.AsyncClient):
-        r = await fw_client.get('/')
-        assert r.status_code == 200
+    async def test_home_redirects_to_dashboard(self, fw_client: httpx.AsyncClient):
+        """`/` is a 303 → /dashboard since the legacy home was a
+        redundant card-selector. /welcome still serves it for back-compat."""
+        r = await fw_client.get('/', follow_redirects=False)
+        assert r.status_code == 303
+        assert r.headers['location'] == '/dashboard'
 
-    async def test_home_shows_agent_count(
+    async def test_welcome_serves_home_with_agent_count(
         self, fw_client: httpx.AsyncClient, framework_config: UIConfig
     ):
         (framework_config.root / 'agents' / 'test.md').write_text(
             '---\nname: Test\n---\n'
         )
-        r = await fw_client.get('/')
+        r = await fw_client.get('/welcome')
         assert r.status_code == 200
 
     async def test_catalog_redirects(self, fw_client: httpx.AsyncClient):

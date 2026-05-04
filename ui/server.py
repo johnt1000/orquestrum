@@ -193,8 +193,18 @@ def create_app(config: UIConfig) -> FastAPI:
     app.include_router(system_doctor.router)
     app.include_router(system_mcp.router)
 
-    @app.get('/', response_class=HTMLResponse)
-    async def index(request: Request) -> HTMLResponse:
+    # `/` lands on the dashboard so users see actual data immediately.
+    # The legacy home (5 card-selector + redundant quick-stats) is still
+    # reachable at `/welcome` for first-time / no-project flows that
+    # benefit from the orientation page; the sidebar's "Visão geral"
+    # link already points to /dashboard.
+    @app.get('/')
+    async def index(request: Request):
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse('/dashboard', status_code=303)
+
+    @app.get('/welcome', response_class=HTMLResponse)
+    async def welcome(request: Request) -> HTMLResponse:
         return templates.TemplateResponse(
             request,
             'home.html',

@@ -66,16 +66,20 @@ class TestHealthRoute:
 # ─── / (home) ────────────────────────────────────────────────────────────────
 
 class TestHomeRoute:
-    async def test_home_returns_200(self, client: httpx.AsyncClient):
-        r = await client.get('/')
+    async def test_home_redirects_to_dashboard(self, client: httpx.AsyncClient):
+        """`/` is now a 303 redirect to `/dashboard` so users land on
+        actual data instead of a card-selector. The legacy welcome page
+        moved to `/welcome`."""
+        r = await client.get('/', follow_redirects=False)
+        assert r.status_code == 303
+        assert r.headers['location'] == '/dashboard'
+
+    async def test_welcome_still_serves_home_page(self, client: httpx.AsyncClient):
+        """The legacy 5-card landing page is preserved at /welcome so
+        users / tests that want it can still reach it."""
+        r = await client.get('/welcome')
         assert r.status_code == 200
-
-    async def test_home_returns_html(self, client: httpx.AsyncClient):
-        r = await client.get('/')
         assert 'text/html' in r.headers['content-type']
-
-    async def test_home_contains_orquestrum(self, client: httpx.AsyncClient):
-        r = await client.get('/')
         assert 'Orquestrum' in r.text
 
 
