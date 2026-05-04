@@ -1986,3 +1986,387 @@ a.agent-card:hover {
   .palette-go { display: none; }
 }
 
+/* ───────────────────────────────────────────────────────────────────────
+   Onda 4 — Design system: buttons, forms, tables, badges, utilities
+
+   Defines the canonical CSS surface used by every page so templates
+   never fall back to Pico defaults. All following the existing tokens
+   (--accent, --border, --l1, --l2, --ok, --warn, --crit) and matching
+   the .phase-chip / .topbar-search / .kpi-card aesthetic already in use.
+   ─────────────────────────────────────────────────────────────────────── */
+
+/* ─── 4.1 Buttons ────────────────────────────────────────────────────── */
+
+/* Base button — neutral surface, soft border, accent on hover.
+   Compose with .btn-primary / .btn-danger / .btn-small for variants.
+   Anything that submits a form, navigates, or triggers an action MUST
+   use .btn (or .btn-link for inline text actions). */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-1);
+  background: var(--l1);
+  color: var(--fg-1);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: border-color var(--motion-fast), background var(--motion-fast),
+              color var(--motion-fast);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.btn:hover {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: var(--l2);
+}
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.btn:disabled, .btn[aria-disabled="true"] {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+/* Override the legacy .btn-primary so it picks up the .btn padding
+   model when both classes are present. Fallback for old templates that
+   set .btn-primary alone is preserved by the original definition. */
+.btn.btn-primary {
+  background: var(--accent);
+  color: var(--l1);
+  border-color: var(--accent);
+}
+.btn.btn-primary:hover {
+  background: color-mix(in srgb, var(--accent) 88%, black);
+  border-color: color-mix(in srgb, var(--accent) 88%, black);
+}
+
+.btn-danger,
+.btn.btn-danger {
+  border-color: color-mix(in srgb, var(--crit) 30%, var(--border));
+  color: var(--crit);
+}
+.btn-danger:hover,
+.btn.btn-danger:hover {
+  background: color-mix(in srgb, var(--crit) 8%, var(--l1));
+  border-color: var(--crit);
+  color: var(--crit);
+}
+
+.btn-small,
+.btn.btn-small {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+/* ─── 4.2 Forms ──────────────────────────────────────────────────────── */
+
+/* Action bar: form row with a primary action + a hint to its right.
+   Used at the bottom of admin pages (installs prune, doctor re-run, mcp
+   validate). Stacks on narrow viewports. */
+.action-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0 24px;
+  flex-wrap: wrap;
+}
+.action-bar-hint {
+  font-size: 12px;
+  color: var(--fg-3);
+}
+
+/* Form grid: 2-column label+input layout for the MCP add form and any
+   other admin form. .form-grid-wide spans both columns. */
+.form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px 16px;
+  align-items: end;
+  margin: 12px 0 24px;
+}
+.form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--fg-2);
+}
+.form-grid label > span:first-child {
+  font-weight: 500;
+  color: var(--fg-1);
+}
+.form-grid input,
+.form-grid select {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-1);
+  background: var(--l1);
+  color: var(--fg-1);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  transition: border-color var(--motion-fast);
+}
+.form-grid input:focus,
+.form-grid select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.form-grid input::placeholder {
+  color: var(--fg-3);
+}
+.form-grid small.muted {
+  font-size: 11px;
+  color: var(--fg-3);
+  font-weight: 400;
+}
+.form-grid-wide {
+  grid-column: 1 / -1;
+}
+.form-grid-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.inline-form {
+  display: inline;
+  margin: 0;
+}
+
+/* Generic search input that pairs visually with .topbar-search. Use on
+   any page that needs a search box that isn't the global ⌘K trigger. */
+.search-input,
+input[type="search"].search-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-1);
+  background: var(--l1);
+  color: var(--fg-1);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  transition: border-color var(--motion-fast);
+}
+.search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* ─── 4.3 Tables ─────────────────────────────────────────────────────── */
+
+/* Standard data table: rounded outer border, hover rows, subtle header.
+   Used for installs records, doctor checks, mcp servers — anywhere the
+   page has tabular data. Replaces Pico defaults. */
+.data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-2);
+  overflow: hidden;
+  margin: 12px 0 24px;
+  font-size: 13px;
+}
+.data-table thead th {
+  background: var(--l2);
+  color: var(--fg-2);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.data-table tbody td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--fg-1);
+  vertical-align: middle;
+}
+.data-table tbody tr:last-child td { border-bottom: none; }
+.data-table tbody tr:hover { background: var(--l2); }
+.data-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.data-table .row-mark {
+  width: 28px;
+  text-align: center;
+  font-weight: 600;
+  color: var(--fg-3);
+}
+.data-table .path {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg-2);
+  word-break: break-all;
+}
+.data-table .muted { color: var(--fg-3); font-size: 12px; }
+.data-table .fix-cmd {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--accent-soft);
+  padding: 2px 8px;
+  border-radius: var(--r-1);
+  color: color-mix(in srgb, var(--accent) 70%, black);
+}
+
+/* Row-state coloring (left-edge accent + faint background). Used for
+   doctor results (ok/warn/fail) and installs (stale/retired/valid). */
+.row-warn { background: color-mix(in srgb, var(--warn) 6%, transparent); }
+.row-fail { background: color-mix(in srgb, var(--crit) 6%, transparent); }
+.row-stale { background: color-mix(in srgb, var(--warn) 5%, transparent); }
+.row-retired { background: color-mix(in srgb, var(--crit) 5%, transparent); }
+.data-table .row-warn .row-mark,
+.data-table .row-stale .row-mark { color: var(--warn); }
+.data-table .row-fail .row-mark,
+.data-table .row-retired .row-mark { color: var(--crit); }
+.data-table .row-ok .row-mark { color: var(--ok); }
+
+/* ─── 4.4 Badges ─────────────────────────────────────────────────────── */
+
+/* Small inline status pill. Use for ownership, severity, state. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+  background: var(--l2);
+  color: var(--fg-2);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+.badge-stale,
+.badge-warn { background: color-mix(in srgb, var(--warn) 14%, var(--l1)); color: color-mix(in srgb, var(--warn) 60%, black); border-color: color-mix(in srgb, var(--warn) 30%, var(--border)); }
+.badge-retired,
+.badge-fail { background: color-mix(in srgb, var(--crit) 14%, var(--l1)); color: color-mix(in srgb, var(--crit) 60%, black); border-color: color-mix(in srgb, var(--crit) 30%, var(--border)); }
+.badge-ok { background: color-mix(in srgb, var(--ok) 14%, var(--l1)); color: color-mix(in srgb, var(--ok) 60%, black); border-color: color-mix(in srgb, var(--ok) 30%, var(--border)); }
+.badge-orquestrum { background: var(--accent-soft); color: color-mix(in srgb, var(--accent) 70%, black); border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); }
+.badge-user { background: var(--l2); color: var(--fg-2); }
+
+/* ─── 4.5 KPI value semantic colors ──────────────────────────────────── */
+
+.kpi-ok    { color: var(--ok); }
+.kpi-warn  { color: var(--warn); }
+.kpi-error { color: var(--crit); }
+
+/* ─── 4.6 Utility classes ────────────────────────────────────────────── */
+
+.muted { color: var(--fg-3); }
+.path  { font-family: var(--font-mono); font-size: 12px; color: var(--fg-2); word-break: break-all; }
+.num   { text-align: right; font-variant-numeric: tabular-nums; }
+
+.empty-state {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--fg-3);
+  background: var(--l2);
+  border: 1px dashed var(--border);
+  border-radius: var(--r-2);
+  margin: 16px 0 24px;
+  font-size: 13px;
+}
+
+/* Compact bullet list used for the orq_* tool catalog on /system/mcp. */
+.tool-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 16px;
+}
+.tool-list li {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  line-height: 1.4;
+}
+.tool-list li:last-child { border-bottom: none; }
+.tool-list code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--accent-soft);
+  padding: 2px 6px;
+  border-radius: var(--r-1);
+  color: color-mix(in srgb, var(--accent) 70%, black);
+  margin-right: 6px;
+}
+
+/* Subtitle under page-head h1; lighter weight, muted color. */
+.page-subtitle {
+  margin: 4px 0 0;
+  color: var(--fg-2);
+  font-size: 13px;
+  line-height: 1.5;
+  max-width: 80ch;
+}
+
+/* Footer hint at the bottom of admin pages: shows the equivalent CLI. */
+.page-footer-hint {
+  margin-top: 24px;
+  padding: 12px 14px;
+  border: 1px dashed var(--border);
+  border-radius: var(--r-2);
+  background: var(--l2);
+  font-size: 12px;
+  color: var(--fg-3);
+}
+.page-footer-hint code {
+  font-family: var(--font-mono);
+  background: var(--l1);
+  padding: 1px 6px;
+  border-radius: var(--r-1);
+  border: 1px solid var(--border);
+  color: var(--fg-2);
+  margin: 0 4px;
+}
+.page-footer-hint strong { color: var(--fg-2); margin-right: 4px; }
+
+/* Backwards-compat: old templates wrote .page-header instead of the
+   canonical .page-head. Alias them so neither breaks. */
+.page-header {
+  margin-bottom: 24px;
+}
+.page-header h1 {
+  margin: 0 0 4px;
+}
+
+/* Section spacing for admin pages with multiple <section> blocks
+   (e.g. /system/mcp has Servers + Add + Tools sections). */
+.page-head + section,
+section + section {
+  margin-top: 24px;
+}
+
+/* Generic KPI grid (uniform card row at top of admin pages). The
+   .kpi-card styling already exists; this is just the wrapping grid. */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin: 12px 0 24px;
+}
+.kpi-grid .kpi-card { padding: 14px 16px; }
+.kpi-grid .kpi-label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--fg-3);
+  margin-bottom: 6px;
+}
+.kpi-grid .kpi-value {
+  display: block;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--fg-1);
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+}
+

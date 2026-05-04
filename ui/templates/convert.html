@@ -33,7 +33,10 @@
     <input type="checkbox" name="dry_run" value="1" {% if last and last.dry_run %}checked{% endif %}>
     <strong>Dry-run</strong> — print summary (inventory + cost projection), no files written
   </label>
-  <button type="submit">Run convert</button>
+  <div class="action-bar">
+    <button type="submit" class="btn btn-primary">Run convert</button>
+    <span class="action-bar-hint">Equivalente CLI: <code>orquestrum convert --tool ... --provider ...</code></span>
+  </div>
 </form>
 {% endif %}
 {% endblock %}

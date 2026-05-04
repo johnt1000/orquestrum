@@ -3,9 +3,11 @@
 {% block content %}
 <h1>Documentation</h1>
 
-<form action="/docs/search" method="get" role="search" class="search-form">
-  <input type="search" name="q" placeholder="Search docs (uses ripgrep when available)…" autofocus>
-  <button type="submit">Search</button>
+<form action="/docs/search" method="get" role="search" class="action-bar">
+  <input type="search" name="q" class="search-input"
+         placeholder="Search docs (uses ripgrep when available)…" autofocus
+         style="flex: 1; min-width: 240px;">
+  <button type="submit" class="btn btn-primary">Search</button>
 </form>
 
 {% for audience, label in [('agent-context', '🧠 Agent-context — read by LLMs at runtime'),

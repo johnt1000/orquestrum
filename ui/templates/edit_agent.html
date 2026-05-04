@@ -94,11 +94,11 @@
 
       <div class="edit-actions">
         <button type="submit"
-                class="btn-primary"
+                class="btn btn-primary"
                 hx-post="/agents/{{ slug }}/edit"
                 hx-target="#diff-pane"
                 hx-swap="outerHTML">{{ 'edit.btn.validate' | t }}</button>
-        <a href="/catalog/agents" class="btn-link">{{ 'edit.btn.cancel' | t }}</a>
+        <a href="/catalog/agents" class="btn btn-link">{{ 'edit.btn.cancel' | t }}</a>
       </div>
     </form>
   </section>

@@ -3,9 +3,10 @@
 {% block content %}
 <nav><a href="/docs">← back to docs</a></nav>
 <h1>Search results</h1>
-<form action="/docs/search" method="get" role="search" class="search-form">
-  <input type="search" name="q" value="{{ q }}" autofocus>
-  <button type="submit">Search</button>
+<form action="/docs/search" method="get" role="search" class="action-bar">
+  <input type="search" name="q" value="{{ q }}" class="search-input" autofocus
+         style="flex: 1; min-width: 240px;">
+  <button type="submit" class="btn btn-primary">Search</button>
 </form>
 {% if not q %}
   <p><em>Type a query above.</em></p>
