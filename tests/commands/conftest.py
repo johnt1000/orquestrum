@@ -12,10 +12,21 @@ import pytest
 
 @pytest.fixture()
 def isolated_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """Point ORQUESTRUM_HOME at a tmp dir so registry writes stay isolated."""
+    """Point ORQUESTRUM_HOME at a tmp dir so registry writes stay isolated.
+
+    Also overrides `Path.home()` to a tmp dir so any code that consults the
+    real `~/.claude/settings.json` (e.g. `_detect_global_state` in init,
+    `_claude_code_target` in setup) sees a fresh empty environment instead
+    of the developer's actual install state. Without this, init tests run
+    on a machine with global orquestrum installed would skip prompts that
+    the test expects to fire.
+    """
     home = tmp_path / 'orq-home'
     home.mkdir()
     monkeypatch.setenv('ORQUESTRUM_HOME', str(home))
+    fake = tmp_path / 'fake-user-home'
+    fake.mkdir()
+    monkeypatch.setattr(Path, 'home', staticmethod(lambda: fake))
     return home
 
 

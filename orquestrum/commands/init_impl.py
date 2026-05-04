@@ -89,8 +89,48 @@ def _ask_scope(label: str, *, interactive: bool, default: Scope) -> Scope:
     return {'g': 'global', 'p': 'project', 's': 'skip'}[choice]
 
 
-def _gather_choices(*, interactive: bool) -> dict:
+def _detect_global_state() -> dict[str, bool]:
+    """Inspect ~/.claude/settings.json to see whether `setup` already
+    registered the metrics hook + orquestrum MCP. Returns a dict with
+    `hook_registered` and `mcp_registered` flags. Used to skip
+    redundant prompts in `init` after the user already ran `setup`.
+
+    Reads only — never writes. Missing file = both False (no global setup).
+    """
+    from orquestrum.lib import settings_io
+    settings_path = Path.home() / '.claude' / 'settings.json'
+    settings = settings_io.load_claude_settings(settings_path)
+
+    # Hook detection: look for the orquestrum stop hook command
+    hook_registered = False
+    for blocks in (settings.get('hooks') or {}).values():
+        if not isinstance(blocks, list):
+            continue
+        for block in blocks:
+            for h in block.get('hooks', []):
+                if settings_io.is_orquestrum_hook(h.get('command')):
+                    hook_registered = True
+                    break
+            if hook_registered:
+                break
+        if hook_registered:
+            break
+
+    # MCP detection: look for the orquestrum entry under mcpServers
+    mcp_servers = settings.get('mcpServers') or {}
+    mcp_registered = 'orquestrum' in mcp_servers
+
+    return {'hook_registered': hook_registered,
+            'mcp_registered':  mcp_registered}
+
+
+def _gather_choices(*, interactive: bool, per_project: bool = False) -> dict:
     """Run the three prompts and return a dict with the user's selections.
+
+    Auto-skips the metrics hook + MCP prompts when global registration
+    already exists (set by `orquestrum setup`). Pass `per_project=True`
+    to force the prompts even when global is registered (rare edge case
+    where the user wants project-scoped overrides).
 
     In non-interactive mode all defaults are honoured: metrics + MCP enabled
     globally, agents NOT installed.
@@ -99,26 +139,45 @@ def _gather_choices(*, interactive: bool) -> dict:
     print('Optional integrations (skip any with [s]):')
     print()
 
-    metrics_on = prompts.ask_yn(
-        '[1/3] Enable metrics collection? (Stop hook records tokens/cost per turn)',
-        default=True, interactive=interactive,
-    )
-    metrics_scope: Scope = 'skip'
-    if metrics_on:
-        metrics_scope = _ask_scope('the metrics hook',
+    global_state = _detect_global_state() if not per_project else {
+        'hook_registered': False, 'mcp_registered': False,
+    }
+
+    # ── Metrics hook ─────────────────────────────────────────────────
+    if global_state['hook_registered']:
+        print('  ✓ Metrics hook already registered globally '
+              '(~/.claude/settings.json) — using it for this project')
+        metrics_on = True
+        metrics_scope: Scope = 'global'
+    else:
+        metrics_on = prompts.ask_yn(
+            '[1/3] Enable metrics collection? (Stop hook records tokens/cost per turn)',
+            default=True, interactive=interactive,
+        )
+        metrics_scope = 'skip'
+        if metrics_on:
+            metrics_scope = _ask_scope('the metrics hook',
+                                       interactive=interactive, default='global')
+            metrics_on = metrics_scope != 'skip'
+
+    # ── MCP server ───────────────────────────────────────────────────
+    if global_state['mcp_registered']:
+        print('  ✓ MCP server already registered globally '
+              '(~/.claude/settings.json) — using it for this project')
+        mcp_on = True
+        mcp_scope: Scope = 'global'
+    else:
+        mcp_on = prompts.ask_yn(
+            '[2/3] Register orquestrum MCP server? (Helm/Flux query budget mid-turn)',
+            default=True, interactive=interactive,
+        )
+        mcp_scope = 'skip'
+        if mcp_on:
+            mcp_scope = _ask_scope('the MCP server',
                                    interactive=interactive, default='global')
-        metrics_on = metrics_scope != 'skip'
+            mcp_on = mcp_scope != 'skip'
 
-    mcp_on = prompts.ask_yn(
-        '[2/3] Register orquestrum MCP server? (Helm/Flux query budget mid-turn)',
-        default=True, interactive=interactive,
-    )
-    mcp_scope: Scope = 'skip'
-    if mcp_on:
-        mcp_scope = _ask_scope('the MCP server',
-                               interactive=interactive, default='global')
-        mcp_on = mcp_scope != 'skip'
-
+    # ── Agents (always asked — independent of global state) ─────────
     print()
     print('  Note: agents always install to ~/.claude/agents/ (never to this project).')
     agents_on = prompts.ask_yn(
@@ -127,11 +186,19 @@ def _gather_choices(*, interactive: bool) -> dict:
     )
 
     return {
-        'metrics_enabled': metrics_on,
-        'metrics_scope':   metrics_scope,
-        'mcp_enabled':     mcp_on,
-        'mcp_scope':       mcp_scope,
-        'agents_installed': agents_on,
+        'metrics_enabled':    metrics_on,
+        'metrics_scope':      metrics_scope,
+        'mcp_enabled':        mcp_on,
+        'mcp_scope':          mcp_scope,
+        'agents_installed':   agents_on,
+        # Flag: when True, skip _install_metrics_hook + _install_mcp because
+        # the global registration already covers it. The choices are still
+        # recorded for config.toml.
+        'skip_global_install': (
+            global_state['hook_registered'] or global_state['mcp_registered']
+        ),
+        '_global_hook_present': global_state['hook_registered'],
+        '_global_mcp_present':  global_state['mcp_registered'],
     }
 
 
@@ -252,11 +319,20 @@ def _install_agents_global(project_root: Path) -> None:
 
 
 def run_init(*, name: str | None = None,
-             interactive: bool = True) -> int:
+             interactive: bool = True,
+             per_project: bool = False) -> int:
     """Bootstrap `.orquestrum/` and run the optional-integrations prompts.
 
     Returns 0 on success, 1 on failure of an optional install (the
     `.orquestrum/` bootstrap itself is best-effort and never fails).
+
+    When `per_project=False` (default): auto-detects whether MCP/hook
+    are already registered globally by `orquestrum setup` and skips
+    those prompts + installs. The user gets a clean fast init.
+
+    When `per_project=True`: always runs the prompts, even when global
+    is registered. Used for the rare case where someone wants project-
+    scoped overrides.
     """
     project_root = Path.cwd()
     project_name = name or project_root.name
@@ -277,8 +353,9 @@ def run_init(*, name: str | None = None,
         if moved:
             print(f'  Migrated legacy ORQUESTRUM.md → {moved.relative_to(project_root)}')
 
-    # Interactive prompts (or defaults when -y / non-tty)
-    choices = _gather_choices(interactive=interactive)
+    # Interactive prompts (or defaults when -y / non-tty); auto-skips
+    # prompts whose work `orquestrum setup` already did unless --per-project.
+    choices = _gather_choices(interactive=interactive, per_project=per_project)
 
     # Persist choices into config.toml + manifest
     _write_config(project_root, project_name, choices)
@@ -301,12 +378,16 @@ def run_init(*, name: str | None = None,
     print(f'  Registered in {paths.orquestrum_home() / "registry.toml"}')
 
     # Optional integrations — run AFTER bootstrap so the project is consistent
-    # even if any of these fail.
+    # even if any of these fail. SKIP when global registration already
+    # covers it (set by `orquestrum setup`); the project picks up the global
+    # config automatically.
     rc = 0
+    skip_hook = choices.get('_global_hook_present', False)
+    skip_mcp  = choices.get('_global_mcp_present', False)
     try:
-        if choices['metrics_enabled']:
+        if choices['metrics_enabled'] and not skip_hook:
             _install_metrics_hook(project_root, choices['metrics_scope'])
-        if choices['mcp_enabled']:
+        if choices['mcp_enabled'] and not skip_mcp:
             # Same code path as metrics hook — settings.json merge handles
             # both `hooks` and `mcpServers` blocks atomically.
             if not choices['metrics_enabled']:

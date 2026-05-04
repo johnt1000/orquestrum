@@ -50,6 +50,11 @@ def register(sub: argparse._SubParsersAction) -> None:
                    help='Accept defaults for every prompt without asking. '
                         'Defaults: metrics hook ENABLED globally, MCP server '
                         'ENABLED globally, agents NOT installed.')
+    p.add_argument('--per-project', action='store_true', dest='per_project',
+                   help='Force the metrics-hook + MCP prompts even when global '
+                        'registration already exists. Default behavior: skip '
+                        'those prompts when `orquestrum setup` has already '
+                        'registered them globally.')
     # Reject the v0.4 flags with a clear migration message instead of
     # silently ignoring them.
     p.add_argument('--tool', help=argparse.SUPPRESS)
@@ -67,4 +72,8 @@ def _handler(args: argparse.Namespace) -> int | None:
         )
         return 2
     from orquestrum.commands.init_impl import run_init
-    return run_init(name=args.name, interactive=not args.non_interactive)
+    return run_init(
+        name=args.name,
+        interactive=not args.non_interactive,
+        per_project=getattr(args, 'per_project', False),
+    )
