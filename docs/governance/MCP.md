@@ -153,7 +153,33 @@ The mapping lives in `orquestrum/core/convert.py::ClaudeCodeAdapter._CLAUDE_TOOL
 
 ---
 
-## Operator usage
+## CLI hub — `orquestrum mcp` subcommands
+
+Beyond running the server, `orquestrum mcp` exposes a small management hub for **all** MCP servers in `~/.claude/settings.json` (orquestrum's own + any third-party ones the user added). All operations are `settings.json` CRUD plus a smoke-test — no JSON-editing by hand needed.
+
+| Subcommand | What it does |
+|---|---|
+| `orquestrum mcp` (no args) | Default — runs the server. Backward-compat with the form `settings.json` registers (`{"command": "orquestrum", "args": ["mcp"]}`). |
+| `orquestrum mcp run` | Explicit form of the above. |
+| `orquestrum mcp list` | Print a table of every server in `--target/.claude/settings.json` with NAME / COMMAND / TYPE / OWNER (orquestrum vs user). |
+| `orquestrum mcp tools` | Catalog of the 6 read-only + 2 write `orq_*` tools + 2 resources. AST-based — does not start the server. |
+| `orquestrum mcp add NAME --command CMD [--args ARG …] [--type stdio\|http]` | Register a third-party MCP server. Replaces existing entry of same name (idempotent). |
+| `orquestrum mcp remove NAME [--force]` | Unregister. Refuses to remove `orquestrum` without `--force` (agents would lose access to all `orq_*` tools). |
+| `orquestrum mcp validate [--timeout SEC]` | For each registered server, attempt to spawn the binary + a probe arg. Reports ✓/✗ + elapsed ms. Timeout-as-healthy (server waiting on stdio). |
+
+Examples:
+
+```bash
+orquestrum mcp list                                          # current state
+orquestrum mcp tools                                         # see what orq exposes
+orquestrum mcp add filesystem \
+    --command npx --args -y @modelcontextprotocol/server-filesystem /tmp
+orquestrum mcp add github --command mcp-github
+orquestrum mcp validate                                      # spawn each + report
+orquestrum mcp remove filesystem
+```
+
+The `orquestrum setup --advanced` wizard uses these helpers internally — section [8/9] lists current MCPs and offers to add common ones (filesystem, github, postgres) interactively.
 
 ### Manual launch (debugging)
 

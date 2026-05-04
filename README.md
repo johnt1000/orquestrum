@@ -125,17 +125,18 @@ Contributing? See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ```bash
 # 1. ONE-TIME setup (global — installs the framework on your system)
-orquestrum setup                  # interactive wizard
+orquestrum setup                  # 3-prompt wizard: claude-code, opencode, web ui
 # or
-orquestrum setup --yes            # accept defaults (install claude-code,
-                                  # skip opencode). Lands at ~/.claude/agents/,
-                                  # ~/.claude/skills/, registers MCP +
-                                  # metrics hook in ~/.claude/settings.json.
+orquestrum setup --advanced       # 9-prompt wizard with provider, extras,
+                                  # external deps, and third-party MCPs
+# or
+orquestrum setup --yes            # silent defaults (claude-code + ui, skip opencode)
 
 # 2. PER-PROJECT (optional — only if you want metrics + MCP for THIS project)
 cd /path/to/your/project
 orquestrum init --yes             # creates ./.orquestrum/{config,manifest,metrics/}
-                                  # — that's the entire project footprint.
+                                  # auto-skips MCP/hook prompts if `setup` already
+                                  # registered them globally.
 
 # 3. Day-to-day
 orquestrum web                    # dashboard (auto-detects project)
@@ -170,8 +171,8 @@ orquestrum update --tool opencode                # cleanup + reinstall + history
 
 | Command | What it does |
 |---------|--------------|
-| `orquestrum setup [--yes]` | Wizard for first-time global install. Detects what's already on the system and asks before installing claude-code / opencode integrations under `~/.claude/` / `~/.config/opencode/`. The recommended starting point — covers `convert + install` in one interactive step. |
-| `orquestrum init [--name N] [--yes]` | Bootstrap `<project>/.orquestrum/` (config, manifest, gitignore, metrics dir) and register globally. Asks 3 interactive prompts about optional integrations (metrics hook, MCP server, agents). `--yes` accepts defaults silently. Tool installs are SEPARATE — see `orquestrum setup` or `orquestrum install`. |
+| `orquestrum setup [--yes] [--advanced]` | First-time global wizard. Default: 3 prompts (claude-code, opencode, web UI). `--advanced` opens a 9-prompt wizard covering provider, extras (ui/webview), external deps (agency-agents, anthropics/skills), and third-party MCP servers (filesystem, github, postgres). The recommended starting point — covers `convert + install + extras + deps + mcp add` in one interactive step. |
+| `orquestrum init [--name N] [--yes] [--per-project]` | Bootstrap `<project>/.orquestrum/` (config, manifest, gitignore, metrics dir) and register globally. Auto-detects whether MCP/hook are already registered globally (by `setup`) and skips those prompts to avoid friction. `--per-project` forces the prompts even when global registration exists. |
 | `orquestrum update [--tool X] [--all] [--check] [--self]` | Re-sync this project (or all). `--tool` switches integrations with cleanup of the old one. `--self` upgrades the CLI itself (detects `uv tool` vs source install and runs the matching command — equivalent to re-running `install.sh`). |
 | `orquestrum web [--mode {project,framework,auto}] [--port N] [--no-browser]` | Launch the local console. Auto-detects mode from cwd. |
 | `orquestrum repos {list,add,remove}` | Manage the global registry at `~/.orquestrum/registry.toml`. |
@@ -181,7 +182,7 @@ orquestrum update --tool opencode                # cleanup + reinstall + history
 | `orquestrum deps --target PATH [--only agency,skills]` | Install external agent/skill dependencies (pinned via `pinned_refs.toml`). |
 | `orquestrum audit {payload,parity,attention}` | Run an audit. `payload` = reference size; `parity` = provider equivalence; `attention` = attention-score distribution. |
 | `orquestrum dashboard [--metrics-dir PATH] [--tier T] [--html]` | Render a static metrics dashboard. |
-| `orquestrum mcp` | Start the MCP server on stdio. Spawned automatically by Claude Code; agents call `orq_*` tools to query session/budget/cost or emit rich domain events. See [`docs/governance/MCP.md`](docs/governance/MCP.md). |
+| `orquestrum mcp [SUBCOMMAND]` | Hub for Model Context Protocol management. **Subcommands:** `mcp` / `mcp run` (start server — default; spawned automatically by Claude Code), `mcp list` (show every registered MCP server), `mcp tools` (catalog the 8 `orq_*` tools + 2 resources), `mcp add NAME --command CMD [--args ...]` (register a third-party MCP), `mcp remove NAME [--force]` (unregister; orquestrum protected), `mcp validate` (smoke-test each server). See [`docs/governance/MCP.md`](docs/governance/MCP.md). |
 | `orquestrum compact [--threshold-kb N] [--skill X] [--dry-run]` | Compress oversized skill references deterministically. |
 | `orquestrum version` | Print version info. |
 

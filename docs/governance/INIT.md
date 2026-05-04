@@ -101,6 +101,18 @@ The agents prompt has no scope question — agents always go to `~/.claude/agent
 | `--yes` / `-y` / `--non-interactive` | Use defaults silently |
 | `$ORQUESTRUM_NONINTERACTIVE=1` env var | Same as `--yes` |
 | stdin is not a TTY (piped input, CI) | Same as `--yes` |
+| **Global already registered (auto-detected)** | Prompts 1/3 + 2/3 are auto-skipped with `✓ already registered globally — using it for this project` markers. The choices are still recorded in `config.toml`, but the actual settings.json install is bypassed (the global registration covers the project). Bypass with `--per-project`. |
+
+### `--per-project` escape hatch
+
+If you ran `orquestrum setup` (which registers MCP + hook globally) and now want a **project-scoped** override (e.g. a different metrics directory or different MCP entries), pass `--per-project`:
+
+```bash
+orquestrum init --per-project              # always asks all 3 prompts
+orquestrum init --per-project --yes        # silent, but still installs project-scoped
+```
+
+This is rare in practice — most users want the global registration to apply everywhere.
 
 ---
 
