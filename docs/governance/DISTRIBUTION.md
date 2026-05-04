@@ -10,7 +10,7 @@ How Orquestrum is distributed today, why we restrict to Mac + Linux, and the roa
 
 The decision is deliberate, not lazy:
 
-- The framework writes hooks into `.claude/settings.json` whose `command:` field assumes POSIX shell semantics (`uv run .sdd/scripts/hooks/emit_metrics.py`). Windows path separators and the absence of `/usr/bin` style binaries make this fragile.
+- The framework writes hooks into `~/.claude/settings.json` whose `command:` field is `orquestrum hook` — resolved via `$PATH`. On macOS/Linux this works once the `orquestrum` CLI is installed (`uv tool install orquestrum` puts it in `~/.local/bin`); on Windows the PATH semantics + `.exe` shim handling around `uv tool` are still fragile and untested.
 - File-system invariants (`~/.orquestrum/registry.toml` resolution, atomic `os.replace` semantics, `pathlib.Path` POSIX behavior) are tested only on macOS and Linux.
 - Process-supervision (`subprocess.run` with `cwd`, signal handling, `webbrowser.open`) has subtle Windows differences that we don't have time to validate.
 - `uv tool install` and `pipx install` global-binary installation has known Windows quirks around PATH, `.exe` shims, and `--editable` mode.

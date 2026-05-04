@@ -125,31 +125,13 @@ For other clients (manual config, opencode, etc.), add the equivalent block to y
 
 ## Tool allowlists in agent frontmatter
 
-Helm and Flux are pure coordinators — they classify and route. To prevent overreach (e.g. an orchestrator deciding to "fix" project files mid-task), their Claude Code subagent frontmatter restricts `tools:` to a minimal set including only the read-only MCP tools:
+**Removed in v0.5.1.** Earlier versions emitted a `tools:` field in Helm and Flux frontmatter to restrict them at the API level. Claude Code, however, **hides** any subagent that declares `tools:` from the interactive Shift+Tab agent picker — they become subagent-only (callable only via Task), which broke the most common UX path: a user typing `@"Helm - The Architect"` would not find Helm in the picker.
 
-```yaml
-# Helm
-tools: Task, Read, Write,
-       mcp__orquestrum__orq_session_summary,
-       mcp__orquestrum__orq_budget_status,
-       mcp__orquestrum__orq_recent_events,
-       mcp__orquestrum__orq_list_projects,
-       mcp__orquestrum__orq_project_summary,
-       mcp__orquestrum__orq_cost_today
-```
+Tradeoff accepted: tool discipline for coordinators (Helm, Flux) is now enforced **via prompt content** rather than at the API level. Each agent's body opens with explicit "⛔ MANDATORY DELEGATION RULES" listing the tools it must not use (Edit, Bash, Grep, Glob for coordinators) — the LLM follows the prompt, and in practice this has been at least as reliable as the API restriction was.
 
-```yaml
-# Flux
-tools: Task, Read, Grep, Glob,
-       mcp__orquestrum__orq_session_summary,
-       mcp__orquestrum__orq_recent_events,
-       mcp__orquestrum__orq_list_projects,
-       mcp__orquestrum__orq_cost_today
-```
+The dict `ClaudeCodeAdapter._CLAUDE_TOOLS_ALLOWLIST` in `orquestrum/core/convert.py` is now intentionally empty. Adding entries to it would re-hide those agents from the picker. See commit `39c1ed5` for the full rationale.
 
-The 6 other agents (Lore, Forge, Cipher, Ward, Cast, Trace) carry no `tools:` entry — they inherit all native tools plus all MCP tools, including the write ones. Forge or Ward calling `orq_skill_completed` at the end of a skill is the canonical write path; coordinators don't author metric events.
-
-The mapping lives in `orquestrum/core/convert.py::ClaudeCodeAdapter._CLAUDE_TOOLS_ALLOWLIST`.
+The 6 specialist agents (Lore, Forge, Cipher, Ward, Cast, Trace) never had `tools:` restrictions — they inherit all native tools plus all MCP tools, including the write ones. Forge or Ward calling `orq_skill_completed` at the end of a skill is the canonical write path; coordinators don't author metric events (still enforced by prompt).
 
 ---
 

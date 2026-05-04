@@ -14,15 +14,30 @@ The hook closes the gap: every time a Claude Code turn ends (`Stop`) or a subage
 
 ## What gets installed
 
-When you run `orquestrum install --tool claude-code --target <project>`:
+Since v0.5.1 the hook is the `orquestrum hook` CLI subcommand — there is **no script copied into the project**. The handler logic lives only in the orquestrum package (`orquestrum/core/hooks/emit_metrics.py`) and is invoked via PATH lookup, so it works regardless of which directory Claude Code was launched from.
 
-| Path in target | What |
+When `orquestrum setup` runs (or `orquestrum install --tool claude-code --target ~`):
+
+| Path | What |
 |----------------|------|
-| `.claude/settings.json` | hooks declaration (merged into existing settings, never overwritten) |
-| `.sdd/scripts/hooks/emit_metrics.py` | the hook handler (copied from `orquestrum/core/hooks/`) |
-| `.sdd/scripts/lib/` | required for the hook (uses `models.estimate_cost`; copied from `orquestrum/lib/`) |
+| `~/.claude/settings.json` | hooks declaration registered globally; merged into existing settings (user keys preserved) |
 
-The handler is executable (`chmod +x`) and runs via `uv run .sdd/scripts/hooks/emit_metrics.py`. The deployed `.sdd/scripts/` path is intentionally stable so target projects don't need to know about Orquestrum's internal package layout.
+The settings.json entry registers exactly:
+
+```json
+{
+  "hooks": {
+    "Stop": [{"matcher": "", "hooks": [{"type": "command", "command": "orquestrum hook"}]}],
+    "SubagentStop": [{"matcher": "", "hooks": [{"type": "command", "command": "orquestrum hook"}]}]
+  }
+}
+```
+
+The command is `orquestrum hook` (no path), resolved via `$PATH` — same as the MCP server registration. This sidesteps the historical bug where a relative path like `uv run .claude/sdd/scripts/hooks/emit_metrics.py` failed with ENOENT whenever Claude Code was launched from a directory that did not contain that exact path tree.
+
+### Legacy form (≤v0.5.0)
+
+Older installs registered `uv run .claude/sdd/scripts/hooks/emit_metrics.py`. The merge logic in `orquestrum.lib.settings_io.is_orquestrum_hook` recognises both forms — re-running `orquestrum setup` or `orquestrum install` on an old install replaces the legacy entry with the new one and removes the orphan `.claude/sdd/scripts/` files (handled by `orquestrum uninstall`).
 
 ---
 
@@ -134,7 +149,9 @@ orquestrum web --target /path/to/project --mode project
 
 ## Disabling the hook
 
-Edit `.claude/settings.json` and remove the entries with `command: uv run .sdd/scripts/hooks/emit_metrics.py`. The next `orquestrum install` will re-add them — to suppress permanently, add a sentinel comment or skip running install for that target.
+Edit `~/.claude/settings.json` and remove the entries whose `command` contains `orquestrum hook` (or, on legacy installs, `emit_metrics.py`). Cleaner: run `orquestrum uninstall --self` (removes the CLI entirely) or manually delete the `Stop` and `SubagentStop` blocks created by orquestrum.
+
+The next `orquestrum setup` (or `orquestrum install --tool claude-code --target ~`) re-registers them. To suppress permanently, skip running setup/install for that target — or wrap the entry with `false_disabled` (orquestrum's merge ignores entries it doesn't own).
 
 You can also disable hooks globally per-session via Claude Code's settings UI / CLI flags without editing the file.
 

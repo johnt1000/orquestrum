@@ -580,6 +580,14 @@ Onda 3:
 | R14 (Onda 1) | UX & Onboarding — quick wins CLI + Web | 2026-05-02 | (working tree) |
 | R14 (Onda 2) | UX & Onboarding — async jobs, side-by-side diff, inline form errors, CLI progress | 2026-05-02 | (working tree) |
 | R14 (Onda 3) | UX & Onboarding — CONTRIBUTING expansion, ui/README, Makefile, pre-commit | 2026-05-02 | (working tree) |
+| R15 | Setup wizard global (`orquestrum setup`) — first-time install em 1 comando | 2026-05-03 | `16b4153` |
+| R16 | `orquestrum hook` CLI entry — substitui caminho relativo `emit_metrics.py` quebrado | 2026-05-03 | `770c9f7` |
+| R17 | Convert: remove `tools:` allowlist do frontmatter — agentes voltam ao Shift+Tab picker | 2026-05-03 | `39c1ed5` |
+| R18 | archive-manager v1.2.0 — modos `release` (Cast) + `prune` (Flux) com tier rubric | 2026-05-03 | `83ba20f` |
+| R19 (WSA) | CLI help overhaul — 18 subcommands com description + epilog + Examples + See also | 2026-05-03 | `3e4b663` |
+| R19 (WSC) | `orquestrum mcp` virou hub (run/list/tools/add/remove/validate) + `lib/settings_io.py` | 2026-05-03 | `bf3e039` |
+| R19 (WSB) | `setup` ganhou prompt UI (fast 3-prompt) + `--advanced` 9-prompt wizard | 2026-05-03 | `198f3c1` |
+| R19 (WSD) | `init` auto-detecta MCP/hook global e pula prompts redundantes | 2026-05-03 | `86050c0` |
 
 ---
 
