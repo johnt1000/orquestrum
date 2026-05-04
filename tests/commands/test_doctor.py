@@ -282,6 +282,44 @@ class TestLegacySddDirsCheck:
         assert any('rm -rf' in (res.get('fix') or '') for res in r.results)
 
 
+class TestFrameworkHintCheck:
+    def test_no_markers_no_hint(self, project_root: Path):
+        # bare project dir → no framework markers → no hint emitted
+        r = doctor.Report()
+        doctor._check_project_framework_hints(r)
+        # No assertion on errors/warnings (this check only emits OK lines);
+        # the assertion is that no `framework hint` line appears
+        details = ' '.join((res.get('detail') or '') for res in r.results)
+        assert 'detected' not in details
+
+    def test_supabase_marker_suggests_supabase_and_schema_manager(
+        self, project_root: Path,
+    ):
+        # Create the marker file the check looks for
+        sb = project_root / 'supabase'
+        sb.mkdir()
+        (sb / 'config.toml').write_text('[api]\nport=54321\n', encoding='utf-8')
+        r = doctor.Report()
+        doctor._check_project_framework_hints(r)
+        text = ' '.join((res.get('detail') or '') for res in r.results)
+        assert 'Supabase project detected' in text
+        # Suggests both relevant skills
+        assert '`supabase`' in text
+        assert '`schema-manager`' in text
+        # Mentions the deprecated flag pain-point so user remembers why
+        assert '--linked' in text
+
+    def test_prisma_marker_suggests_schema_manager(self, project_root: Path):
+        prisma = project_root / 'prisma'
+        prisma.mkdir()
+        (prisma / 'schema.prisma').write_text('generator client {}\n', encoding='utf-8')
+        r = doctor.Report()
+        doctor._check_project_framework_hints(r)
+        text = ' '.join((res.get('detail') or '') for res in r.results)
+        assert 'Prisma project detected' in text
+        assert '`schema-manager`' in text
+
+
 class TestInstallsManifestHealthCheck:
     def test_empty_manifest_marks_ok(self, isolated_home: Path):
         r = doctor.Report()

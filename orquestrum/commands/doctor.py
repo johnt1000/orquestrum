@@ -221,6 +221,44 @@ def _check_current_project(r: Report) -> None:
            fix='orquestrum init --yes')
 
 
+# ─── framework / skill nudges ────────────────────────────────────────────────
+
+
+# When cwd has these markers, the matching skill is highly likely to be useful.
+# We nudge — never block — because a project may legitimately use a framework
+# without wanting orquestrum's opinion on it.
+_FRAMEWORK_MARKERS: list[tuple[str, list[str], list[str], str]] = [
+    # (label, paths to check, suggested skills, why)
+    ('Supabase project',
+     ['supabase/config.toml', 'supabase/migrations'],
+     ['supabase', 'schema-manager'],
+     'load these BEFORE writing migrations or RLS policies — avoids '
+     'flag/syntax mistakes (e.g. the deprecated `--linked`)'),
+    ('Prisma project',
+     ['prisma/schema.prisma', 'prisma/migrations'],
+     ['schema-manager'],
+     'use schema-manager to cache the Prisma schema map; avoids '
+     'repeated grep loops over generated SQL'),
+    ('Django project',
+     ['manage.py'],
+     ['schema-manager'],
+     'schema-manager handles Django migrations the same way it does SQL'),
+]
+
+
+def _check_project_framework_hints(r: Report) -> None:
+    """Scan cwd for framework markers and suggest the matching orquestrum
+    skills. Discoverability nudge — fires as INFO (no exit-code impact)
+    so it never blocks CI but always reaches operators running doctor."""
+    cwd = Path.cwd()
+    for label, markers, skills, why in _FRAMEWORK_MARKERS:
+        if not any((cwd / m).exists() for m in markers):
+            continue
+        skill_list = ', '.join(f'`{s}`' for s in skills)
+        r.ok(f'project framework hint',
+             detail=f'{label} detected → consider {skill_list} ({why})')
+
+
 # ─── drift checks (~/.claude/, installs.json) ─────────────────────────────────
 
 
@@ -334,6 +372,7 @@ def _handler(args: argparse.Namespace) -> int:
 
     r.section('Current directory')
     _check_current_project(r)
+    _check_project_framework_hints(r)
 
     print()
     if args.as_json:
