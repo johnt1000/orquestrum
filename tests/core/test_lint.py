@@ -24,7 +24,7 @@ class TestLintOnRealRepo:
     def test_success_line_contains_counts(self):
         result = _run_lint()
         assert '8 agents' in result.stdout
-        assert '25 skills' in result.stdout
+        assert '26 skills' in result.stdout   # bumped when schema-manager landed
         assert '0 errors' in result.stdout
 
     def test_success_line_contains_asset_count(self):

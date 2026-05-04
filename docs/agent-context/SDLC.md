@@ -274,6 +274,7 @@ Always use the `References` section of templates to keep this chain intact.
 | 2 | architecture-manager | System view and diagrams |
 | 3 | epic-manager | Vertical decomposition of SPEC |
 | 3 | task-manager | Execution with traceability |
+| 2-3 | schema-manager | Cached structural map of DB schema (parses migrations, caches in CHECKPOINT — replaces grep loops) |
 | 3.5 | security-manager | Threat modeling, OWASP validation, SEC report |
 | 4 | review-manager | Code quality and security (with traceability score) |
 | 4 | qa-manager | Functional validation against SPEC |

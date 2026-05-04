@@ -35,10 +35,12 @@ Phase-orchestration skills (always orquestrum-owned):
 - About to plan a data migration (schema/backfill)? → `skill(name="data-migration-manager")`
 - About to update checkpoint? → `skill(name="checkpoint-manager")`
 
-Domain skills (third-party, install with `orquestrum deps`; load BEFORE writing the matching artifact type):
-- Supabase work (any: schema, RLS, edge functions, auth, migrations, CLI) → `skill(name="supabase")`
-- Postgres performance / query / index design → `skill(name="supabase-postgres-best-practices")`
-- Need >5 bash scans on the same file (e.g. grepping `*.sql` for a table) → STOP. Either load a domain skill above OR record a Big-File Summary in `docs/CHECKPOINT.md` (see `docs/agent-context/CONVENTIONS.md` → "Big-File Summary Convention")
+Domain skills (load BEFORE writing the matching artifact type):
+- About to find a table's columns, constraints, or "where is X defined" via grep on migrations? → `skill(name="schema-manager")` FIRST. It parses migrations once and caches a structured schema map in CHECKPOINT — replaces 10+ bash scans with one read.
+- Supabase work (RLS, edge functions, auth, migrations, CLI) — third-party, install with `orquestrum deps` → `skill(name="supabase")`
+- Postgres performance / query / index design — third-party → `skill(name="supabase-postgres-best-practices")`
+- About to plan a schema change (forward + rollback paths) → `skill(name="data-migration-manager")` (load `schema-manager` first to anchor on current state)
+- Need >5 bash scans on the same file → STOP. Either load a domain skill above OR record a Big-File Summary in `docs/CHECKPOINT.md` (see `docs/agent-context/CONVENTIONS.md` → "Big-File Summary Convention")
 - Looking for a skill that might exist but you're not sure → `skill(name="find-skills")` to discover it
 
 - None match AND task is novel? → proceed cautiously. Prefer reading 1 authoritative file (TASK-INDEX, glossary) over `grep` chains.

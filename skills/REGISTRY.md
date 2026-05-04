@@ -33,6 +33,7 @@ Agents use this table to check whether a task requires skill loading before proc
 | Prune obsolete docs (superseded versions, empty stubs, stale drafts) — any time | `archive-manager` (prune mode) | flux | 0 | maintenance |
 | Document a rollback procedure for a release | `rollback-manager` | cast | 1 | 5 |
 | Plan a data migration (schema, backfill, store move) | `data-migration-manager` | forge | 2 | 3 |
+| Find current schema (table columns, constraints, latest migration per table) | `schema-manager` | forge | 0 | 2-3 |
 | Validate performance targets / capture regression | `performance-manager` | ward | 1 | 4 |
 | Produce a hotfix runbook (production bleeding) | `hotfix-runbook` | flux | 0 | maintenance |
 | Write a blameless incident postmortem | `incident-postmortem` | flux | 1 | maintenance |
