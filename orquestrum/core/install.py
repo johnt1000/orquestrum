@@ -29,93 +29,29 @@ INTEGRATIONS = convert_output_root()
 
 
 def _merge_claude_settings(template_path: Path, target_path: Path) -> None:
-    """Merge our hooks into target settings.json without clobbering user keys.
+    """Merge our hooks/mcpServers into target settings.json without clobbering
+    user keys. Delegates to `orquestrum.lib.settings_io` helpers; this function
+    stays as the install-time orchestrator (logging + file I/O wiring)."""
+    from orquestrum.lib import settings_io
 
-    Strategy:
-      - If target does not exist → copy template verbatim.
-      - If target exists → load both, deep-merge hooks.{Stop,SubagentStop}
-        as additional entries; never overwrite existing user hooks at the
-        same matcher; refuse if structure incompatible.
-    """
     if not target_path.exists():
         shutil.copy(template_path, target_path)
         ok(f'  settings.json: created at {target_path}')
         return
 
-    try:
-        template_data = json.loads(template_path.read_text(encoding='utf-8'))
-        target_data   = json.loads(target_path.read_text(encoding='utf-8'))
-    except json.JSONDecodeError as e:
-        warn(f'  settings.json: target is not valid JSON ({e}); leaving untouched.')
+    if not settings_io.is_valid_json(target_path):
+        warn(f'  settings.json: target is not valid JSON; leaving untouched.')
         warn(f'  Manually merge hooks from: {template_path}')
         return
 
-    target_hooks   = target_data.setdefault('hooks', {})
-    template_hooks = template_data.get('hooks', {})
+    template_data = settings_io.load_claude_settings(template_path)
+    target_data = settings_io.load_claude_settings(target_path)
 
-    # Recognise any orquestrum-installed hook (current or legacy form) so
-    # we replace it on re-install instead of accumulating duplicates.
-    # Markers:
-    #   - `orquestrum hook`                            ≥0.5.1 (current)
-    #   - `sdd/scripts/hooks/emit_metrics.py` tail     ≤0.5.0 (broken
-    #     relative path; replaced on first re-install)
-    def _is_orq_hook(cmd: str | None) -> bool:
-        if not cmd:
-            return False
-        if 'orquestrum hook' in cmd:
-            return True
-        return 'sdd/scripts/hooks/emit_metrics.py' in cmd
+    removed_legacy, added, mcp_added, mcp_replaced = (
+        settings_io.merge_template_settings(template_data, target_data)
+    )
 
-    removed_legacy = 0
-    for event_name, existing in list(target_hooks.items()):
-        if not isinstance(existing, list):
-            continue
-        cleaned: list[dict] = []
-        for block in existing:
-            inner = [h for h in block.get('hooks', []) if not _is_orq_hook(h.get('command'))]
-            removed = len(block.get('hooks', [])) - len(inner)
-            removed_legacy += removed
-            if inner:
-                cleaned.append({**block, 'hooks': inner})
-        if cleaned:
-            target_hooks[event_name] = cleaned
-        else:
-            target_hooks.pop(event_name, None)
-
-    added: list[str] = []
-    for event_name, blocks in template_hooks.items():
-        existing = target_hooks.setdefault(event_name, [])
-        if not isinstance(existing, list):
-            warn(f'  settings.json: hooks.{event_name} exists but is not a list; skipping.')
-            continue
-        for block in blocks:
-            block_command = next(
-                (h.get('command') for h in block.get('hooks', []) if h.get('command')),
-                None,
-            )
-            existing.append(block)
-            added.append(f'{event_name}: {block_command}')
-
-    # ── mcpServers merge ────────────────────────────────────────────────
-    # The orquestrum MCP server registers under the well-known key
-    # "orquestrum". On re-install we replace the entry (idempotent) so
-    # users always run the latest server config — but never touch other
-    # MCP servers the user has registered (filesystem, github, etc.).
-    target_mcp   = target_data.setdefault('mcpServers', {})
-    template_mcp = template_data.get('mcpServers', {}) or {}
-    mcp_added: list[str] = []
-    mcp_replaced: list[str] = []
-    for name, config in template_mcp.items():
-        if name in target_mcp:
-            mcp_replaced.append(name)
-        else:
-            mcp_added.append(name)
-        target_mcp[name] = config
-    # If the user manually deleted mcpServers entirely, don't reinstate empty.
-    if not target_mcp:
-        target_data.pop('mcpServers', None)
-
-    target_path.write_text(json.dumps(target_data, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+    settings_io.write_claude_settings(target_path, target_data)
     if removed_legacy:
         log(f'  settings.json: replaced {removed_legacy} prior orquestrum hook entr(y/ies)')
     if added:
