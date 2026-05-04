@@ -307,3 +307,81 @@ class TestOutput:
         assert 'claude-code' in out
         # The detected line marks installed entries
         assert '✓' in out
+
+
+# ─── UI prompt (3rd prompt added in WSB) ───────────────────────────────────
+
+
+class TestUIPrompt:
+    def test_three_prompts_numbered_correctly(
+        self, isolated_manifest: Path, fake_home: Path,
+        stub_install_pipeline,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        """Fast path now has 3 prompts; the labels [1/3], [2/3], [3/3]
+        must appear in the question text passed to _read_line."""
+        from orquestrum.lib import prompts
+        seen_prompts: list[str] = []
+        monkeypatch.setattr(prompts, '_is_interactive', lambda: True)
+
+        def _capture(prompt: str) -> str:
+            seen_prompts.append(prompt)
+            return 'n'
+
+        monkeypatch.setattr(prompts, '_read_line', _capture)
+        setup._run_setup(interactive=True)
+        all_prompts = ' '.join(seen_prompts)
+        assert '[1/3]' in all_prompts
+        assert '[2/3]' in all_prompts
+        assert '[3/3]' in all_prompts
+
+    def test_ui_prompt_default_yes_when_extras_missing(
+        self, isolated_manifest: Path, fake_home: Path,
+        stub_install_pipeline, capsys: pytest.CaptureFixture,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        """When fastapi is NOT importable, the UI prompt should default
+        to Y so first-time users discover the dashboard. We mock the
+        probe and the install function to verify the default takes effect."""
+        called: list[bool] = []
+        monkeypatch.setattr(setup, '_ui_extra_installed', lambda: False)
+        monkeypatch.setattr(setup, '_install_ui_extra',
+                            lambda: called.append(True) or True)
+        # Non-interactive uses defaults silently
+        setup._run_setup(interactive=False)
+        # claude-code default Y + ui default Y → both invoked
+        assert called == [True], 'UI extra should be installed on default-Y path'
+
+    def test_ui_prompt_default_no_when_already_installed(
+        self, isolated_manifest: Path, fake_home: Path,
+        stub_install_pipeline, capsys: pytest.CaptureFixture,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        """When the ui extra is already installed, default flips to N to
+        avoid pointless re-installs on every setup re-run."""
+        called: list[bool] = []
+        monkeypatch.setattr(setup, '_ui_extra_installed', lambda: True)
+        monkeypatch.setattr(setup, '_install_ui_extra',
+                            lambda: called.append(True) or True)
+        setup._run_setup(interactive=False)
+        assert called == [], 'UI extra should NOT be re-installed by default'
+
+    def test_post_install_message_always_mentions_orquestrum_web(
+        self, isolated_manifest: Path, fake_home: Path,
+        stub_install_pipeline, capsys: pytest.CaptureFixture,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        """`orquestrum web` should appear in the next-steps regardless of
+        whether the user installed the UI extra — discovery matters."""
+        # Decline UI but accept claude-code
+        monkeypatch.setattr(setup, '_ui_extra_installed', lambda: False)
+        monkeypatch.setattr(setup, '_install_ui_extra', lambda: True)
+        from orquestrum.lib import prompts
+        monkeypatch.setattr(prompts, '_is_interactive', lambda: True)
+        # claude-code Y, opencode N, ui N
+        answers = iter(['y', 'n', 'n'])
+        monkeypatch.setattr(prompts, '_read_line',
+                            lambda prompt: next(answers, ''))
+        setup._run_setup(interactive=True)
+        out = capsys.readouterr().out
+        assert 'orquestrum web' in out, 'next-steps must mention web dashboard'
