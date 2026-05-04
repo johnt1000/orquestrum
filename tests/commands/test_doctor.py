@@ -218,6 +218,118 @@ class TestCurrentProjectCheck:
         assert 'legacy' not in details
 
 
+# ─── drift checks (new) ────────────────────────────────────────────────────
+
+
+class TestGlobalSettingsHookCheck:
+    def test_no_settings_file_marks_ok(self, isolated_home: Path):
+        # isolated_home mocks Path.home(); settings.json doesn't exist there
+        r = doctor.Report()
+        doctor._check_global_settings_hook(r)
+        assert r.errors == 0 and r.warnings == 0
+        assert any('not present' in (res.get('detail') or '') for res in r.results)
+
+    def test_modern_form_marks_ok(self, isolated_home: Path):
+        import json
+        path = Path.home() / '.claude' / 'settings.json'
+        path.parent.mkdir(parents=True)
+        path.write_text(json.dumps({
+            'hooks': {'Stop': [{'matcher': '', 'hooks': [
+                {'type': 'command', 'command': 'orquestrum hook'},
+            ]}]},
+        }), encoding='utf-8')
+        r = doctor.Report()
+        doctor._check_global_settings_hook(r)
+        assert r.warnings == 0
+        assert any('correct' in (res.get('detail') or '') for res in r.results)
+
+    def test_legacy_form_warns_with_setup_fix(self, isolated_home: Path):
+        """The bug case: settings.json registered the broken
+        relative-path hook; doctor must surface it AND point at the fix."""
+        import json
+        path = Path.home() / '.claude' / 'settings.json'
+        path.parent.mkdir(parents=True)
+        path.write_text(json.dumps({
+            'hooks': {'Stop': [{'matcher': '', 'hooks': [
+                {'type': 'command',
+                 'command': 'uv run .claude/sdd/scripts/hooks/emit_metrics.py'},
+            ]}]},
+        }), encoding='utf-8')
+        r = doctor.Report()
+        doctor._check_global_settings_hook(r)
+        assert r.warnings == 1
+        assert any('legacy' in (res.get('detail') or '') for res in r.results)
+        assert any('orquestrum setup' in (res.get('fix') or '')
+                   for res in r.results)
+
+
+class TestLegacySddDirsCheck:
+    def test_no_legacy_dirs_marks_ok(self, isolated_home: Path):
+        r = doctor.Report()
+        doctor._check_legacy_sdd_dirs(r)
+        assert r.warnings == 0
+
+    def test_warns_for_each_legacy_dir(self, isolated_home: Path):
+        # Create both ~/.claude/sdd/ and ~/.claude/.sdd/
+        (Path.home() / '.claude' / 'sdd').mkdir(parents=True)
+        (Path.home() / '.claude' / '.sdd').mkdir(parents=True)
+        r = doctor.Report()
+        doctor._check_legacy_sdd_dirs(r)
+        assert r.warnings == 1
+        details = ' '.join(res.get('detail') or '' for res in r.results)
+        assert 'sdd' in details
+        # Fix command should mention rm -rf
+        assert any('rm -rf' in (res.get('fix') or '') for res in r.results)
+
+
+class TestInstallsManifestHealthCheck:
+    def test_empty_manifest_marks_ok(self, isolated_home: Path):
+        r = doctor.Report()
+        doctor._check_installs_manifest_health(r)
+        assert r.warnings == 0
+
+    def test_clean_manifest_marks_ok(
+        self, isolated_home: Path, tmp_path: Path,
+    ):
+        import json
+        valid = tmp_path / 'real'
+        valid.mkdir()
+        (isolated_home / 'installs.json').write_text(json.dumps({
+            'schema_version': 1,
+            'installs': [{
+                'target': str(valid), 'tool': 'claude-code',
+                'orquestrum_version': '0.5.1',
+                'installed_at': '2026-05-03T10:00:00',
+                'files': [], 'directories': [],
+            }],
+        }), encoding='utf-8')
+        r = doctor.Report()
+        doctor._check_installs_manifest_health(r)
+        assert r.warnings == 0
+        assert any('all valid' in (res.get('detail') or '') for res in r.results)
+
+    def test_stale_majority_warns_with_prune_fix(
+        self, isolated_home: Path, tmp_path: Path,
+    ):
+        """The graveyard scenario: 95% stale (407/428 in real life) →
+        warn loudly and point at `installs prune`."""
+        import json
+        records = [{
+            'target': str(tmp_path / f'gone-{i}'),
+            'tool': 'claude-code', 'orquestrum_version': '0.3.0',
+            'installed_at': '2026-05-03T10:00:00',
+            'files': [], 'directories': [],
+        } for i in range(10)]
+        (isolated_home / 'installs.json').write_text(json.dumps({
+            'schema_version': 1, 'installs': records,
+        }), encoding='utf-8')
+        r = doctor.Report()
+        doctor._check_installs_manifest_health(r)
+        assert r.warnings == 1
+        assert any('orquestrum installs prune' in (res.get('fix') or '')
+                   for res in r.results)
+
+
 class TestHandler:
     def test_returns_0_when_no_errors(
         self, monkeypatch: pytest.MonkeyPatch, isolated_home: Path,
@@ -264,6 +376,9 @@ class TestHandler:
         monkeypatch.setattr(doctor, '_check_extras', lambda r: None)
         monkeypatch.setattr(doctor, '_check_integrations', lambda r: None)
         monkeypatch.setattr(doctor, '_check_registry', lambda r: None)
+        monkeypatch.setattr(doctor, '_check_installs_manifest_health', lambda r: None)
+        monkeypatch.setattr(doctor, '_check_global_settings_hook', lambda r: None)
+        monkeypatch.setattr(doctor, '_check_legacy_sdd_dirs', lambda r: None)
         monkeypatch.setattr(doctor, '_check_current_project', lambda r: None)
 
         ns = argparse.Namespace(as_json=True)

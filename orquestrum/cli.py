@@ -33,6 +33,7 @@ def _build_parser() -> argparse.ArgumentParser:
     from orquestrum.commands import (
         convert, install, lint, deps, audit, dashboard, compact, version,
         init, web, repos, update, extras, uninstall, doctor, mcp, setup, hook,
+        installs,
     )
     setup.register(sub)
     convert.register(sub)
@@ -51,6 +52,7 @@ def _build_parser() -> argparse.ArgumentParser:
     doctor.register(sub)
     mcp.register(sub)
     hook.register(sub)
+    installs.register(sub)
     version.register(sub)
 
     return parser

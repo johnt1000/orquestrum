@@ -221,6 +221,95 @@ def _check_current_project(r: Report) -> None:
            fix='orquestrum init --yes')
 
 
+# ─── drift checks (~/.claude/, installs.json) ─────────────────────────────────
+
+
+def _check_global_settings_hook(r: Report) -> None:
+    """Verify ~/.claude/settings.json hook command is the modern form
+    (`orquestrum hook`). The legacy `uv run .claude/sdd/scripts/hooks/
+    emit_metrics.py` form was deprecated in v0.5.1 — it uses a relative
+    path that fails outside $HOME, so any settings.json still using it is
+    silently dropping metric events whenever the user is in a project dir."""
+    from orquestrum.lib import settings_io
+    settings_path = Path.home() / '.claude' / 'settings.json'
+    if not settings_path.exists():
+        r.ok('global settings.json', detail='not present (no global hook configured)')
+        return
+    settings = settings_io.load_claude_settings(settings_path)
+    legacy_count = 0
+    modern_count = 0
+    for blocks in (settings.get('hooks') or {}).values():
+        if not isinstance(blocks, list):
+            continue
+        for blk in blocks:
+            for h in blk.get('hooks', []):
+                cmd = h.get('command') or ''
+                if 'orquestrum hook' in cmd:
+                    modern_count += 1
+                elif 'sdd/scripts/hooks/emit_metrics.py' in cmd:
+                    legacy_count += 1
+    if legacy_count:
+        r.warn('global hook command form',
+               detail=f'{legacy_count} legacy entry/entries '
+                      f'(uv run .../emit_metrics.py — broken outside $HOME)',
+               fix='orquestrum setup --yes  (re-merges settings.json with `orquestrum hook`)')
+    elif modern_count:
+        r.ok('global hook command form',
+             detail=f'{modern_count} entry/entries — `orquestrum hook` (correct)')
+    else:
+        r.warn('global hook command form',
+               detail='no orquestrum hook registered',
+               fix='orquestrum setup --yes  (registers Stop/SubagentStop hooks)')
+
+
+def _check_legacy_sdd_dirs(r: Report) -> None:
+    """Detect orphan `~/.claude/sdd/` and `~/.claude/.sdd/` trees left over
+    from pre-v0.5 installs. Nothing reads them today; they exist only to
+    confuse future debugging."""
+    home = Path.home()
+    legacy_dirs = [home / '.claude' / 'sdd', home / '.claude' / '.sdd']
+    found = [d for d in legacy_dirs if d.is_dir()]
+    if not found:
+        r.ok('legacy ~/.claude/sdd', detail='not present')
+        return
+    paths = ', '.join(str(d) for d in found)
+    r.warn('legacy ~/.claude/sdd', detail=f'orphan dir(s) present: {paths}',
+           fix=f'rm -rf {" ".join(str(d) for d in found)}'
+               '   (safe — these are pre-v0.5 leftovers)')
+
+
+def _check_installs_manifest_health(r: Report) -> None:
+    """Surface when the install manifest accumulates dead weight (>50%
+    stale targets or any retired-tool entries). Both conditions point at
+    `orquestrum installs prune` as the fix."""
+    try:
+        from orquestrum.lib import installs_manifest as im
+        records = im.list_installs()
+    except Exception as e:
+        r.warn('installs manifest', detail=f'unreadable: {e}',
+               fix='check ~/.orquestrum/installs.json syntax')
+        return
+    if not records:
+        r.ok('installs manifest', detail='empty (no installs yet)')
+        return
+
+    buckets = im.classify_stale(records)
+    n_total = len(records)
+    n_stale = len(buckets['stale_target'])
+    n_retired = len(buckets['retired_tool'])
+    n_dead = n_stale + n_retired
+
+    if n_dead == 0:
+        r.ok('installs manifest', detail=f'{n_total} record(s), all valid')
+        return
+
+    # Stale ratio threshold: warn at >50% dead OR any retired-tool entry
+    pct = round(100 * n_dead / n_total)
+    detail = f'{n_dead}/{n_total} dead ({pct}%): {n_stale} stale + {n_retired} retired'
+    r.warn('installs manifest', detail=detail,
+           fix='orquestrum installs prune --dry-run    (preview, then drop --dry-run)')
+
+
 # ─── handler ──────────────────────────────────────────────────────────────────
 
 def _handler(args: argparse.Namespace) -> int:
@@ -237,6 +326,11 @@ def _handler(args: argparse.Namespace) -> int:
     r.section('Framework artifacts')
     _check_integrations(r)
     _check_registry(r)
+    _check_installs_manifest_health(r)
+
+    r.section('Drift detection')
+    _check_global_settings_hook(r)
+    _check_legacy_sdd_dirs(r)
 
     r.section('Current directory')
     _check_current_project(r)

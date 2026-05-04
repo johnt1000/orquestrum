@@ -253,3 +253,66 @@ def surgical_uninstall(tool: str, target: Path) -> tuple[list[str], list[str]]:
 
     remove_install(tool, target)
     return removed_files, removed_dirs
+
+
+# ─── pruning ───────────────────────────────────────────────────────────────
+
+
+# Tools that have been retired from orquestrum. Entries for these in the
+# manifest are dead weight (the tool's adapter no longer exists) and any
+# uninstall attempt would fail. Treat them as prunable by default.
+RETIRED_TOOLS: frozenset[str] = frozenset({'aider', 'cursor', 'windsurf'})
+
+
+def classify_stale(records: list[ToolInstall]) -> dict[str, list[ToolInstall]]:
+    """Partition a list of install records into three buckets:
+
+    - `stale_target`  — target directory no longer exists on disk
+    - `retired_tool`  — tool was removed in v0.4 (aider/cursor/windsurf)
+    - `valid`         — target exists AND tool is still supported
+
+    Useful both for the `installs prune` CLI and for the doctor health-check
+    that surfaces a warning when stale entries dominate the manifest.
+    """
+    out: dict[str, list[ToolInstall]] = {
+        'stale_target': [],
+        'retired_tool': [],
+        'valid':        [],
+    }
+    for r in records:
+        # Retired-tool check first — a retired tool's record is always
+        # prunable regardless of whether the target still exists.
+        if r.tool in RETIRED_TOOLS:
+            out['retired_tool'].append(r)
+        elif not Path(r.target).is_dir():
+            out['stale_target'].append(r)
+        else:
+            out['valid'].append(r)
+    return out
+
+
+def prune_stale(*, dry_run: bool = False) -> tuple[int, int, int]:
+    """Remove every install record whose target directory no longer exists,
+    plus every record for a retired tool. Returns
+    `(removed_stale, removed_retired, kept)`.
+
+    `dry_run=True` returns the same counts but does NOT write the manifest —
+    used by `installs prune --dry-run` and by the doctor check. The caller
+    is responsible for printing a human-friendly report.
+
+    Backup of the prior manifest is the caller's responsibility (the CLI
+    writes a `.bak.<date>` sibling before invoking this).
+    """
+    records = list_installs()
+    buckets = classify_stale(records)
+    removed_stale = len(buckets['stale_target'])
+    removed_retired = len(buckets['retired_tool'])
+    kept = len(buckets['valid'])
+
+    if not dry_run and (removed_stale or removed_retired):
+        data = {
+            'schema_version': _SCHEMA_VERSION,
+            'installs': [r.to_dict() for r in buckets['valid']],
+        }
+        _save_raw(data)
+    return removed_stale, removed_retired, kept
