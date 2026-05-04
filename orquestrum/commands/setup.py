@@ -147,24 +147,30 @@ def _print_detected(state: dict) -> None:
 
 
 def _install_one(tool: str, target: Path, *, provider: str | None = None) -> bool:
-    """Run convert (if cache missing) + install for one tool. Returns True
-    on success; logs errors to stderr but never raises."""
+    """Always regenerate the integration cache then install for one tool.
+
+    Convert is fast (~1s) and the cache freshness guarantee matters more
+    than the saved second: the prior "if not cache_dir.is_dir()" guard
+    silently used STALE templates whenever orquestrum was upgraded
+    in-place without a version bump (every patch release inside the
+    same MINOR). Real bugs surfaced from this — e.g. setup re-installing
+    the legacy hook command from a cache generated before WSC.
+
+    Returns True on success; logs errors to stderr but never raises.
+    """
     from orquestrum.core.convert import main as convert_main
     from orquestrum.core.install import main as install_main
-    from orquestrum.lib.paths import convert_output_root
 
-    cache_dir = convert_output_root() / tool
-    if not cache_dir.is_dir():
-        print(f'  {_DIM}→ orquestrum convert --tool {tool}'
-              + (f' --provider {provider}' if provider else '') + f'{_NC}')
-        argv = ['--tool', tool]
-        if provider:
-            argv += ['--provider', provider]
-        try:
-            convert_main(argv)
-        except SystemExit as e:
-            if e.code not in (None, 0):
-                return False
+    print(f'  {_DIM}→ orquestrum convert --tool {tool}'
+          + (f' --provider {provider}' if provider else '') + f'{_NC}')
+    argv = ['--tool', tool]
+    if provider:
+        argv += ['--provider', provider]
+    try:
+        convert_main(argv)
+    except SystemExit as e:
+        if e.code not in (None, 0):
+            return False
 
     target.mkdir(parents=True, exist_ok=True)
     print(f'  {_DIM}→ orquestrum install --tool {tool} '
@@ -353,19 +359,23 @@ def _run_setup_advanced(*, interactive: bool) -> int:
             rc = 1
             print(f'  {_RED}✗ opencode: install reported errors above{_NC}')
 
-    # ── Extras ──
+    # ── Extras (combined into ONE _install call) ──
+    # Critical: each `uv tool install --with X` call replaces the entire
+    # extras set on the orquestrum tool install. Calling _install(['ui'])
+    # then _install(['webview']) sequentially CLOBBERS ui (the second call
+    # passes only --with pywebview, dropping fastapi/jinja2/etc.). Combine
+    # them so a single uv invocation carries every requested package.
+    extras_to_install: list[str] = []
     if extras['install_ui']:
-        print(f'  {_DIM}→ orquestrum extras install ui{_NC}')
-        from orquestrum.commands.extras import _install as _install_extras
-        if _install_extras(['ui']) != 0:
-            rc = 1
-            print(f'  {_RED}✗ ui extras: install reported errors above{_NC}')
+        extras_to_install.append('ui')
     if extras['install_webview']:
-        print(f'  {_DIM}→ orquestrum extras install webview{_NC}')
+        extras_to_install.append('webview')
+    if extras_to_install:
+        print(f'  {_DIM}→ orquestrum extras install {" ".join(extras_to_install)}{_NC}')
         from orquestrum.commands.extras import _install as _install_extras
-        if _install_extras(['webview']) != 0:
+        if _install_extras(extras_to_install) != 0:
             rc = 1
-            print(f'  {_RED}✗ webview extras: install reported errors above{_NC}')
+            print(f'  {_RED}✗ extras: install reported errors above{_NC}')
 
     # ── Deps ──
     if deps['install_agency']:

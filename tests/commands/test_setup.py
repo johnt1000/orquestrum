@@ -113,8 +113,10 @@ class TestNonInteractiveFlow:
     ):
         rc = setup._run_setup(interactive=False)
         assert rc == 0
-        # convert NOT called (cache stub pre-populated)
-        assert stub_install_pipeline['convert'] == []
+        # convert ALWAYS runs in setup — guarantees fresh templates
+        # (was: skipped when cache existed; that caused real bugs where
+        # post-version-bump installs reused stale templates).
+        assert stub_install_pipeline['convert']
         # install called for claude-code with --target = fake home
         installs = stub_install_pipeline['install']
         assert len(installs) == 1
@@ -221,13 +223,21 @@ class TestInstallOne:
         assert convert_calls == [['--tool', 'claude-code', '--provider', 'claude']]
         assert install_calls and 'claude-code' in install_calls[0]
 
-    def test_skips_convert_when_cache_present(
+    def test_always_runs_convert_then_install(
         self, isolated_manifest: Path, fake_home: Path,
         stub_install_pipeline,
     ):
+        """Setup unconditionally regenerates the cache before install.
+        The previous "skip convert if cache exists" behavior caused real
+        bugs after framework changes — stale cached templates were
+        installed instead of the current ones. Convert is ~1s; the
+        freshness guarantee outweighs the saved second."""
         ok = setup._install_one('claude-code', fake_home, provider=None)
         assert ok is True
-        assert stub_install_pipeline['convert'] == []
+        # Convert MUST have run, exactly once
+        assert len(stub_install_pipeline['convert']) == 1
+        assert stub_install_pipeline['convert'][0] == ['--tool', 'claude-code']
+        # Install MUST have run, exactly once
         assert len(stub_install_pipeline['install']) == 1
 
     def test_returns_false_on_install_failure(

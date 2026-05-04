@@ -1,6 +1,6 @@
 [project]
 name = "orquestrum"
-version = "0.5.0"
+version = "0.5.1"
 description = "Specification-Driven Development framework for multi-agent AI systems (Mac & Linux)."
 requires-python = ">=3.12"
 dependencies = [

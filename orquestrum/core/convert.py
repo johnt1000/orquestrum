@@ -550,6 +550,11 @@ def main(argv: list[str] | None = None) -> None:
     for idx, tool in enumerate(tools, 1):
         if total > 1:
             print(f'\033[1m[{idx}/{total}] {tool}\033[0m')
+        # Invalidate stale cache (different orquestrum version) before
+        # the adapter writes — guarantees the on-disk output reflects
+        # the current source code, not whatever was cached after a
+        # prior version's run. No-op in dev mode.
+        _maybe_invalidate_cache(INTEGRATIONS / tool)
         ADAPTERS[tool].convert(provider)
 
         # Verify the tool's output before moving on. A failed verification

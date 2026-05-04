@@ -236,6 +236,30 @@ class TestRunSetupAdvanced:
         # No MCPs added (defaults all N for common MCPs)
         assert stub_install_pipeline['mcp_add'] == []
 
+    def test_ui_and_webview_combined_into_single_extras_call(
+        self, isolated_manifest: Path, fake_home: Path,
+        stub_install_pipeline, monkeypatch: pytest.MonkeyPatch,
+    ):
+        """REGRESSION GUARD: when both ui and webview are selected, they
+        MUST be installed in a single `_install` call. Calling them
+        sequentially makes `uv tool install --with X` clobber the prior
+        package set (real bug observed in production: ui got installed,
+        then webview install dropped fastapi/jinja2)."""
+        # Override the section to request BOTH ui and webview
+        monkeypatch.setattr(sections, 'section_extras',
+            lambda **kw: {'install_ui': True, 'install_webview': True})
+        # Pin everything else to defaults / no-ops
+        monkeypatch.setattr(sections, 'section_core',
+            lambda **kw: {'install_cc': False, 'install_oc': False, 'provider': 'claude'})
+        monkeypatch.setattr(sections, 'section_deps',
+            lambda **kw: {'install_agency': False, 'install_skills': False})
+        monkeypatch.setattr(sections, 'section_mcp', lambda **kw: [])
+        monkeypatch.setattr(sections, 'section_opencode_mcp', lambda **kw: False)
+
+        setup._run_setup_advanced(interactive=False)
+        # Exactly ONE call to _install carrying BOTH names
+        assert stub_install_pipeline['extras'] == [['ui', 'webview']]
+
     def test_no_changes_path_emits_friendly_message(
         self, isolated_manifest: Path, fake_home: Path,
         stub_install_pipeline, monkeypatch: pytest.MonkeyPatch,
